@@ -1,6 +1,22 @@
-#define ORDER 20
-//unoptimized: 27 hours for order 20
-//optimized: approx. 3x faster
+#define ORDER 4
+#define SumsA 2
+#define SumsB 2
+#define PrintProg 100
+//unoptimized: 27 hours for order 20 prog: 2500 time: 240 seconds
+//optimized w/ Row Sums: approx. 3x faster prog: 2500 time: 106 seconds pairs found: 1154
+//optimized w/ Power Representation 6 or 12: prog: 2500 time: 94 seconds (Found no pairs, which is probably why.)
+//optimized row sums eliminating sequences of A that satisfy neither Power Representation: prog: 2500 time: 36 seconds pairs found: 1154
+
+//ORDER 18 exhaustive w/seq b starting at combination a time:776 seconds pairs found: 0
+//ORDER 18 exhaustive w/o seq b starting at combination a time: 1628 seconds pairs found: 0
+//approx 2x increase
+
+
+//next optimization: have the nested for loop that checks through B's start at the current combination of A,
+//as well as eliminate every B s.t it satisfies neither power representation square.
+
+//great potential optimization:
+// find every candidate sequence and test all pairs between those instead
 
 #include<stdio.h>
 #include<stdlib.h>
@@ -10,12 +26,16 @@ int PAF(int seq[], int s);
 int CheckIfPair(int a[], int b[]);
 int* CompressSequence(int a[]);
 int NextCombination(int arr[], int length);
-void PrintArray(int arr[], int length);
+void PrintArray(int arr[], int length, FILE *fp);
 void Reset(int arr[], int length);
 int Power(int base, int exponent);
-int RowSums(int a[], int b[]);
+int RowSums(int a[]);
+void CopyArray(int dest[], int source[], int length);
 
 int main() {
+    FILE *fp;
+
+    fp = fopen("pairsfound.txt", "w+");
 
     int pairs = 0;
     int combinations = Power(2, ORDER);
@@ -32,41 +52,47 @@ int main() {
     clock_t current;
     while(1) {
         current = clock();
-            printf("Progress: %d ... %d, time elapsed: %d seconds, pairs: %d\n", progress, combinations - 1, (current - start) / CLOCKS_PER_SEC, pairs);
-            fflush(stdin);
-        while(1) {
-            if(RowSums(a,b) == 2 * ORDER) {
-                if(CheckIfPair(a,b)) {
-                    printf("Pair Found: ");
-                    PrintArray(a, ORDER);
-                    PrintArray(b, ORDER);
-                    printf("\n");
-                    pairs++;
+            if(progress % PrintProg == 0) {
+                printf("Progress: %d ... %d, time elapsed: %d seconds, Pairs found: %d\n", progress, combinations - 1, (current - start) / CLOCKS_PER_SEC, pairs);
+                fflush(stdin);
+            }
+        if(Power(RowSums(a), 2) == SumsA * SumsA || Power(RowSums(a), 2) == SumsB * SumsB) {
+            while(1) {
+                if(Power(RowSums(a), 2) + Power(RowSums(b), 2) == ORDER * 2) {
+                    if(CheckIfPair(a,b)) {
+                        PrintArray(a, ORDER, fp);
+                        PrintArray(b, ORDER, fp);
+                        pairs++;
+                    }
+                }
+                if(!NextCombination(b,ORDER)) {
+                    break;
                 }
             }
-            if(!NextCombination(b,ORDER)) {
-                break;
-            }
         }
-        Reset(b, 3);
         if(!NextCombination(a,ORDER)) {
             break;
         }
+        CopyArray(b, a, ORDER);
         progress++;
     }
     printf("Pairs Found: %d\n", pairs);
 }
 
-int RowSums(int a[], int b[]) {
+void CopyArray(int dest[], int source[], int length) {
+    for(int i = 0; i < length; i++) {
+        dest[i] = source[i];
+    }
+}
+
+int RowSums(int a[]) {
     int Asums = 0;
-    int Bsums = 0;
 
     for(int i = 0; i < ORDER; i++) {
         Asums += a[i];
-        Bsums += b[i];
     }
 
-    return Power(Asums, 2) + Power(Bsums, 2);
+    return Asums;
 }
 
 int Power(int base, int exponent) {
@@ -114,13 +140,14 @@ int NextCombination(int arr[], int length) {
     }
 }
 
-void PrintArray(int arr[], int length) {
-    printf("{");
+void PrintArray(int arr[], int length, FILE *fp) {
+    fprintf(fp, "{");
     for(int i = 0; i < length - 1; i++) {
-        printf("%d, ", arr[i]);
-    } 
+        fprintf(fp, "%d,", arr[i]);
+
+    }
     
-    printf("%d} ", arr[length - 1]);
+    fprintf(fp, "%d}\n", arr[length - 1]);
 }
 
 int PAF(int seq[], int s) { 

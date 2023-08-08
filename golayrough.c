@@ -1,6 +1,4 @@
 #define ORDER 20
-//unoptimized: 27 hours for order 20
-//optimized: approx. 3x faster
 
 #include<stdio.h>
 #include<stdlib.h>
@@ -13,7 +11,6 @@ int NextCombination(int arr[], int length);
 void PrintArray(int arr[], int length);
 void Reset(int arr[], int length);
 int Power(int base, int exponent);
-int RowSums(int a[], int b[]);
 
 int main() {
 
@@ -32,17 +29,15 @@ int main() {
     clock_t current;
     while(1) {
         current = clock();
-            printf("Progress: %d ... %d, time elapsed: %d seconds, pairs: %d\n", progress, combinations - 1, (current - start) / CLOCKS_PER_SEC, pairs);
+            printf("Progress: %d ... %d, time elapsed: %d seconds\n", progress, combinations - 1, (current - start) / CLOCKS_PER_SEC);
             fflush(stdin);
         while(1) {
-            if(RowSums(a,b) == 2 * ORDER) {
-                if(CheckIfPair(a,b)) {
-                    printf("Pair Found: ");
-                    PrintArray(a, ORDER);
-                    PrintArray(b, ORDER);
-                    printf("\n");
-                    pairs++;
-                }
+            if(CheckIfPair(a,b)) {
+                printf("Pair Found: ");
+                PrintArray(a, ORDER);
+                PrintArray(b, ORDER);
+                printf("\n");
+                pairs++;
             }
             if(!NextCombination(b,ORDER)) {
                 break;
@@ -55,18 +50,6 @@ int main() {
         progress++;
     }
     printf("Pairs Found: %d\n", pairs);
-}
-
-int RowSums(int a[], int b[]) {
-    int Asums = 0;
-    int Bsums = 0;
-
-    for(int i = 0; i < ORDER; i++) {
-        Asums += a[i];
-        Bsums += b[i];
-    }
-
-    return Power(Asums, 2) + Power(Bsums, 2);
 }
 
 int Power(int base, int exponent) {
