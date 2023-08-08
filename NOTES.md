@@ -1,5 +1,5 @@
 # Ambrose code
-    important function: generate_equivalence_class
+    - important function: generate_equivalence_class
     -  generates equivalence classes on several equivalence relation functions, stores these classes in a hashmap.
     - This probably is an optimization by creating all equivalence classes beforehand, and then operating on one item in each equivalence class.
     ^ I should confirm this hypothesis
@@ -12,9 +12,9 @@
 // ambrose's code in general
 
 # benchmarks
-    unoptimized: 27 hours for order 20 prog: 2500 time: 240 seconds
-    optimized w/ Row Sums: approx. 3x faster prog: 2500 time: 106 seconds pairs found: 1154
-    optimized w/ Power Representation 6 or 12: prog: 2500 time: 94 seconds (Found no pairs, which is probably why.)
-    optimized row sums eliminating sequences of A that satisfy neither Power Representation: prog: 2500 time: 36 seconds pairs found: 1154
+    - unoptimized: 27 hours for order 20 prog: 2500 time: 240 seconds
+    - optimized w/ Row Sums: approx. 3x faster prog: 2500 time: 106 seconds pairs found: 1154
+    - optimized w/ Power Representation 6 or 12: prog: 2500 time: 94 seconds (Found no pairs, which is probably why.)
+    - optimized row sums eliminating sequences of A that satisfy neither Power Representation: prog: 2500 time: 36 seconds pairs found: 1154
 
-# a few thousand 3-compression candidates
+- a few thousand 3-compression candidates
