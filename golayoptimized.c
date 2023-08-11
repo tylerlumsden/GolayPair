@@ -1,6 +1,6 @@
-#define ORDER 4
-#define SumsA 2
-#define SumsB 2
+#define ORDER 18
+#define SumsA 0
+#define SumsB 6
 #define PrintProg 100
 //unoptimized: 27 hours for order 20 prog: 2500 time: 240 seconds
 //optimized w/ Row Sums: approx. 3x faster prog: 2500 time: 106 seconds pairs found: 1154
@@ -21,6 +21,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<time.h>
+#include"fftw-3.3.5-dll64/fftw3.h"
 
 int PAF(int seq[], int s);
 int CheckIfPair(int a[], int b[]);
@@ -31,6 +32,7 @@ void Reset(int arr[], int length);
 int Power(int base, int exponent);
 int RowSums(int a[]);
 void CopyArray(int dest[], int source[], int length);
+int dftfilter(int seq[], int len);
 
 int main() {
     FILE *fp;
@@ -56,9 +58,9 @@ int main() {
                 printf("Progress: %d ... %d, time elapsed: %d seconds, Pairs found: %d\n", progress, combinations - 1, (current - start) / CLOCKS_PER_SEC, pairs);
                 fflush(stdin);
             }
-        if(Power(RowSums(a), 2) == SumsA * SumsA || Power(RowSums(a), 2) == SumsB * SumsB) {
+        if(dftfilter(a, ORDER) && (Power(RowSums(a), 2) == SumsA * SumsA || Power(RowSums(a), 2) == SumsB * SumsB)) {
             while(1) {
-                if(Power(RowSums(a), 2) + Power(RowSums(b), 2) == ORDER * 2) {
+                if((Power(RowSums(a), 2) + Power(RowSums(b), 2) == ORDER * 2)) {
                     if(CheckIfPair(a,b)) {
                         PrintArray(a, ORDER, fp);
                         PrintArray(b, ORDER, fp);
@@ -182,4 +184,40 @@ int * CompressSequence(int seq[]) {
     
     return compression;
 }
+
+fftw_complex * dft(int seq[], int len) {
+    fftw_complex *in, *out;
+    fftw_plan p;
+
+    in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * len);
+    out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * len);
+
+    for(int i = 0; i < len; i++) {
+        in[i][0] = (double)seq[i];
+    }
+
+    p = fftw_plan_dft_1d(len, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+
+    fftw_execute(p);
+
+    fftw_destroy_plan(p);
+    fftw_free(in);
+
+    return out;
+} 
+
+int dftfilter(int seq[], int len) {
+    fftw_complex * seqdft = dft(seq, len);
+    for(int i = 0; i < len; i++) {
+        if(seqdft[i][0] > len * 2) {
+            fftw_free(seqdft);
+            return 0;
+        }
+    }
+    fftw_free(seqdft);
+    return 1;
+
+}
+
+
 
