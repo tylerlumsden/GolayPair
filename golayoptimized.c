@@ -209,7 +209,7 @@ fftw_complex * dft(int seq[], int len) {
 int dftfilter(int seq[], int len) {
     fftw_complex * seqdft = dft(seq, len);
     for(int i = 0; i < len; i++) {
-        if(seqdft[i][0] > len * 2) {
+        if((seqdft[i][0] * seqdft[i][0] + seqdft[i][1] * seqdft[i][1]) > len * 2 + 0.001) {
             fftw_free(seqdft);
             return 0;
         }

@@ -22,4 +22,14 @@
     //ORDER 18 exhaustive w/ prev. + DFT's time: 730 seconds pairs found: 0
     //approx 2x increase
 
+    //prog: 300 50 seconds
+
 - a few thousand 3-compression candidates
+
+//psd real part squared plus imaginary part squared of every entry (currently not using imaginary part)
+//norm in ambrose's code was real part squared plus imaginary part squared
+
+//psd's of every vector should be constant, do the check first
+//consider the b's with the a's after an a is accepted (add the psd's together)
+
+//save the psd's of a in the outer loop, add them together with the b and then check them.
