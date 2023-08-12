@@ -1,24 +1,37 @@
-#define ORDER 20
-//unoptimized: 27 hours for order 20
-//optimized: approx. 3x faster
-
 #include<stdio.h>
-#include<stdlib.h>
 #include<time.h>
+#include"array.h"
+#include<string.h>
+#include"fftw-3.3.5-dll64/fftw3.h"
+#include"fourier.h"
 
-int PAF(int seq[], int s);
+#define ORDER 20
+#define SumsA 2
+#define SumsB 2
+#define PrintProg 1000
+
 int CheckIfPair(int a[], int b[]);
-int* CompressSequence(int a[]);
-int NextCombination(int arr[], int length);
-void PrintArray(int arr[], int length);
-void Reset(int arr[], int length);
 int Power(int base, int exponent);
-int RowSums(int a[], int b[]);
 
-int main() {
+void find_psd() {
+
+    fftw_complex *in, *dftA, *dftB;
+    fftw_plan planA, planB;
+
+    in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * ORDER);
+    dftA = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * ORDER);
+    dftB = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * ORDER);
+
+    planA = fftw_plan_dft_1d(ORDER, in, dftA, FFTW_FORWARD, FFTW_ESTIMATE);
+    planB = fftw_plan_dft_1d(ORDER, in, dftA, FFTW_FORWARD, FFTW_ESTIMATE);
 
     int pairs = 0;
+    int progress = 0;
     int combinations = Power(2, ORDER);
+
+    char fname[100];
+    sprintf(fname, "results/pairs-%d.txt", ORDER);
+    FILE * out = fopen(fname, "w+");
 
     int a[ORDER];
     int b[ORDER];
@@ -26,101 +39,44 @@ int main() {
     Reset(a, ORDER);
     Reset(b, ORDER);
 
-    int progress = 0;
-
     clock_t start = clock();
     clock_t current;
-    while(1) {
+
+    do {
+
         current = clock();
-            printf("Progress: %d ... %d, time elapsed: %d seconds, pairs: %d\n", progress, combinations - 1, (current - start) / CLOCKS_PER_SEC, pairs);
+        if(progress % PrintProg == 0) {
+            printf("Progress: %d ... %d, time elapsed: %d seconds, Pairs found: %d\n", progress, combinations - 1, (current - start) / CLOCKS_PER_SEC, pairs);
             fflush(stdin);
-        while(1) {
-            if(RowSums(a,b) == 2 * ORDER) {
-                if(CheckIfPair(a,b)) {
-                    printf("Pair Found: ");
-                    PrintArray(a, ORDER);
-                    PrintArray(b, ORDER);
-                    printf("\n");
+        }
+
+        CopyArray(b, a, ORDER);
+
+        //start filtering here
+        dftA = dft(a, in, dftA, planA, ORDER);
+        if(dftfilter(dftA, ORDER)) {
+            do {
+                dftB = dft(b, in, dftB, planB, ORDER);
+                if(dftfilterpair(dftA, dftB, ORDER)) {
+                    //record pair to file
+                    WritePairToFile(out, a, b, ORDER);
                     pairs++;
                 }
-            }
-            if(!NextCombination(b,ORDER)) {
-                break;
-            }
+            } while(NextCombination(b, ORDER));
         }
-        Reset(b, 3);
-        if(!NextCombination(a,ORDER)) {
-            break;
-        }
+
         progress++;
-    }
+
+    } while(NextCombination(a, ORDER));
+
     printf("Pairs Found: %d\n", pairs);
-}
 
-int RowSums(int a[], int b[]) {
-    int Asums = 0;
-    int Bsums = 0;
+    fftw_free(dftA);
+    fftw_free(dftB);
+    fftw_free(in);
 
-    for(int i = 0; i < ORDER; i++) {
-        Asums += a[i];
-        Bsums += b[i];
-    }
-
-    return Power(Asums, 2) + Power(Bsums, 2);
-}
-
-int Power(int base, int exponent) {
-    int product = base;
-    for(int i = 0; i < exponent - 1; i++) {
-        product *= base;
-    }
-    return product;
-}
-
-void Reset(int arr[], int length) {
-    for(int i = 0; i < length; i++) {
-        arr[i] = 1;
-    } 
-}
-
-//returns 0 if the array is already the last combination, returns 1 if the array was edited
-int NextCombination(int arr[], int length) {
-    //if the value is -1, need to re-traverse the tree
-    if(arr[length - 1] == -1) {
-
-        //find next root node that is value of 1
-        int i = length - 1;
-        while(arr[i] == -1) {
-            if(i == 0) {
-                return 0;
-            }
-            i--;
-        }
-        arr[i] = -1;
-        
-        //every node after this root should be value of 1 (considering that we are finding the next combination)
-        i++;
-        while(i < length) {
-            arr[i] = 1;
-            i++;
-        }
-
-        return 1;
-    }
-    //if the value is 1, then the next combination has the value as -1.
-    if(arr[length - 1] == 1) {
-        arr[length - 1] = -1;
-        return 1;
-    }
-}
-
-void PrintArray(int arr[], int length) {
-    printf("{");
-    for(int i = 0; i < length - 1; i++) {
-        printf("%d, ", arr[i]);
-    } 
-    
-    printf("%d} ", arr[length - 1]);
+    fftw_destroy_plan(planA);
+    fftw_destroy_plan(planB);
 }
 
 int PAF(int seq[], int s) { 
@@ -142,17 +98,12 @@ int CheckIfPair(int a[], int b[]) {
     return 1;
 }
 
-
-
-int * CompressSequence(int seq[]) {
-    int * compression = (int*)malloc(ORDER / 2 * sizeof(int));
-    for(int i = 0; i < ORDER / 2; i++) {
-        compression[i] = seq[i] + seq[i + ORDER / 2];
-        printf("%d", compression[i]);
+int Power(int base, int exponent) {
+    int product = base;
+    for(int i = 0; i < exponent - 1; i++) {
+        product *= base;
     }
-
-    printf("\n");
-    
-    return compression;
+    return product;
 }
+
 

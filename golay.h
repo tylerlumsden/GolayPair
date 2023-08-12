@@ -1,3 +1,1 @@
-#define ORDER 18;
-
-extern int dftfilter(int seq[], int len);
+void find_psd();

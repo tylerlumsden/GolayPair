@@ -24,6 +24,14 @@
     //ORDER 18 exhaustive w/ mangled DFT code: 254 seconds pairs found: 0
     ^ unsure why???? Maybe the a's previously had some slowdown
 
+    //ORDER 18 exhaustive w/ DFT code filtering only a sequences time: 363 seconds, pairs found: 0
+
+    //ORDER 18 exhaustive w/ DFT code filtering both a and b sequences time: 208 seconds, pairs found: 0
+
+    problem: the dft filtering of both and b fails to find pairs at prog:2500 ORDER 20 unlike previous code. 
+    The code still works for order 4.
+
+
     //approx 2x increase
 
     //prog: 300 50 seconds
@@ -37,3 +45,5 @@
 //consider the b's with the a's after an a is accepted (add the psd's together)
 
 //save the psd's of a in the outer loop, add them together with the b and then check them.
+
+- I should log the end progress and pairs found at the very end of the runtime. Or, I can log at some interval so that we can compare mid-progress later.
