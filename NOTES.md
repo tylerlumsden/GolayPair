@@ -20,6 +20,10 @@
     //ORDER 18 exhaustive w/o seq b starting at combination a time: 1628 seconds pairs found: 0
     //ORDER 18 exhaustive w/seq b starting at combination a time:776 seconds pairs found: 0
     //ORDER 18 exhaustive w/ prev. + DFT's time: 730 seconds pairs found: 0
+
+    //ORDER 18 exhaustive w/ mangled DFT code: 254 seconds pairs found: 0
+    ^ unsure why???? Maybe the a's previously had some slowdown
+
     //approx 2x increase
 
     //prog: 300 50 seconds
