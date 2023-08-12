@@ -5,7 +5,7 @@
 #include"fftw-3.3.5-dll64/fftw3.h"
 #include"fourier.h"
 
-#define ORDER 20
+#define ORDER 4
 #define SumsA 2
 #define SumsB 2
 #define PrintProg 1000
@@ -57,7 +57,7 @@ void find_psd() {
         if(dftfilter(dftA, ORDER)) {
             do {
                 dftB = dft(b, in, dftB, planB, ORDER);
-                if(dftfilterpair(dftA, dftB, ORDER)) {
+                if(dftfilterpair(dftA, dftB, ORDER) && CheckIfPair(a,b)) {
                     //record pair to file
                     WritePairToFile(out, a, b, ORDER);
                     pairs++;
