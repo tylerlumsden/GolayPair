@@ -20,7 +20,7 @@ int dftfilter(fftw_complex * seqdft, int len) {
 }
 
 int dftfilterpair(fftw_complex *dftA, fftw_complex *dftB, int len) {
-    for(int i = 0; i < len / 2; i++) {
+    for(int i = 0; i < len; i++) {
         if(((dftA[i][0] * dftA[i][0] + dftA[i][1] * dftA[i][1]) + (dftB[i][0] * dftB[i][0] + dftB[i][1] * dftB[i][1])) > len * 2 + 0.001) {
             return 0;
         }

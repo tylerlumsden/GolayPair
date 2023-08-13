@@ -31,6 +31,12 @@
     problem: the dft filtering of both and b fails to find pairs at prog:2500 ORDER 20 unlike previous code. 
     The code still works for order 4.
 
+    ^^problem solved, was using dftA for both plans by mistake.
+
+    //ORDER 18 exhaustive w/ DFT code filtering both a and b sequences WORKING CODE time: 229 seconds, pairs found: 0
+    //ORDER 18 exhaustive w/ DFT code filtering only a sequences WORKING CODE time: 535 seconds, pairs found: 0
+
+
 
     //approx 2x increase
 

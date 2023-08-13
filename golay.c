@@ -5,7 +5,7 @@
 #include"fftw-3.3.5-dll64/fftw3.h"
 #include"fourier.h"
 
-#define ORDER 4
+#define ORDER 20
 #define SumsA 2
 #define SumsB 2
 #define PrintProg 1000
@@ -23,7 +23,7 @@ void find_psd() {
     dftB = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * ORDER);
 
     planA = fftw_plan_dft_1d(ORDER, in, dftA, FFTW_FORWARD, FFTW_ESTIMATE);
-    planB = fftw_plan_dft_1d(ORDER, in, dftA, FFTW_FORWARD, FFTW_ESTIMATE);
+    planB = fftw_plan_dft_1d(ORDER, in, dftB, FFTW_FORWARD, FFTW_ESTIMATE);
 
     int pairs = 0;
     int progress = 0;
