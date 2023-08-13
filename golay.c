@@ -7,7 +7,7 @@
 
 #define ORDER 20
 #define SumsA 2
-#define SumsB 2
+#define SumsB 6
 #define PrintProg 1000
 
 int CheckIfPair(int a[], int b[]);
@@ -54,10 +54,10 @@ void find_psd() {
 
         //start filtering here
         dftA = dft(a, in, dftA, planA, ORDER);
-        if(dftfilter(dftA, ORDER)) {
+        if(dftfilter(dftA, ORDER) && (Power(RowSums(a, ORDER), 2) == SumsA * SumsA || Power(RowSums(a, ORDER), 2) == SumsB * SumsB)) {
             do {
                 dftB = dft(b, in, dftB, planB, ORDER);
-                if(dftfilterpair(dftA, dftB, ORDER) && CheckIfPair(a,b)) {
+                if(dftfilterpair(dftA, dftB, ORDER) && (Power(RowSums(a, ORDER), 2) + Power(RowSums(b, ORDER), 2) == ORDER * 2) && CheckIfPair(a,b)) {
                     //record pair to file
                     WritePairToFile(out, a, b, ORDER);
                     pairs++;

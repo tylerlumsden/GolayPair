@@ -36,6 +36,10 @@
     //ORDER 18 exhaustive w/ DFT code filtering both a and b sequences WORKING CODE time: 229 seconds, pairs found: 0
     //ORDER 18 exhaustive w/ DFT code filtering only a sequences WORKING CODE time: 535 seconds, pairs found: 0
 
+    //ORDER 18 exhaustive w/ DFT code filtering only a and b sequences + row sums time: 105 seconds, pairs found: 0
+
+
+
 
 
     //approx 2x increase
