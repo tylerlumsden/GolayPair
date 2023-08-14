@@ -6,3 +6,4 @@ void Reset(int arr[], int len);
 int RowSums(int a[], int len);
 void CopyArray(int dest[], int source[], int len);
 int NextCombination(int arr[], int length);
+int NextCombinationRowSums(int arr[], int length, int currentSum, int bound);

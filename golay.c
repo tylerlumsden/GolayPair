@@ -5,13 +5,14 @@
 #include"fftw-3.3.5-dll64/fftw3.h"
 #include"fourier.h"
 
-#define ORDER 20
-#define SumsA 2
+#define ORDER 18
+#define SumsA 0
 #define SumsB 6
-#define PrintProg 1000
+#define PrintProg 100
 
 int CheckIfPair(int a[], int b[]);
 int Power(int base, int exponent);
+void Log(int pairs, int order, int time, char * lognote);
 
 void find_psd() {
 
@@ -34,7 +35,11 @@ void find_psd() {
     FILE * out = fopen(fname, "w+");
 
     int a[ORDER];
+    int currentA = ORDER;
     int b[ORDER];
+    int currentB = ORDER;
+
+
 
     Reset(a, ORDER);
     Reset(b, ORDER);
@@ -50,24 +55,28 @@ void find_psd() {
             fflush(stdin);
         }
 
-        CopyArray(b, a, ORDER);
+        Reset(b, ORDER);
+        currentB = ORDER;
 
         //start filtering here
         dftA = dft(a, in, dftA, planA, ORDER);
-        if(dftfilter(dftA, ORDER) && (Power(RowSums(a, ORDER), 2) == SumsA * SumsA || Power(RowSums(a, ORDER), 2) == SumsB * SumsB)) {
+        if(dftfilter(dftA, ORDER)) {
             do {
                 dftB = dft(b, in, dftB, planB, ORDER);
-                if(dftfilterpair(dftA, dftB, ORDER) && (Power(RowSums(a, ORDER), 2) + Power(RowSums(b, ORDER), 2) == ORDER * 2) && CheckIfPair(a,b)) {
+                if(dftfilterpair(dftA, dftB, ORDER) && CheckIfPair(a,b)) {
                     //record pair to file
                     WritePairToFile(out, a, b, ORDER);
                     pairs++;
                 }
-            } while(NextCombination(b, ORDER));
+            } while((currentB = NextCombinationRowSums(b, ORDER, currentB, SumsB)) != ORDER + 1);
         }
 
         progress++;
 
-    } while(NextCombination(a, ORDER));
+    } while((currentA = NextCombinationRowSums(a, ORDER, currentA, SumsA)) != ORDER + 1);
+
+    current = clock();
+    Log(pairs, ORDER, (current - start) / CLOCKS_PER_SEC, "PSD filtering with generating from row sums");
 
     printf("Pairs Found: %d\n", pairs);
 
@@ -104,6 +113,14 @@ int Power(int base, int exponent) {
         product *= base;
     }
     return product;
+}
+
+void Log(int pairs, int order, int time, char * lognote) {
+    char fname[100];
+    sprintf(fname, "results/log-%d.txt", order);
+    FILE * out = fopen(fname, "a");
+
+    fprintf(out, "%s:\n %d pairs found\n time elapsed: %d seconds\n", lognote, pairs, time);
 }
 
 
