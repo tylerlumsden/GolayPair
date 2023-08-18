@@ -5,8 +5,8 @@
 #include"fftw-3.3.5-dll64/fftw3.h"
 #include"fourier.h"
 
-#define ORDER 18
-#define SumsA 0
+#define ORDER 20
+#define SumsA 2
 #define SumsB 6
 #define PrintProg 100
 

@@ -57,3 +57,18 @@
 //save the psd's of a in the outer loop, add them together with the b and then check them.
 
 - I should log the end progress and pairs found at the very end of the runtime. Or, I can log at some interval so that we can compare mid-progress later.
+
+- Next step is equivalences
+- cyclic shift, multiplication by -1, alternating multiplication by -1,
+- decimation x(i) -> x(k * i mod n, k and n are coprime)
+
+- figure out how to pick the smallest sequence, lex order to pick the smallest
+
+try to make a table of these solutions by tuesday up to equivaleces:
+- include the runtime of these
+1,2,4,5,8,9,10
+
+--> then
+
+- ilias will provide the compressions and the uncompressions code
+- given multiple compressions, remove the ones that are equivalent
