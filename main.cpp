@@ -1,7 +1,7 @@
 #include<stdio.h>
 #include"golay.h"
 
-#define CHOICE 1
+#define CHOICE 2
 
 int main() {    
 
@@ -10,7 +10,7 @@ int main() {
             find_psd();
             break;
         case 2:
-            //run find function
+            find_unique();
             break;
         default:
             //error

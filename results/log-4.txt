@@ -1,0 +1,6 @@
+Equivalence generating with sequences only from row sums:
+ 1 pairs found
+ time elapsed: 0 seconds
+Equivalence generating with sequences only from row sums, only equivalence is uniform shift:
+ 1 pairs found
+ time elapsed: 0 seconds

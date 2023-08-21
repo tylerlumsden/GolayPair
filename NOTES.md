@@ -37,6 +37,7 @@
     //ORDER 18 exhaustive w/ DFT code filtering only a sequences WORKING CODE time: 535 seconds, pairs found: 0
 
     //ORDER 18 exhaustive w/ DFT code filtering only a and b sequences + row sums time: 105 seconds, pairs found: 0
+    ---------->> plus with generating from row sums rather than just checking time: 14 seconds (huge!)
 
 
 
@@ -57,3 +58,17 @@
 //save the psd's of a in the outer loop, add them together with the b and then check them.
 
 - I should log the end progress and pairs found at the very end of the runtime. Or, I can log at some interval so that we can compare mid-progress later.
+
+- Next step is equivalences
+- cyclic shift, multiplication by -1, alternating multiplication by -1,
+- decimation x(i) -> x(k * i mod n, k and n are coprime)
+
+- figure out how to pick the smallest sequence, lex order to pick the smallest
+
+try to make a table of these solutions by tuesday up to equivalences:
+-  include the runtime of these
+1,2,4,5,8,9,10
+
+--> then
+- ilias will provide the compressions and the uncompressions code
+- given multiple compressions, remove the ones that are equivalent
