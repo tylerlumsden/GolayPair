@@ -37,9 +37,9 @@ namespace std
     };
 }
 
-#define ORDER 10
-#define SumsA 2
-#define SumsB 4
+#define ORDER 18
+#define SumsA 0
+#define SumsB 6
 #define PrintProg 10000
 
 int VecCheckIfPair(vector<int> a, vector<int> b);
@@ -121,6 +121,8 @@ void find_psd() {
 
 void find_unique() {
 
+    printf("Running Exhaustive Search on Order %d\n", ORDER);
+
     int pairs = 0;
 
     char fname[100];
@@ -159,8 +161,8 @@ void find_unique() {
             generate_equivalence_class(classesA, a);
         }
     } while((currentSum = VecNextCombinationRowSums(a, currentSum, SumsA)) != ORDER + 1);
-
-    printf("Time Elapsed: %d\n", (current - start) / CLOCKS_PER_SEC);
+    current = clock();
+    printf("Time Elapsed: %d, Unique Sequences found: %d, Sequences in first Class: %d\n", (current - start) / CLOCKS_PER_SEC, classesA.size(), (*classesA[0].begin()).first.size());
 
     //every permutation of b
     vector<int> b(ORDER, 1);
@@ -177,7 +179,8 @@ void find_unique() {
             generate_equivalence_class(classesB, b);
         }
     } while((currentSum = VecNextCombinationRowSums(b, currentSum, SumsB)) != ORDER + 1);
-    printf("Time Elapsed: %d\n", (current - start) / CLOCKS_PER_SEC);
+    current = clock();
+    printf("Time Elapsed: %d, Unique sequences found: %d\n", (current - start) / CLOCKS_PER_SEC, classesB.size());
 
     for(unordered_map<vector<int>, int> mapA : classesA) {
         for(unordered_map<vector<int>, int> mapB : classesB) {
@@ -193,6 +196,7 @@ void find_unique() {
     Log(pairs, ORDER, (current - start) / CLOCKS_PER_SEC, "Equivalence generating with sequences only from row sums, neg, altneg, uniform shift equivalences");
 
     printf("Pairs Found: %d\n", pairs);
+    printf("Time to completion: %d\n\n", (current - start) / CLOCKS_PER_SEC);
 
     fftw_free(dftA);
     fftw_free(dftB);

@@ -25,3 +25,18 @@ Equivalence generating with sequences only from row sums, only equivalence is un
 Equivalence generating with sequences only from row sums, only equivalence is uniform shift:
  0 pairs found
  time elapsed: 83 seconds
+Equivalence generating with sequences only from row sums, neg, altneg, uniform shift equivalences:
+ 0 pairs found
+ time elapsed: 6 seconds
+Equivalence generating with sequences only from row sums, neg, altneg, uniform shift equivalences:
+ 0 pairs found
+ time elapsed: 86 seconds
+Equivalence generating with sequences only from row sums, neg, altneg, no shift:
+ 0 pairs found
+ time elapsed: 385 seconds
+Equivalence generating with sequences only from row sums, neg, altneg, uniform shift equivalences:
+ 0 pairs found
+ time elapsed: 84 seconds
+Equivalence generating with sequences only from row sums, neg, altneg, uniform shift equivalences:
+ 0 pairs found
+ time elapsed: 99 seconds

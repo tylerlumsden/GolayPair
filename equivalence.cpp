@@ -59,6 +59,18 @@ void generate_equivalence_class(vector<unordered_map<vector<int>, int>>& classes
     classes.push_back(map);
 }
 
+void unishift_equivalence(unordered_map<vector<int>, int>& map, vector<int> seq) {
+    //rewrite for experiment
+    for(int i = 0; i < seq.size(); i++) {
+        for(int i = 0; i < seq.size(); i++) {
+            int temp = seq[(i + 1) % seq.size()];
+            seq[i + 1] = seq[i];
+
+        }
+    }
+}
+
+
 void shift_equivalence(unordered_map<vector<int>, int>& map, vector<int> seq) {
     for(unsigned int i = 0; i < seq.size(); i++) {
         rotate(seq.begin(), seq.begin() + 1, seq.end());

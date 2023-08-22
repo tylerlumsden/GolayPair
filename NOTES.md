@@ -87,3 +87,14 @@ try to make a table of these solutions by tuesday up to equivalences:
 --> then
 - ilias will provide the compressions and the uncompressions code
 - given multiple compressions, remove the ones that are equivalent
+
+next
+-->
+- log the stats of the equivalence checking, number of sequences filtered, time for each step, etc.
+- Look at how curtis or others table the results
+
+- decimation on a, and then decimation on a and b
+
+- perhaps the uniform shifting is causing extreme slowdown? Is my implementation ideal? 
+- log results with/without uniform shift
+Looks like this is not the case.
