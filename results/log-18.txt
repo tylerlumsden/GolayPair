@@ -13,3 +13,15 @@ Equivalence generating with sequences only from row sums, only equivalence is un
 Equivalence generating with sequences only from row sums, only equivalence is uniform shift:
  0 pairs found
  time elapsed: 79 seconds
+Equivalence generating with sequences only from row sums, only equivalence is uniform shift:
+ 0 pairs found
+ time elapsed: 69 seconds
+Equivalence generating with sequences only from row sums, only equivalence is uniform shift:
+ 0 pairs found
+ time elapsed: 73 seconds
+Equivalence generating with sequences only from row sums, only equivalence is uniform shift:
+ 0 pairs found
+ time elapsed: 72 seconds
+Equivalence generating with sequences only from row sums, only equivalence is uniform shift:
+ 0 pairs found
+ time elapsed: 83 seconds

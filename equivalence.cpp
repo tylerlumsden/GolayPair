@@ -6,6 +6,8 @@
 #include<algorithm>
 #include<iterator>
 
+#define LIMIT 90
+
 using namespace std;
 
 
@@ -37,6 +39,8 @@ namespace std
 }
 
 void shift_equivalence(unordered_map<vector<int>, int>& map, vector<int> seq);
+void negative_equivalence(unordered_map<vector<int>, int>& map, vector<int> seq);
+void altnegative_equivalence(unordered_map<vector<int>, int>& map, vector<int> seq);
 
 void generate_equivalence_class(vector<unordered_map<vector<int>, int>>& classes, vector<int> seq) {
     unordered_map<vector<int>, int> map;
@@ -49,6 +53,9 @@ void generate_equivalence_class(vector<unordered_map<vector<int>, int>>& classes
 
     map.insert({seq, 1});
     shift_equivalence(map, seq); 
+    negative_equivalence(map, seq);
+    altnegative_equivalence(map, seq);
+
     classes.push_back(map);
 }
 
@@ -56,9 +63,61 @@ void shift_equivalence(unordered_map<vector<int>, int>& map, vector<int> seq) {
     for(unsigned int i = 0; i < seq.size(); i++) {
         rotate(seq.begin(), seq.begin() + 1, seq.end());
 
-        if(map.find(seq) != map.end()) {
-            break;
-        }
         map.insert({seq, 1});
     }
 }
+
+void negative_equivalence(unordered_map<vector<int>, int>& map, vector<int> seq) {
+    for(unsigned int i = 0; i < seq.size(); i++) {
+        seq[i] = -seq[i];
+    }
+    map.insert({seq, 1});
+}
+
+void altnegative_equivalence(unordered_map<vector<int>, int>& map, vector<int> seq) {
+    for(unsigned int i = 0; i < seq.size(); i++) {
+        if(i % 2 == 1) { 
+            seq[i] = -seq[i];
+        }
+    }
+    map.insert({seq, 1});
+}
+
+constexpr int ** COPRIMES() {
+    int count = 0;
+    int * list[LIMIT]= {};
+
+    for(int i = 0; i < LIMIT; i++) {
+
+        int coprimes[LIMIT] = {};
+
+        for(int j = 1; j < i; j++) {
+            if(__gcd(i,j) == 1) {
+                coprimes[count] = j;
+                count++;
+            }
+        }
+        list[i] = coprimes;
+    }
+
+    return list;
+}
+
+void permute(vector<int>& seq, int coprime) {
+    for(int i = 0; i < seq.size(); i++) {
+        seq[i] = seq[i * coprime % seq.size()];
+    }
+}
+
+void decimation_equivalence(unordered_map<vector<int>, int>& map, vector<int> seq) {
+
+    int ** coprimes = COPRIMES();
+
+    for(int i = 0; i < LIMIT; i++) {
+
+        permute(seq, coprimes[seq.size()][i]);
+
+        map.insert({seq, 1});
+    }
+}
+

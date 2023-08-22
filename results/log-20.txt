@@ -76,3 +76,6 @@ Equivalence generating with sequences only from row sums:
 Equivalence generating with sequences only from row sums:
  0 pairs found
  time elapsed: 0 seconds
+Equivalence generating with sequences only from row sums, only equivalence is uniform shift:
+ 646 pairs found
+ time elapsed: 747 seconds

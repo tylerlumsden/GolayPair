@@ -37,9 +37,9 @@ namespace std
     };
 }
 
-#define ORDER 18
-#define SumsA 0
-#define SumsB 6
+#define ORDER 10
+#define SumsA 2
+#define SumsB 4
 #define PrintProg 10000
 
 int VecCheckIfPair(vector<int> a, vector<int> b);
@@ -160,6 +160,8 @@ void find_unique() {
         }
     } while((currentSum = VecNextCombinationRowSums(a, currentSum, SumsA)) != ORDER + 1);
 
+    printf("Time Elapsed: %d\n", (current - start) / CLOCKS_PER_SEC);
+
     //every permutation of b
     vector<int> b(ORDER, 1);
 
@@ -175,6 +177,7 @@ void find_unique() {
             generate_equivalence_class(classesB, b);
         }
     } while((currentSum = VecNextCombinationRowSums(b, currentSum, SumsB)) != ORDER + 1);
+    printf("Time Elapsed: %d\n", (current - start) / CLOCKS_PER_SEC);
 
     for(unordered_map<vector<int>, int> mapA : classesA) {
         for(unordered_map<vector<int>, int> mapB : classesB) {
@@ -187,7 +190,7 @@ void find_unique() {
 
 
     current = clock();
-    Log(pairs, ORDER, (current - start) / CLOCKS_PER_SEC, "Equivalence generating with sequences only from row sums, only equivalence is uniform shift");
+    Log(pairs, ORDER, (current - start) / CLOCKS_PER_SEC, "Equivalence generating with sequences only from row sums, neg, altneg, uniform shift equivalences");
 
     printf("Pairs Found: %d\n", pairs);
 
