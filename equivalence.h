@@ -1,8 +1,12 @@
-#include<stdio.h>
-#include<unordered_map>
 #include<vector>
+#include<set>
+#include<array>
+#include"golay.h"
 
 using namespace std;
 
-void generate_equivalence_class(vector<unordered_map<vector<int>, int>>& map, vector<int> seq);
-void shift_equivalence(unordered_map<vector<int>, int>& map, vector<int> seq);
+void shift_equivalence(set<array<int,ORDER>>& map, array<int,ORDER> seq);
+void negative_equivalence(set<array<int,ORDER>>& map, array<int,ORDER> seq);
+void altnegative_equivalence(set<array<int,ORDER>>& map, array<int,ORDER> seq);
+void unishift_equivalence(set<array<int,ORDER>>& map, array<int,ORDER> seq);
+void generate_equivalence_class(vector<set<array<int, ORDER>>>& classes, array<int, ORDER> seq);

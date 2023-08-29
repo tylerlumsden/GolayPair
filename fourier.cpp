@@ -1,21 +1,13 @@
 #include"fftw-3.3.5-dll64/fftw3.h"
-#include<vector>
+#include"golay.h"
+#include<array>
+
 
 using namespace std;
 
-fftw_complex * dftVec(vector<int> seq, fftw_complex * in, fftw_complex * out, fftw_plan p) {
-    for(int i = 0; i < seq.size(); i++) {
-        in[i][0] = (double)seq[i];
-        in[i][1] = 0;
-    } 
 
-    fftw_execute(p);
-
-    return out;
-} 
-
-fftw_complex * dft(int seq[], fftw_complex * in, fftw_complex * out, fftw_plan p, int len) {
-    for(int i = 0; i < len; i++) {
+fftw_complex * dft(array<int, ORDER> seq, fftw_complex * in, fftw_complex * out, fftw_plan p) {
+    for(int i = 0; i < ORDER; i++) {
         in[i][0] = (double)seq[i];
         in[i][1] = 0;
     } 

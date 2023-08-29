@@ -1,7 +1,0 @@
-Equivalence generating with sequences only from row sums, only equivalence is uniform shift:
- 0 pairs found
- time elapsed: 0 seconds
-
-Equivalence generating with sequences only from row sums, neg, altneg, uniform shift equivalences:
- 0 pairs found
- time elapsed: 0 seconds

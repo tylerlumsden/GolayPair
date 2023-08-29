@@ -1,6 +1,0 @@
-PSD filtering with generating from row sums:
- 384 pairs found
- time elapsed: 0 seconds
-Equivalence generating with sequences only from row sums, neg, altneg, uniform shift equivalences:
- 4 pairs found
- time elapsed: 0 seconds

@@ -1,209 +1,129 @@
 #include<stdio.h>
+#include<stdlib.h>
+#include<time.h>
+#include<vector>
+#include<set>
+#include<array>
 #include<time.h>
 #include"array.h"
-#include<string.h>
 #include"fftw-3.3.5-dll64/fftw3.h"
+#include"decomps.h"
+#include"golay.h"
 #include"fourier.h"
-#include<unordered_map>
-#include<vector>
 #include"equivalence.h"
 
 using namespace std;
 
-//copied following code from stack-overflow: https://stackoverflow.com/questions/37007307/fast-hash-function-for-stdvector
-//using boost::hash_combine
-template <class T>
-inline void hash_combine(std::size_t& seed, T const& v)
-{
-    seed ^= std::hash<T>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-}
+void write_seq(FILE * out, array<int, ORDER> seq);
+void write_unique_seq(FILE * out, int rowsum, int flag);
+int check_if_pair(array<int, ORDER> a, array<int, ORDER> b);
+void fill_from_string(array<int, ORDER>& seq, char str[]);
+void match_pairs(FILE * a, FILE * b, FILE * out);
 
-namespace std
-{
-    template<typename T>
-    struct hash<vector<T>>
-    {
-        typedef vector<T> argument_type;
-        typedef std::size_t result_type;
-        result_type operator()(argument_type const& in) const
-        {
-            size_t size = in.size();
-            size_t seed = 0;
-            for (size_t i = 0; i < size; i++)
-                //Combine the hash of the current vector with the hashes of the previous ones
-                hash_combine(seed, in[i]);
-            return seed;
-        }
-    };
-}
-
-#define ORDER 10
-#define SumsA 2
-#define SumsB 4
-#define PrintProg 10000
-
-int VecCheckIfPair(vector<int> a, vector<int> b);
-int CheckIfPair(int a[], int b[]);
-int Power(int base, int exponent);
-void Log(int pairs, int order, int time, const char * lognote);
-
-void find_psd() {
-
-    fftw_complex *in, *dftA, *dftB;
-    fftw_plan planA, planB;
-
-    in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * ORDER);
-    dftA = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * ORDER);
-    dftB = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * ORDER);
-
-    planA = fftw_plan_dft_1d(ORDER, in, dftA, FFTW_FORWARD, FFTW_ESTIMATE);
-    planB = fftw_plan_dft_1d(ORDER, in, dftB, FFTW_FORWARD, FFTW_ESTIMATE);
-
-    int pairs = 0;
-    int progress = 0;
-    int combinations = Power(2, ORDER);
-
-    char fname[100];
-    sprintf(fname, "results/pairs-%d.txt", ORDER);
-    FILE * out = fopen(fname, "w+");
-
-    int a[ORDER];
-    int currentA = ORDER;
-    int b[ORDER];
-    int currentB = ORDER;
-
-
-
-    Reset(a, ORDER);
-    Reset(b, ORDER);
+void find_unique(int argc, char** argv) {
 
     clock_t start = clock();
-    clock_t current;
 
-    do {
+    if(decomps_len[ORDER] == 0) {
+        printf("decomps_len == 0. There will be no pairs found.\n");
+        return;
+    } 
+    FILE * out;
+    char fname[100];
 
-        current = clock();
-        if(progress % PrintProg == 0) {
-            printf("Progress: %d ... %d, time elapsed: %d seconds, Pairs found: %d\n", progress, combinations - 1, (current - start) / CLOCKS_PER_SEC, pairs);
-            fflush(stdin);
-        }
+    for(int i = 0; i < decomps_len[ORDER]; i++) {
+        printf("Running on decomps %d, %d\n", decomps[ORDER][i][0], decomps[ORDER][i][1]);
 
-        Reset(b, ORDER);
-        currentB = ORDER;
+        printf("Generating classesA\n");
 
-        //start filtering here
-        dftA = dft(a, in, dftA, planA, ORDER);
-        if(dftfilter(dftA, ORDER)) {
-            do {
-                dftB = dft(b, in, dftB, planB, ORDER);
-                if(dftfilterpair(dftA, dftB, ORDER) && CheckIfPair(a,b)) {
-                    //record pair to file
-                    WritePairToFile(out, a, b, ORDER);
-                    pairs++;
-                }
-            } while((currentB = NextCombinationRowSums(b, ORDER, currentB, SumsB)) != ORDER + 1);
-        }
-        progress++;
-    } while((currentA = NextCombinationRowSums(a, ORDER, currentA, SumsA)) != ORDER + 1);
+        sprintf(fname, "results/%d-unique-filtered-a-%d", ORDER, i);
+        out = fopen(fname, "w+");
+        write_unique_seq(out, decomps[ORDER][i][0], 0);
 
-    current = clock();
-    Log(pairs, ORDER, (current - start) / CLOCKS_PER_SEC, "PSD filtering with generating from row sums");
+        printf("Time elapsed: %ld seconds\n", (clock() - start) / CLOCKS_PER_SEC);
 
-    printf("Pairs Found: %d\n", pairs);
+        printf("Generating classesB\n");
 
-    fftw_free(dftA);
-    fftw_free(dftB);
-    fftw_free(in);
+        sprintf(fname, "results/%d-unique-filtered-b-%d", ORDER, i);
+        out = fopen(fname, "w+");
+        write_unique_seq(out, decomps[ORDER][i][1], 1);
 
-    fftw_destroy_plan(planA);
-    fftw_destroy_plan(planB);
+        printf("Time elapsed: %ld seconds\n", (clock() - start) / CLOCKS_PER_SEC);
+
+    }
+
+    printf("Matching pairs\n");
+
+    FILE * a;
+    FILE * b;
+
+    sprintf(fname, "results/%d-pairs-found", ORDER);
+    out = fopen(fname, "w+");
+
+    for(int i = 0; i < decomps_len[ORDER]; i++) {
+        sprintf(fname, "results/%d-unique-filtered-a-%d", ORDER, i);
+        a = fopen(fname, "r+");
+        sprintf(fname, "results/%d-unique-filtered-b-%d", ORDER, i);
+        b = fopen(fname, "r+");
+
+        match_pairs(a, b, out);
+    }
+
+    sprintf(fname, "timings/total");
+    out = fopen(fname, "w");
+
+    fprintf(out, "%.1f", (clock() - start) / (float)CLOCKS_PER_SEC);
+
+    fclose(out);
+
+    printf("Time elapsed: %ld seconds\n", (clock() - start) / CLOCKS_PER_SEC);
 }
 
-void find_unique() {
-
+void match_pairs(FILE * a, FILE * b, FILE * out) {
     int pairs = 0;
 
     char fname[100];
-    sprintf(fname, "results/pairs-%d.txt", ORDER);
-    FILE * out = fopen(fname, "w+");
-
+    sprintf(fname, "timings/matching");
+    FILE * timing = fopen(fname, "w");  
+    sprintf(fname, "timings/pairs");
+    FILE * pair = fopen(fname, "w");
 
     clock_t start = clock();
-    clock_t current;
 
-    fftw_complex *in, *dftA, *dftB;
-    fftw_plan planA, planB;
+    array<int, ORDER> seqa;
+    array<int, ORDER> seqb;
 
-    in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * ORDER);
-    dftA = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * ORDER);
-    dftB = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * ORDER);
-
-    planA = fftw_plan_dft_1d(ORDER, in, dftA, FFTW_FORWARD, FFTW_ESTIMATE);
-    planB = fftw_plan_dft_1d(ORDER, in, dftB, FFTW_FORWARD, FFTW_ESTIMATE);
-
-
-    //generate an equivalence class for all sequences
-    //if a sequence is already in an equivalence class, then skip
-    //check through all combinations of a single representative of an equivalence class
-
-    vector<int> a(ORDER, 1);
-    int currentSum = ORDER;
-
-    //create an equivalence class for every permutation of sequence
-    vector<unordered_map<vector<int>, int>> classesA;
+    char stringa[ORDER + 2];
+    char stringb[ORDER + 2];
     
-    printf("Generating classesA\n");
-    do {
-        dftA = dftVec(a, in, dftA, planA);
-        if(dftfilter(dftA, ORDER)) {
-            generate_equivalence_class(classesA, a);
-        }
-    } while((currentSum = VecNextCombinationRowSums(a, currentSum, SumsA)) != ORDER + 1);
+    while(fgets(stringa, ORDER + 2, a)) {
+        fill_from_string(seqa, stringa);
 
-    printf("Time Elapsed: %d\n", (current - start) / CLOCKS_PER_SEC);
-
-    //every permutation of b
-    vector<int> b(ORDER, 1);
-
-    currentSum = ORDER;
-
-    //create an equivalence class for every permutation of sequence
-    vector<unordered_map<vector<int>, int>> classesB;
-
-    printf("Generating classesB\n");    
-    do {
-        dftB = dftVec(b, in, dftA, planA);
-        if(dftfilter(dftB, ORDER)) {
-            generate_equivalence_class(classesB, b);
-        }
-    } while((currentSum = VecNextCombinationRowSums(b, currentSum, SumsB)) != ORDER + 1);
-    printf("Time Elapsed: %d\n", (current - start) / CLOCKS_PER_SEC);
-
-    for(unordered_map<vector<int>, int> mapA : classesA) {
-        for(unordered_map<vector<int>, int> mapB : classesB) {
-            if(VecCheckIfPair((*mapA.begin()).first, (*mapB.begin()).first)) {
-                WriteVecPairToFile(out, (*mapA.begin()).first, (*mapB.begin()).first);
+        while(fgets(stringb, ORDER + 2, b)) {
+            fill_from_string(seqb, stringb);
+            if(check_if_pair(seqa, seqb)) {
+                write_seq(out, seqa);
+                fprintf(out, " ");
+                write_seq(out, seqb);
+                fprintf(out, "\n");
                 pairs++;
             }
         }
+        rewind(b);
     }
 
 
-    current = clock();
-    Log(pairs, ORDER, (current - start) / CLOCKS_PER_SEC, "Equivalence generating with sequences only from row sums, neg, altneg, uniform shift equivalences");
+    fprintf(pair, "%d", pairs);
 
-    printf("Pairs Found: %d\n", pairs);
+    fclose(pair);
+    fclose(a);
+    fclose(b);
+    fclose(out);
 
-    fftw_free(dftA);
-    fftw_free(dftB);
-    fftw_free(in);
-
-    fftw_destroy_plan(planA);
-    fftw_destroy_plan(planB);
+    fprintf(timing, "%.1f", (clock() - start) / (float)CLOCKS_PER_SEC);
 }
 
-int PAF(int seq[], int s) { 
-
+int PAF(array<int, ORDER> seq, int s) { 
     int result = 0;
     for(int i = 0; i < ORDER; i++) {
         result = result + (seq[i] * seq[(i + s) % ORDER]);
@@ -211,7 +131,7 @@ int PAF(int seq[], int s) {
     return result;
 }
 
-int CheckIfPair(int a[], int b[]) {
+int check_if_pair(array<int, ORDER> a, array<int, ORDER> b) {
     for(int i = 1; i <= ORDER / 2; i++) {
         if(PAF(a, i) + PAF(b, i) != 0) {
             return 0;
@@ -221,41 +141,78 @@ int CheckIfPair(int a[], int b[]) {
     return 1;
 }
 
-int VecPAF(vector<int> seq, int s) { 
-
-    int result = 0;
+void fill_from_string(array<int, ORDER>& seq, char str[]) {
     for(int i = 0; i < ORDER; i++) {
-        result = result + (seq[i] * seq[(i + s) % ORDER]);
-    }
-    return result;
-}
-
-int VecCheckIfPair(vector<int> a, vector<int> b) {
-    for(int i = 1; i <= ORDER / 2; i++) {
-        if(VecPAF(a, i) + VecPAF(b, i) != 0) {
-            return 0;
+        if(str[i] == '+') {
+            seq[i] = 1;
+            continue;
+        } 
+        if(str[i] == '-') {
+            seq[i] = -1;
+            continue;
         }
     }
-
-    return 1;
 }
 
-int Power(int base, int exponent) {
-    int product = base;
-    for(int i = 0; i < exponent - 1; i++) {
-        product *= base;
-    }
-    return product;
+vector<set<array<int, ORDER>>> get_unique_classes(int rowsum, int flag) {
+    fftw_complex *in, *out;
+    fftw_plan plan;
+
+    in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * ORDER);
+    out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * ORDER);
+    plan = fftw_plan_dft_1d(ORDER, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+
+    //generate sequences, return them
+    vector<set<array<int,ORDER>>> classes;
+
+    array<int, ORDER> seq;
+    seq.fill(1);
+    int currentSum = ORDER;
+
+    do {
+        out = dft(seq, in, out, plan);  
+        if(dftfilter(out, ORDER)) {
+            generate_equivalence_class(classes, seq);
+        }
+    } while(NextCombinationRowSums(seq, ORDER, &currentSum, rowsum));
+
+    fftw_free(in);
+    fftw_free(out);
+    fftw_destroy_plan(plan);
+
+    return classes;
 }
 
-void Log(int pairs, int order, int time, const char * lognote) {
+void write_unique_seq(FILE * out, int rowsum, int flag) {
+    vector<set<array<int,ORDER>>> classes;
+
     char fname[100];
-    sprintf(fname, "results/log-%d.txt", order);
-    FILE * out = fopen(fname, "a");
+    sprintf(fname, "timings/classgeneration-%d", flag);
+    FILE * timing = fopen(fname, "w");
+    clock_t start = clock();
 
-    fprintf(out, "%s:\n %d pairs found\n time elapsed: %d seconds\n", lognote, pairs, time);
+    classes = get_unique_classes(rowsum, flag);
 
+    fprintf(timing, "%.1f", (clock() - start) / (float)CLOCKS_PER_SEC);
+    fclose(timing);
+
+    for(set<array<int,ORDER>> set : classes) {
+        //write to file
+        write_seq(out, *(set.begin()));
+        fprintf(out, "\n");
+    }
     fclose(out);
 }
 
-
+void write_seq(FILE * out, array<int, ORDER> seq) {
+    for(int i = 0; i < ORDER; i++) {
+        if(seq[i] == 1) {
+            fprintf(out, "+");
+            continue;
+        }
+        if(seq[i] == -1) {
+            fprintf(out, "-");
+            continue;
+        }
+    }
+}
