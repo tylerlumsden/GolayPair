@@ -8,35 +8,71 @@
 
 using namespace std;
 
-void shift_equivalence(set<array<int,ORDER>>& map, array<int,ORDER> seq);
+void shift_equivalence(set<array<int,ORDER>>& map);
 void negative_equivalence(set<array<int,ORDER>>& map, array<int,ORDER> seq);
 void altnegative_equivalence(set<array<int,ORDER>>& map, array<int,ORDER> seq);
 void unishift_equivalence(set<array<int,ORDER>>& map, array<int,ORDER> seq);
-void decimation_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> seq);
+void decimation_equivalence(set<array<int, ORDER>>& map);
 
-void generate_equivalence_class(vector<set<array<int, ORDER>>>& classes, array<int, ORDER> seq) {
+set<array<int, ORDER>> generateClassA(array<int, ORDER> seq) {
     set<array<int, ORDER>> map;
 
-    for(set<array<int, ORDER>> map : classes) {
-        if(map.find(seq) != map.end()) {
-            return;
-        }
-    }
+    unsigned int size = 0;
 
     map.insert(seq);
-    shift_equivalence(map, seq);  
-    negative_equivalence(map, seq);
-    altnegative_equivalence(map, seq);
-    //decimation_equivalence(map, seq);
 
-    classes.push_back(map);
+    while(map.size() != size) {
+        size = map.size();
+        
+        shift_equivalence(map);  
+        decimation_equivalence(map);
+    }
+
+    return map;
 }
 
-void shift_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> seq) {
-    for(unsigned int i = 0; i < seq.size(); i++) {
-        rotate(seq.begin(), seq.begin() + 1, seq.end());
-        
-        map.insert(seq);
+set<array<int, ORDER>> generateClassB(array<int, ORDER> seq) {
+    set<array<int, ORDER>> map;
+
+    unsigned int size = 0;
+
+    map.insert(seq);
+
+    while(map.size() != size) {
+        size = map.size();
+
+        shift_equivalence(map);  
+    }
+
+    return map;
+}
+/*
+set<pair<array<int, ORDER>,array<int, ORDER>>> generateClassPairs(pair<array<int, ORDER>,array<int, ORDER>> seq) {
+    set<pair<array<int, ORDER>,array<int, ORDER>>> map;
+
+    unsigned int size = 0;
+
+    map.insert(seq);
+
+    while(map.size() != size) {
+        size = map.size();
+
+        decimation_equivalence(map);  
+    }
+
+    return map;
+}
+*/
+
+
+
+void shift_equivalence(set<array<int, ORDER>>& map) {
+    for(array<int, ORDER> seq: map) {
+        for(unsigned int i = 0; i < seq.size(); i++) {
+            rotate(seq.begin(), seq.begin() + 1, seq.end());
+            
+            map.insert(seq);
+        }
     }
 }
 
@@ -56,19 +92,19 @@ void altnegative_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> seq)
     map.insert(seq);
 }
 
-void permute(array<int, ORDER>& seq, int coprime) {
+array<int, ORDER> permute(array<int, ORDER>& seq, int coprime) {
+    array<int, ORDER> newseq;
     for(int i = 0; i < ORDER; i++) {
-        seq[i] = seq[i * coprime % ORDER];
+        newseq[i] = seq[i * coprime % ORDER];
     }
+    return newseq;
 }
 
-void decimation_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> seq) {
-
-    for(int i = 0; i <= coprimelength[ORDER]; i++) {
-
-        permute(seq, coprimelist[ORDER][i]);
-
-        map.insert(seq);
+void decimation_equivalence(set<array<int, ORDER>>& map) {
+    for(array<int, ORDER> seq : map) {
+        for(int i = 0; i <= coprimelength[ORDER]; i++) {
+            map.insert(permute(seq, coprimelist[ORDER][i]));
+        }
     }
 }
 

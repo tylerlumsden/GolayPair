@@ -1,2 +1,4 @@
-- Integrate decimation equivalences
-- Clean up table generation code
+- Clean up table generation
+
+- log the number of classes created
+- perform equivalences on the matched pairs

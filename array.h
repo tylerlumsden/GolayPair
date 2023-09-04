@@ -1,6 +1,7 @@
 #include<array>
 #include"golay.h"
 
+
 using namespace std;
 
-int NextCombinationRowSums(array<int, ORDER>& arr, int length, int* currentSum, int bound);
+int NextCombinationRowSums(array<int, ORDER>& arr, int length, int* currentSum);
