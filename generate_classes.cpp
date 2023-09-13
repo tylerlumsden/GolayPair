@@ -17,6 +17,17 @@ using namespace std;
 void writeSeq(FILE * out, array<int, ORDER> seq);
 int classIsGenerated(vector<set<array<int, ORDER>>>& classes, array<int, ORDER>& seq);
 
+void printArray(array<int, ORDER> seq) {
+    for(int i = 0; i < seq.size(); i++) {
+        if(seq[i] == 1) {
+            printf("+");
+        }
+        if(seq[i] == -1) {
+            printf("-");
+        }
+    }
+}
+
 int main() {
 
     fftw_complex *in, *out;
@@ -39,7 +50,7 @@ int main() {
         int SumsB = decomps[ORDER][i][1];
 
         do {
-
+            
             if(currentSum == SumsA) {
                 out = dft(seq, in, out, plan);  
                 if(dftfilter(out, ORDER)) {
@@ -56,8 +67,10 @@ int main() {
                         classesB.push_back(generateClassB(seq));
                     }
                 }
+                printArray(seq);
+                printf("\n");
             }
-
+            
         } while(NextCombinationRowSums(seq, ORDER, &currentSum));
 
         fftw_free(in);

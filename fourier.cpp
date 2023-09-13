@@ -1,6 +1,8 @@
 #include"fftw-3.3.5-dll64/fftw3.h"
 #include"golay.h"
 #include<array>
+#include"decomps.h"
+#include<math.h>
 
 
 using namespace std;
@@ -17,7 +19,19 @@ fftw_complex * dft(array<int, ORDER> seq, fftw_complex * in, fftw_complex * out,
     return out;
 } 
 
+int floatEqual(float a, int b) {
+    if(a == b) {
+        return 1;
+    }
+    return 0;
+}
+
 int dftfilter(fftw_complex * seqdft, int len) {
+    int j = len / 2;
+    float complex = seqdft[j][0] * seqdft[j][0] + seqdft[j][1] * seqdft[j][1];
+    if(!floatEqual(complex, decomps[len][0][1] * decomps[len][0][1]) && !floatEqual(complex, decomps[len][0][0] * decomps[len][0][0]) ) {
+        return 0;
+    }
     for(int i = 0; i < len / 2; i++) {
         if((seqdft[i][0] * seqdft[i][0] + seqdft[i][1] * seqdft[i][1]) > len * 2 + 0.001) {
             return 0;

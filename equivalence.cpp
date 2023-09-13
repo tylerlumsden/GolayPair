@@ -102,7 +102,7 @@ array<int, ORDER> permute(array<int, ORDER>& seq, int coprime) {
 
 void decimation_equivalence(set<array<int, ORDER>>& map) {
     for(array<int, ORDER> seq : map) {
-        for(int i = 0; i <= coprimelength[ORDER]; i++) {
+        for(int i = 0; i < coprimelength[ORDER]; i++) {
             map.insert(permute(seq, coprimelist[ORDER][i]));
         }
     }
