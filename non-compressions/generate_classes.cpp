@@ -41,8 +41,10 @@ int main() {
 
     for(int i = 0; i < decomps_len[ORDER]; i++) {
         
-        vector<set<array<int, ORDER>>> classesA;
-        vector<set<array<int, ORDER>>> classesB;
+        vector<array<int, ORDER>> representativesA;
+        vector<array<int, ORDER>> representativesB;
+        set<array<int, ORDER>> classesA;
+        set<array<int, ORDER>> classesB;
 
         array<int, ORDER> seq;
         seq.fill(-1);
@@ -54,16 +56,16 @@ int main() {
         int count = 0;
 
         do {
-            if(count % 1000000 == 0) {
+            if(count % 10000000 == 0) {
                 printf("Progress: %d, %ld seconds\n", count, (clock() - start) / CLOCKS_PER_SEC);
             }
             
             if(currentSum == SumsA) {
                 out = dft(seq, in, out, plan);  
                 if(dftfilter(out, ORDER)) {
-
-                    if(!classIsGenerated(classesA, seq)) {
-                        classesA.push_back(generateClassA(seq));
+                    if(classesA.find(seq) == classesA.end()) {
+                        classesA.merge(generateClassA(seq));
+                        representativesA.push_back(seq);
                     }
                 }
             }
@@ -72,8 +74,9 @@ int main() {
                 out = dft(seq, in, out, plan);  
 
                 if(dftfilter(out, ORDER)) {
-                    if(!classIsGenerated(classesB, seq)) {
-                        classesB.push_back(generateClassB(seq));
+                    if(classesB.find(seq) == classesB.end()) {
+                        classesB.merge(generateClassB(seq));
+                        representativesB.push_back(seq);
                     }
                 }
             }
@@ -91,8 +94,8 @@ int main() {
         sprintf(fname, "results/%d-unique-filtered-a-%d", ORDER, i);
         FILE * out = fopen(fname, "w");
 
-        for(set<array<int,ORDER>> set : classesA) {
-            writeSeq(out, *(set.begin()));
+        for(array<int,ORDER> rep : representativesA) {
+            writeSeq(out, rep);
             fprintf(out, "\n");
         }
 
@@ -102,8 +105,8 @@ int main() {
         sprintf(fname, "results/%d-unique-filtered-b-%d", ORDER, i);
         out = fopen(fname, "w");
 
-        for(set<array<int,ORDER>> set : classesB) {
-            writeSeq(out, *(set.begin()));
+        for(array<int,ORDER> rep : representativesB) {
+            writeSeq(out, rep);
             fprintf(out, "\n");
         }
 
