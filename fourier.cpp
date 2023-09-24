@@ -32,7 +32,7 @@ int dftfilter(fftw_complex * seqdft, int len) {
     if(!floatEqual(complex, decomps[len][0][1] * decomps[len][0][1]) && !floatEqual(complex, decomps[len][0][0] * decomps[len][0][0]) ) {
         return 0;
     }
-    for(int i = 0; i < len / 2; i++) {
+    for(int i = 1; i <= len / 2; i++) {
         if((seqdft[i][0] * seqdft[i][0] + seqdft[i][1] * seqdft[i][1]) > len * 2 + 0.001) {
             return 0;
         }

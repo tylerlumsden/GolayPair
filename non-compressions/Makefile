@@ -1,0 +1,28 @@
+.PHONY = all clean
+
+DIR = ../
+CC = g++
+all: $(DIR)fourier.o $(DIR)equivalence.o $(DIR)array.o $(DIR)golay.o generate_classes match_pairs
+
+equivalence.o: $(DIR)equivalence.cpp $(DIR)golay.h $(DIR)coprimes.h
+	$(CC) -Wall -g -c $(DIR)equivalence.cpp -o $(DIR)equivalence.o
+
+array.o: $(DIR)array.cpp $(DIR)golay.h
+	$(CC) -Wall -g -c $(DIR)array.cpp -o $(DIR)array.o
+
+fourier.o: $(DIR)fourier.cpp $(DIR)golay.h
+	$(CC) -Wall -Wextra -g -c $(DIR)fourier.cpp -o $(DIR)fourier.o -L../fftw-3.3.5-dll64 -llibfftw3-3
+
+golay.o: $(DIR)golay.h
+	$(CC) -Wall -g -c $(DIR)golay.cpp -o $(DIR)golay.o
+
+match_pairs: match_pairs.cpp $(DIR)golay.h $(DIR)golay.o
+	$(CC) -Wall -g match_pairs.cpp $(DIR)golay.o -o match_pairs
+
+generate_classes: generate_classes.cpp $(DIR)golay.h $(DIR)array.o $(DIR)fourier.o $(DIR)equivalence.o
+	$(CC) -Wall -g generate_classes.cpp $(DIR)equivalence.o $(DIR)array.o $(DIR)fourier.o -o generate_classes -L../fftw-3.3.5-dll64 -llibfftw3-3
+
+
+clean:
+	@echo "Cleaning up..."
+	rm -f $(DIR)equivalence.o $(DIR)array.o $(DIR)fourier.o $(DIR)golay.o generate_classes match_pairs

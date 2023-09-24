@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<array>
+#include<algorithm>
 #include"golay.h"
 
 using namespace std;
@@ -94,4 +95,97 @@ int nextRowSums(array<int, 8>& seq, int start, int rowsum) {
     } else {
         return 1;
     }
+}
+
+//assumes that there are 7 +/- 3's and 23 +/- 1's in the sequence, the smallest is the sequence with only negative values.
+int nextCombinationA(std::array<int, ORDER>& seq) {
+    int countThree = 0;
+    int countOne = 0;
+    for(int i = 0; i < ORDER; i++) {
+        if(seq[i] == 3) {
+            countThree++;
+        }
+        if(seq[i] == 1) {
+            countOne++;
+        }
+    }
+    
+    if(countOne == 23 && countThree == 7) {
+        return 0;
+    } 
+    
+    else if(countOne == 23) {
+        for(int i = 0; i < ORDER; i++) {
+            if(seq[i] == 1) {
+                seq[i] = -1;
+            }
+        }
+
+        for(int i = 0; i < ORDER; i++) {
+            if(seq[i] == -3) {
+                seq[i] = 3;
+                break;
+            }
+        }
+    } 
+    
+
+    else {
+        for(int i = 0; i < ORDER; i++) {
+            if(seq[i] == -1) {
+                seq[i] = 1;
+                break;
+            }
+        }
+    }
+
+    std::sort(seq.begin(), seq.end());
+
+    return 1;
+}
+
+int nextCombinationB(std::array<int, ORDER>& seq) {
+    int countThree = 0;
+    int countOne = 0;
+    for(int i = 0; i < ORDER; i++) {
+        if(seq[i] == 3) {
+            countThree++;
+        }
+        if(seq[i] == 1) {
+            countOne++;
+        }
+    }
+    
+    if(countOne == 22 && countThree == 8) {
+        return 0;
+    } 
+    
+    else if(countOne == 22) {
+        for(int i = 0; i < ORDER; i++) {
+            if(seq[i] == 1) {
+                seq[i] = -1;
+            }
+        }
+
+        for(int i = 0; i < ORDER; i++) {
+            if(seq[i] == -3) {
+                seq[i] = 3;
+                break;
+            }
+        }
+    } 
+    
+
+    else {
+        for(int i = 0; i < ORDER; i++) {
+            if(seq[i] == -1) {
+                seq[i] = 1;
+                break;
+            }
+        }
+    }
+
+    std::sort(seq.begin(), seq.end());
+
+    return 1;
 }
