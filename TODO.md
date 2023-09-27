@@ -17,3 +17,5 @@
 -> rint in math.h
 -> keep in mind psd(n/2) quality is not proven yet
 
+- use WSL for linux sort script
+

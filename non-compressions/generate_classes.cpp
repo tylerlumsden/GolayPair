@@ -11,11 +11,16 @@
 #include"../golay.h"
 #include"../fourier.h"
 #include"../equivalence.h"
+#include<tgmath.h>
 
 using namespace std;
 
 void writeSeq(FILE * out, array<int, ORDER> seq);
 int classIsGenerated(vector<set<array<int, ORDER>>>& classes, array<int, ORDER>& seq);
+
+double norm(fftw_complex dft) {
+    return dft[0] * dft[0] + dft[1] * dft[1];
+}
 
 void printArray(array<int, ORDER> seq) {
     for(unsigned int i = 0; i < seq.size(); i++) {
@@ -41,8 +46,6 @@ int main() {
 
     for(int i = 0; i < decomps_len[ORDER]; i++) {
         
-        vector<array<int, ORDER>> representativesA;
-        vector<array<int, ORDER>> representativesB;
         set<array<int, ORDER>> classesA;
         set<array<int, ORDER>> classesB;
 
@@ -55,6 +58,16 @@ int main() {
 
         int count = 0;
 
+
+        //write classesA to file
+        char fname[100];
+        sprintf(fname, "results/%d-unique-filtered-a-%d", ORDER, i);
+        FILE * outa = fopen(fname, "w");
+
+        sprintf(fname, "results/%d-unique-filtered-b-%d", ORDER, i);
+        FILE * outb = fopen(fname, "w");
+
+
         do {
             if(count % 10000000 == 0) {
                 printf("Progress: %d, %ld seconds\n", count, (clock() - start) / CLOCKS_PER_SEC);
@@ -65,7 +78,12 @@ int main() {
                 if(dftfilter(out, ORDER)) {
                     if(classesA.find(seq) == classesA.end()) {
                         classesA.merge(generateClassA(seq));
-                        representativesA.push_back(seq);
+                        for(int i = 0; i < ORDER / 2; i++) {
+                            fprintf(outa, "%d", (int)rint(norm(out[i])));
+                        }
+                        fprintf(outa, " ");
+                        writeSeq(outa, seq);
+                        fprintf(outa, "\n");
                     }
                 }
             }
@@ -76,7 +94,12 @@ int main() {
                 if(dftfilter(out, ORDER)) {
                     if(classesB.find(seq) == classesB.end()) {
                         classesB.merge(generateClassB(seq));
-                        representativesB.push_back(seq);
+                        for(int i = 0; i < ORDER / 2; i++) {
+                            fprintf(outb, "%d",    ORDER * 2 - (int)rint(norm(out[i])));
+                        }
+                        fprintf(outb, " ");
+                        writeSeq(outb, seq);
+                        fprintf(outb, "\n");
                     }
                 }
             }
@@ -89,40 +112,15 @@ int main() {
         fftw_free(out);
         fftw_destroy_plan(plan);
 
-        //write classesA to file
-        char fname[100];
-        sprintf(fname, "results/%d-unique-filtered-a-%d", ORDER, i);
-        FILE * out = fopen(fname, "w");
-
-        for(array<int,ORDER> rep : representativesA) {
-            writeSeq(out, rep);
-            fprintf(out, "\n");
-        }
-
-        fclose(out);
-
-        //write classesB to file
-        sprintf(fname, "results/%d-unique-filtered-b-%d", ORDER, i);
-        out = fopen(fname, "w");
-
-        for(array<int,ORDER> rep : representativesB) {
-            writeSeq(out, rep);
-            fprintf(out, "\n");
-        }
-
-        fclose(out);
+        fclose(outa);
+        fclose(outb);
     }
     
 }
 
 void writeSeq(FILE * out, array<int, ORDER> seq) {
     for(unsigned int i = 0; i < seq.size(); i++) {
-        if(seq[i] == 1) {
-            fprintf(out, "+");
-        }
-        if(seq[i] == -1) {
-            fprintf(out, "-");
-        }
+        fprintf(out, "%d ", seq[i]);
     }
 }
 

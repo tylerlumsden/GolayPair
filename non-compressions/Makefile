@@ -25,4 +25,9 @@ generate_classes: generate_classes.cpp $(DIR)golay.h $(DIR)array.o $(DIR)fourier
 
 clean:
 	@echo "Cleaning up..."
-	rm -f $(DIR)equivalence.o $(DIR)array.o $(DIR)fourier.o $(DIR)golay.o generate_classes match_pairs
+	del $(DIR)equivalence.o
+	del $(DIR)array.o 
+	del $(DIR)fourier.o 
+	del $(DIR)golay.o 
+	del generate_classes 
+	del match_pairs
