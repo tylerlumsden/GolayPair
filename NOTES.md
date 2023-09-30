@@ -43,6 +43,9 @@ row sums -> 0,8
 
 ==> p(32!/16! * 16!) = number of sequences to search thru
 
+18100000 <-- all candidates were enumerated at this count
+601080390 <-- total count of all sequences
+
 order 34 
 row sums -> 2, 8
 
@@ -59,3 +62,15 @@ order 26 rowsums 4,6
 4 => 15 +, 11 -
 
 = 7726160 sequences
+
+
+
+2^40 13 digits
+
+row sums -> 4, 8
+
+18, 22 ==> 12 digits
+
+
+interesting phenomenon where all candidates found have the first element as -1.
+Perhaps no new candidates will be found in the latter half of sequences?

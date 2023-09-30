@@ -63,6 +63,7 @@ int main() {
         seq.fill(1);
 
         unsigned long long int count = 0;
+        int candidates = 0;
 
         for(int i = 0; i < negcounta; i++) {
             seq[i] = -1;
@@ -71,12 +72,13 @@ int main() {
         printf("Generating Classes A\n");
 
         do {
-            if(count % 1000000 == 0) {
-                printf("count: %llu, time elapsed: %lds\n", count, (clock() - start) / CLOCKS_PER_SEC);
+            if(count % 10000000 == 0) {
+                printf("count: %llu, candidates: %d, time elapsed: %lds\n", count, candidates, (clock() - start) / CLOCKS_PER_SEC);
             }
             out = dft(seq, in, out, plan);  
             if(dftfilter(out, ORDER)) {
                 if(classesA.find(seq) == classesA.end()) {
+                    candidates++;
                     classesA.merge(generateClassA(seq));
                     for(int i = 0; i < ORDER / 2; i++) {
                         fprintf(outa, "%d",    (int)rint(norm(out[i])));
@@ -100,7 +102,7 @@ int main() {
         printf("Generating Classes B\n");
 
         do {
-            if(count % 1000000 == 0) {
+            if(count % 10000000 == 0) {
                 printf("count: %llu, time elapsed: %lds\n", count, (clock() - start) / CLOCKS_PER_SEC);
             }
             out = dft(seq, in, out, plan);  
