@@ -19,12 +19,11 @@ echo $runtime1 seconds
 
 echo Matching Candidates
 
-awk '{print $1}' results/$order-unique-filtered-a-0 | sort -u > results/$order-unique-filtered-a-0.sorted
-awk '{print $1}' results/$order-unique-filtered-b-0 | sort -u > results/$order-unique-filtered-b-0.sorted
-
-comm -1 -2 results/$order-unique-filtered-a-0.sorted results/$order-unique-filtered-b-0.sorted > results/$order-matches
-
 start=`date +%s`
+
+sort results/$order-unique-filtered-a-0 > results/$order-unique-filtered-a-0.sorted
+sort results/$order-unique-filtered-b-0 > results/$order-unique-filtered-b-0.sorted
+
 ./match_pairs
 end=`date +%s`
 

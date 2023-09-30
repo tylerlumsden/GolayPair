@@ -31,3 +31,6 @@ https://link.springer.com/article/10.1007/s10801-021-01084-0
 - touch on how using equivalences on pairs will now probably result in speedup due to the significant matching time
 - ask about the procedure for decompressing sequences ?? if we use one ??
 - ask for title of project
+
+
+//current match_pairs doesnt work because it skips over doubled pairs (assumes that every psd in a single file is unique)
