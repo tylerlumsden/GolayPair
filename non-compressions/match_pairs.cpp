@@ -10,7 +10,6 @@
 #include<limits>
 
 int main() {
-
     
     for(int i = 0; i < decomps_len[ORDER]; i++) {
 

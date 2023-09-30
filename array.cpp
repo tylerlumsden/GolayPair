@@ -56,8 +56,8 @@ int seqIsLargest(array<int, 8> seq, int start, int rowsum) {
 
 //---+++++
 
-void resetSeq(array<int, 8>& seq, int start, int rowsum) {
-    for(int i = start; i < seq.size(); i++) {
+void resetSeq(array<int, 8>& seq, int start, unsigned int rowsum) {
+    for(unsigned int i = start; i < seq.size(); i++) {
         if((seq.size() - i) < rowsum) {
             seq[i] = 1;
         } else {
@@ -75,7 +75,7 @@ int nextRowSums(array<int, 8>& seq, int start, int rowsum) {
 
     //find first plus
     int first;
-    for(int i = start; i < seq.size(); i++) {
+    for(unsigned int i = start; i < seq.size(); i++) {
         if(seq[i] == 1) {
             first = i;
             break;

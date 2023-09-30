@@ -13,8 +13,9 @@ void negative_equivalence(set<array<int,ORDER>>& map, array<int,ORDER> seq);
 void altnegative_equivalence(set<array<int,ORDER>>& map, array<int,ORDER> seq);
 void unishift_equivalence(set<array<int,ORDER>>& map, array<int,ORDER> seq);
 void decimation_equivalence(set<array<int, ORDER>>& map);
+void reverse_equivalence(set<array<int, ORDER>>& map);
 
-set<array<int, ORDER>> generateClassA(array<int, ORDER> seq) {
+set<array<int, ORDER>> generateClassA(array<int, ORDER>& seq) {
     set<array<int, ORDER>> map;
 
     unsigned int size = 0;
@@ -31,7 +32,7 @@ set<array<int, ORDER>> generateClassA(array<int, ORDER> seq) {
     return map;
 }
 
-set<array<int, ORDER>> generateClassB(array<int, ORDER> seq) {
+set<array<int, ORDER>> generateClassB(array<int, ORDER>& seq) {
     set<array<int, ORDER>> map;
 
     unsigned int size = 0;
@@ -42,6 +43,7 @@ set<array<int, ORDER>> generateClassB(array<int, ORDER> seq) {
         size = map.size();
 
         shift_equivalence(map);  
+        reverse_equivalence(map);
     }
 
     return map;
@@ -73,6 +75,14 @@ void shift_equivalence(set<array<int, ORDER>>& map) {
             
             map.insert(seq);
         }
+    }
+}
+
+void reverse_equivalence(set<array<int, ORDER>>& map) {
+    for(array<int, ORDER> seq: map) { 
+        reverse(seq.begin(), seq.end());
+
+        map.insert(seq);
     }
 }
 
