@@ -34,3 +34,28 @@ https://link.springer.com/article/10.1007/s10801-021-01084-0
 
 
 //current match_pairs doesnt work because it skips over doubled pairs (assumes that every psd in a single file is unique)
+
+
+order 32
+row sums -> 0,8
+
+0 -> 16 +, 16 - 
+
+==> p(32!/16! * 16!) = number of sequences to search thru
+
+order 34 
+row sums -> 2, 8
+
+2 =>
+
+18 +, 16 -
+
+==> p(34! / 18! * 16!) = 2203961430 10 digits vs 17179869184 11 digits
+
+
+
+order 26 rowsums 4,6
+
+4 => 15 +, 11 -
+
+= 7726160 sequences

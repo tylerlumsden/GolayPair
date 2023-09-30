@@ -12,6 +12,7 @@
 #include"../fourier.h"
 #include"../equivalence.h"
 #include<tgmath.h>
+#include<algorithm>
 
 using namespace std;
 
@@ -45,19 +46,6 @@ int main() {
     clock_t start = clock();
 
     for(int i = 0; i < decomps_len[ORDER]; i++) {
-        
-        set<array<int, ORDER>> classesA;
-        set<array<int, ORDER>> classesB;
-
-        array<int, ORDER> seq;
-        seq.fill(-1);
-        int currentSum = -ORDER;
-
-        int SumsA = decomps[ORDER][i][0];
-        int SumsB = decomps[ORDER][i][1];
-
-        int count = 0;
-
 
         //write classesA to file
         char fname[100];
@@ -67,46 +55,68 @@ int main() {
         sprintf(fname, "results/%d-unique-filtered-b-%d", ORDER, i);
         FILE * outb = fopen(fname, "w");
 
+        set<array<int, ORDER>> classesA;
+        set<array<int, ORDER>> classesB;
+
+        array<int, ORDER> seq;
+        int negcounta = (ORDER - decomps[ORDER][i][0]) / 2;
+        seq.fill(1);
+
+        unsigned long long int count = 0;
+
+        for(int i = 0; i < negcounta; i++) {
+            seq[i] = -1;
+        }
+
+        printf("Generating Classes A\n");
 
         do {
-            if(count % 10000000 == 0) {
-                printf("Progress: %d, %ld seconds\n", count, (clock() - start) / CLOCKS_PER_SEC);
+            if(count % 1000000 == 0) {
+                printf("count: %llu, time elapsed: %lds\n", count, (clock() - start) / CLOCKS_PER_SEC);
             }
-            
-            if(currentSum == SumsA) {
-                out = dft(seq, in, out, plan);  
-                if(dftfilter(out, ORDER)) {
-                    if(classesA.find(seq) == classesA.end()) {
-                        classesA.merge(generateClassA(seq));
-                        for(int i = 0; i < ORDER / 2; i++) {
-                            fprintf(outa, "%d", (int)rint(norm(out[i])));
-                        }
-                        fprintf(outa, " ");
-                        writeSeq(outa, seq);
-                        fprintf(outa, "\n");
+            out = dft(seq, in, out, plan);  
+            if(dftfilter(out, ORDER)) {
+                if(classesA.find(seq) == classesA.end()) {
+                    classesA.merge(generateClassA(seq));
+                    for(int i = 0; i < ORDER / 2; i++) {
+                        fprintf(outa, "%d",    (int)rint(norm(out[i])));
                     }
+                    fprintf(outa, " ");
+                    writeSeq(outa, seq);
+                    fprintf(outa, "\n");
                 }
             }
-
-            if(currentSum == SumsB) {
-                out = dft(seq, in, out, plan);  
-
-                if(dftfilter(out, ORDER)) {
-                    if(classesB.find(seq) == classesB.end()) {
-                        classesB.merge(generateClassB(seq));
-                        for(int i = 0; i < ORDER / 2; i++) {
-                            fprintf(outb, "%d",    ORDER * 2 - (int)rint(norm(out[i])));
-                        }
-                        fprintf(outb, " ");
-                        writeSeq(outb, seq);
-                        fprintf(outb, "\n");
-                    }
-                }
-            }
-            
             count++;
+        } while(next_permutation(seq.begin(), seq.end()));
 
-        } while(NextCombinationRowSums(seq, ORDER, &currentSum));
+        seq.fill(1);
+        int negcountb = (ORDER - decomps[ORDER][i][1]) / 2;
+        for(int i = 0; i < negcountb; i++) {
+            seq[i] = -1;
+        }
+
+        count = 0;
+
+        printf("Generating Classes B\n");
+
+        do {
+            if(count % 1000000 == 0) {
+                printf("count: %llu, time elapsed: %lds\n", count, (clock() - start) / CLOCKS_PER_SEC);
+            }
+            out = dft(seq, in, out, plan);  
+            if(dftfilter(out, ORDER)) {
+                if(classesB.find(seq) == classesB.end()) {
+                    classesB.merge(generateClassB(seq));
+                    for(int i = 0; i < ORDER / 2; i++) {
+                        fprintf(outb, "%d",    ORDER * 2 - (int)rint(norm(out[i])));
+                    }
+                    fprintf(outb, " ");
+                    writeSeq(outb, seq);
+                    fprintf(outb, "\n");
+                }
+            }
+            count++;
+        } while(next_permutation(seq.begin(), seq.end()));
 
         fftw_free(in);
         fftw_free(out);
