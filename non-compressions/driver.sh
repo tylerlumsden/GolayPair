@@ -11,7 +11,8 @@ make all
 echo Generating Classes
 
 start=`date +%s`
-./generate_classes
+./generate_classesA & ./generate_classesB
+wait
 end=`date +%s`
 
 runtime1=$((end-start))
@@ -36,4 +37,4 @@ pairs=$(wc -l < results/$order-pairs-found)
 
 total=$((runtime1 + runtime2))
 
-python3 -u "print_timings_table.py" $order $candidatesA $candidatesB $pairs $runtime1 $runtime2 $total
+python3 -u "print_timings_table.py" $order $candidatesA $candidatesB $pairs $runtime1 $runtime2 $total > results.table

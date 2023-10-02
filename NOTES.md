@@ -74,3 +74,32 @@ row sums -> 4, 8
 
 interesting phenomenon where all candidates found have the first element as -1.
 Perhaps no new candidates will be found in the latter half of sequences?
+
+--?..? => -+?..? - +++..+
+
+
+-- cannot construct a seq with only one -, 
+--- cannot construct a seq with only 2 -.
+---- cannot construct a seq with only 3 -.
+.......
+.......
+
+October 2 ----------
+
+nia     (ssh -Y ikotsire@niagara.computecanada.ca)
+ced     (ssh -Y ikotsire@cedar.computecanada.ca)
+bel     (ssh -Y ikotsire@beluga.calculcanada.ca)
+scp $1 ikotsire@niagara.computecanada.ca:$1
+bash cuw pg.tar
+where cuw is an 1-line bash script
+
+https://docs.alliancecan.ca/wiki/Niagara
+https://docs.alliancecan.ca/wiki/Running_jobs
+
+MAKE SURE TO RECOMPILE ON THE CLUSTER
+
+Order 34 seems to generate all candidates after 526s of computation
+
+
+
+

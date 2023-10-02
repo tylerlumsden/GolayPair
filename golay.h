@@ -1,4 +1,4 @@
-#define ORDER 34
+#define ORDER 26
 
 #include<array>
 
