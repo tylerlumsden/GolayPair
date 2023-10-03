@@ -100,6 +100,13 @@ MAKE SURE TO RECOMPILE ON THE CLUSTER
 
 Order 34 seems to generate all candidates after 526s of computation
 
+order 40 ->
+rowsums 4,8
+
+4 implies 22 +, 18 -
+
+==> p(40, 22 * 18) = 12 digits
+
 
 
 

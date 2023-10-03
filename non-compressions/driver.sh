@@ -1,4 +1,9 @@
 #!/bin/bash
+#SBATCH --account=def-cbright
+#SBATCH --time=0-00:15
+#SBATCH --mem-per-cpu=2G
+#SBATCH --cpus-per-task=2
+
 
 order=$1
 

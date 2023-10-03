@@ -71,7 +71,7 @@ int main() {
         printf("Generating Classes B\n");
 
         do {
-            if(count % 10000000 == 0) {
+            if(count % 100000000 == 0) {
                 printf("B | count: %llu, candidates: %d, time elapsed: %lds\n", count, candidates, (clock() - start) / CLOCKS_PER_SEC);
             }
             out = dft(seq, in, out, plan);  
@@ -89,7 +89,7 @@ int main() {
                 }
             }
             count++;
-        } while(next_permutation(seq.begin(), seq.end()));
+        } while(next_permutation(seq.begin(), seq.end()) && seq[0] != 1);
 
         fftw_free(in);
         fftw_free(out);

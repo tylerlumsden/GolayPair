@@ -72,8 +72,9 @@ void shift_equivalence(set<array<int, ORDER>>& map) {
     for(array<int, ORDER> seq: map) {
         for(unsigned int i = 0; i < seq.size(); i++) {
             rotate(seq.begin(), seq.begin() + 1, seq.end());
-            
-            map.insert(seq);
+            if(seq[0] != 1) {
+                map.insert(seq);
+            }
         }
     }
 }
@@ -82,7 +83,7 @@ void reverse_equivalence(set<array<int, ORDER>>& map) {
     for(array<int, ORDER> seq: map) { 
         reverse(seq.begin(), seq.end());
 
-        map.insert(seq);
+         map.insert(seq);
     }
 }
 
@@ -113,7 +114,9 @@ array<int, ORDER> permute(array<int, ORDER>& seq, int coprime) {
 void decimation_equivalence(set<array<int, ORDER>>& map) {
     for(array<int, ORDER> seq : map) {
         for(int i = 0; i < coprimelength[ORDER]; i++) {
-            map.insert(permute(seq, coprimelist[ORDER][i]));
+            array<int, ORDER> newseq = permute(seq, coprimelist[ORDER][i]);
+
+            map.insert(newseq);
         }
     }
 }
