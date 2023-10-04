@@ -159,9 +159,9 @@ libfftw3_omp_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(libfftw3_omp_la_CFLAGS) $(CFLAGS) \
 	$(libfftw3_omp_la_LDFLAGS) $(LDFLAGS) -o $@
-##am_libfftw3_omp_la_rpath =  \
-##	-rpath \
-##	$(libdir)
+am_libfftw3_omp_la_rpath =  \
+	-rpath \
+	$(libdir)
 #am_libfftw3_omp_la_rpath =  \
 #	-rpath $(libdir)
 libfftw3_threads_la_DEPENDENCIES =  \
@@ -182,9 +182,9 @@ libfftw3_threads_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(libfftw3_threads_la_CFLAGS) $(CFLAGS) \
 	$(libfftw3_threads_la_LDFLAGS) $(LDFLAGS) -o $@
-#am_libfftw3_threads_la_rpath =  \
-#	-rpath $(libdir)
-##am_libfftw3_threads_la_rpath =
+am_libfftw3_threads_la_rpath =  \
+	-rpath $(libdir)
+#am_libfftw3_threads_la_rpath =
 AM_V_P = $(am__v_P_$(V))
 am__v_P_ = $(am__v_P_$(AM_DEFAULT_VERBOSITY))
 am__v_P_0 = false
@@ -250,16 +250,16 @@ am__can_run_installinfo = \
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 am__DIST_COMMON = $(srcdir)/Makefile.in $(top_srcdir)/depcomp
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} '/mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/missing' aclocal-1.16
+ACLOCAL = ${SHELL} '/home/ounce/proj/GolayPair/fftw-3.3.10/missing' aclocal-1.16
 ALLOCA = 
 ALTIVEC_CFLAGS = 
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
 AR = ar
 AS = as
-AUTOCONF = ${SHELL} '/mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/missing' autoconf
-AUTOHEADER = ${SHELL} '/mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/missing' autoheader
-AUTOMAKE = ${SHELL} '/mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/missing' automake-1.16
+AUTOCONF = ${SHELL} '/home/ounce/proj/GolayPair/fftw-3.3.10/missing' autoconf
+AUTOHEADER = ${SHELL} '/home/ounce/proj/GolayPair/fftw-3.3.10/missing' autoheader
+AUTOMAKE = ${SHELL} '/home/ounce/proj/GolayPair/fftw-3.3.10/missing' automake-1.16
 AVX2_CFLAGS = 
 AVX512_CFLAGS = 
 AVX_128_FMA_CFLAGS = 
@@ -307,7 +307,7 @@ LN_S = ln -s
 LTLIBOBJS = 
 LT_SYS_LIBRARY_PATH = 
 MAINT = #
-MAKEINFO = ${SHELL} '/mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/missing' makeinfo
+MAKEINFO = ${SHELL} '/home/ounce/proj/GolayPair/fftw-3.3.10/missing' makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /usr/bin/mkdir -p
 MPICC = 
@@ -319,7 +319,7 @@ NMEDIT =
 OBJDUMP = objdump
 OBJEXT = o
 OCAMLBUILD = 
-OPENMP_CFLAGS = 
+OPENMP_CFLAGS = -fopenmp
 OTOOL = 
 OTOOL64 = 
 PACKAGE = fftw
@@ -333,7 +333,7 @@ PATH_SEPARATOR = :
 POW_LIB = 
 PRECISION = d
 PREC_SUFFIX = 
-PTHREAD_CC = 
+PTHREAD_CC = gcc
 PTHREAD_CFLAGS = 
 PTHREAD_LIBS = 
 RANLIB = ranlib
@@ -344,13 +344,13 @@ SHELL = /bin/bash
 SSE2_CFLAGS = 
 STACK_ALIGN_CFLAGS = 
 STRIP = strip
-THREADLIBS = 
+THREADLIBS =  
 VERSION = 3.3.10
 VSX_CFLAGS = 
-abs_builddir = /mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/threads
-abs_srcdir = /mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/threads
-abs_top_builddir = /mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10
-abs_top_srcdir = /mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10
+abs_builddir = /home/ounce/proj/GolayPair/fftw-3.3.10/threads
+abs_srcdir = /home/ounce/proj/GolayPair/fftw-3.3.10/threads
+abs_top_builddir = /home/ounce/proj/GolayPair/fftw-3.3.10
+abs_top_srcdir = /home/ounce/proj/GolayPair/fftw-3.3.10
 ac_ct_AR = ar
 ac_ct_CC = gcc
 ac_ct_DUMPBIN = 
@@ -381,7 +381,7 @@ host_vendor = pc
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/install-sh
+install_sh = ${SHELL} /home/ounce/proj/GolayPair/fftw-3.3.10/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -404,11 +404,11 @@ top_builddir = ..
 top_srcdir = ..
 AM_CPPFLAGS = -I $(top_srcdir)
 AM_CFLAGS = $(STACK_ALIGN_CFLAGS)
-FFTWOMPLIB = 
-#FFTWOMPLIB = libfftw3_omp.la
-##noinst_LTLIBRARIES = libfftw3_threads.la
-#lib_LTLIBRARIES = libfftw3_threads.la $(FFTWOMPLIB)
-lib_LTLIBRARIES = $(FFTWOMPLIB)
+#FFTWOMPLIB = 
+FFTWOMPLIB = libfftw3_omp.la
+#noinst_LTLIBRARIES = libfftw3_threads.la
+lib_LTLIBRARIES = libfftw3_threads.la $(FFTWOMPLIB)
+#lib_LTLIBRARIES = $(FFTWOMPLIB)
 libfftw3_threads_la_SOURCES = api.c conf.c threads.c	\
 threads.h dft-vrank-geq1.c ct.c rdft-vrank-geq1.c hc2hc.c		\
 vrank-geq1-rdft2.c f77api.c f77funcs.h

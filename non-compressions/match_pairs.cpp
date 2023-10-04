@@ -58,7 +58,6 @@ int main() {
 
             if(a == b) {
                 //match the pairs
-
                     temp = a;
 
                     while(filea.good() && a == temp) {

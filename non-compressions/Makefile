@@ -19,11 +19,11 @@ golay.o: $(DIR)golay.h
 match_pairs: match_pairs.cpp $(DIR)golay.h $(DIR)golay.o
 	$(CC) -Wall -g match_pairs.cpp $(DIR)golay.o -o match_pairs
 
-generate_classesA: generate_classesA.cpp $(DIR)golay.h $(DIR)array.o $(DIR)fourier.o $(DIR)equivalence.o
-	$(CC) -Wall -g generate_classesA.cpp $(DIR)equivalence.o $(DIR)array.o $(DIR)fourier.o -o generate_classesA -L../fftw-3.3.10/.libs -l:libfftw3.a
+generate_classesA: generate_classesAPARALLEL.cpp $(DIR)golay.h $(DIR)array.o $(DIR)fourier.o $(DIR)equivalence.o
+	$(CC) -Wall -g -O3 generate_classesAPARALLEL.cpp $(DIR)equivalence.o $(DIR)array.o $(DIR)fourier.o -o generate_classesA -fopenmp -L../fftw-3.3.10 -l:libfftw3.a -l:libfftw3_omp.a -lm
 
-generate_classesB: generate_classesB.cpp $(DIR)golay.h $(DIR)array.o $(DIR)fourier.o $(DIR)equivalence.o
-	$(CC) -Wall -g generate_classesB.cpp $(DIR)equivalence.o $(DIR)array.o $(DIR)fourier.o -o generate_classesB -L../fftw-3.3.10/.libs -l:libfftw3.a
+generate_classesB: generate_classesBPARALLEL.cpp $(DIR)golay.h $(DIR)array.o $(DIR)fourier.o $(DIR)equivalence.o
+	$(CC) -Wall -g -O3 generate_classesBPARALLEL.cpp $(DIR)equivalence.o $(DIR)array.o $(DIR)fourier.o -o generate_classesB -fopenmp -L../fftw-3.3.10 -l:libfftw3.a -l:libfftw3_omp.a -lm
 
 
 clean:

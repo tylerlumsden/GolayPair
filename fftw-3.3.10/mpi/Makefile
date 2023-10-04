@@ -270,16 +270,16 @@ ETAGS = etags
 CTAGS = ctags
 am__DIST_COMMON = $(srcdir)/Makefile.in $(top_srcdir)/depcomp
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} '/mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/missing' aclocal-1.16
+ACLOCAL = ${SHELL} '/home/ounce/proj/GolayPair/fftw-3.3.10/missing' aclocal-1.16
 ALLOCA = 
 ALTIVEC_CFLAGS = 
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
 AR = ar
 AS = as
-AUTOCONF = ${SHELL} '/mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/missing' autoconf
-AUTOHEADER = ${SHELL} '/mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/missing' autoheader
-AUTOMAKE = ${SHELL} '/mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/missing' automake-1.16
+AUTOCONF = ${SHELL} '/home/ounce/proj/GolayPair/fftw-3.3.10/missing' autoconf
+AUTOHEADER = ${SHELL} '/home/ounce/proj/GolayPair/fftw-3.3.10/missing' autoheader
+AUTOMAKE = ${SHELL} '/home/ounce/proj/GolayPair/fftw-3.3.10/missing' automake-1.16
 AVX2_CFLAGS = 
 AVX512_CFLAGS = 
 AVX_128_FMA_CFLAGS = 
@@ -327,7 +327,7 @@ LN_S = ln -s
 LTLIBOBJS = 
 LT_SYS_LIBRARY_PATH = 
 MAINT = #
-MAKEINFO = ${SHELL} '/mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/missing' makeinfo
+MAKEINFO = ${SHELL} '/home/ounce/proj/GolayPair/fftw-3.3.10/missing' makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /usr/bin/mkdir -p
 MPICC = 
@@ -339,7 +339,7 @@ NMEDIT =
 OBJDUMP = objdump
 OBJEXT = o
 OCAMLBUILD = 
-OPENMP_CFLAGS = 
+OPENMP_CFLAGS = -fopenmp
 OTOOL = 
 OTOOL64 = 
 PACKAGE = fftw
@@ -353,7 +353,7 @@ PATH_SEPARATOR = :
 POW_LIB = 
 PRECISION = d
 PREC_SUFFIX = 
-PTHREAD_CC = 
+PTHREAD_CC = gcc
 PTHREAD_CFLAGS = 
 PTHREAD_LIBS = 
 RANLIB = ranlib
@@ -364,13 +364,13 @@ SHELL = /bin/bash
 SSE2_CFLAGS = 
 STACK_ALIGN_CFLAGS = 
 STRIP = strip
-THREADLIBS = 
+THREADLIBS =  
 VERSION = 3.3.10
 VSX_CFLAGS = 
-abs_builddir = /mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/mpi
-abs_srcdir = /mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/mpi
-abs_top_builddir = /mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10
-abs_top_srcdir = /mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10
+abs_builddir = /home/ounce/proj/GolayPair/fftw-3.3.10/mpi
+abs_srcdir = /home/ounce/proj/GolayPair/fftw-3.3.10/mpi
+abs_top_builddir = /home/ounce/proj/GolayPair/fftw-3.3.10
+abs_top_srcdir = /home/ounce/proj/GolayPair/fftw-3.3.10
 ac_ct_AR = ar
 ac_ct_CC = gcc
 ac_ct_DUMPBIN = 
@@ -401,7 +401,7 @@ host_vendor = pc
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/install-sh
+install_sh = ${SHELL} /home/ounce/proj/GolayPair/fftw-3.3.10/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -442,8 +442,8 @@ libfftw3_mpi_la_SOURCES = $(SRC) $(TRANSPOSE_SRC) $(DFT_SRC) $(RDFT_SRC) $(RDFT2
 libfftw3_mpi_la_LDFLAGS = -version-info 9:10:6
 libfftw3_mpi_la_LIBADD = ../libfftw3.la 
 #mpi_bench_CFLAGS = $(OPENMP_CFLAGS)
-#mpi_bench_CFLAGS = $(PTHREAD_CFLAGS)
-#LIBFFTWTHREADS = $(top_builddir)/threads/libfftw3_threads.la
+mpi_bench_CFLAGS = $(PTHREAD_CFLAGS)
+LIBFFTWTHREADS = $(top_builddir)/threads/libfftw3_threads.la
 #LIBFFTWTHREADS = $(top_builddir)/threads/libfftw3_omp.la
 mpi_bench_SOURCES = mpi-bench.c $(top_srcdir)/tests/fftw-bench.c $(top_srcdir)/tests/hook.c
 mpi_bench_LDADD = libfftw3_mpi.la $(LIBFFTWTHREADS) $(top_builddir)/libfftw3.la $(top_builddir)/libbench2/libbench2.a $(MPILIBS) $(THREADLIBS)
@@ -1006,10 +1006,10 @@ uninstall-am: uninstall-includeHEADERS uninstall-libLTLIBRARIES \
 #	@echo "--------------------------------------------------------------"
 #	@echo "      MPI FFTW transforms passed "$(NUMCHECK)" tests, 4 CPUs"
 #	@echo "--------------------------------------------------------------"
-##	perl -w $(CHECK) $(CHECKOPTS) --mpi --nthreads=2 "$(MPIRUN) -np 3 `pwd`/mpi-bench"
-##	@echo "--------------------------------------------------------------"
-##	@echo "      MPI FFTW threaded transforms passed "$(NUMCHECK)" tests!"
-##	@echo "--------------------------------------------------------------"
+#	perl -w $(CHECK) $(CHECKOPTS) --mpi --nthreads=2 "$(MPIRUN) -np 3 `pwd`/mpi-bench"
+#	@echo "--------------------------------------------------------------"
+#	@echo "      MPI FFTW threaded transforms passed "$(NUMCHECK)" tests!"
+#	@echo "--------------------------------------------------------------"
 
 #bigcheck: mpi-bench$(EXEEXT)
 #	$(MAKE) $(AM_MAKEFLAGS) NUMCHECK=100 CHECKSIZE=60000 check-local

@@ -188,16 +188,16 @@ ETAGS = etags
 CTAGS = ctags
 am__DIST_COMMON = $(srcdir)/Makefile.in $(top_srcdir)/depcomp README
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} '/mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/missing' aclocal-1.16
+ACLOCAL = ${SHELL} '/home/ounce/proj/GolayPair/fftw-3.3.10/missing' aclocal-1.16
 ALLOCA = 
 ALTIVEC_CFLAGS = 
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
 AR = ar
 AS = as
-AUTOCONF = ${SHELL} '/mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/missing' autoconf
-AUTOHEADER = ${SHELL} '/mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/missing' autoheader
-AUTOMAKE = ${SHELL} '/mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/missing' automake-1.16
+AUTOCONF = ${SHELL} '/home/ounce/proj/GolayPair/fftw-3.3.10/missing' autoconf
+AUTOHEADER = ${SHELL} '/home/ounce/proj/GolayPair/fftw-3.3.10/missing' autoheader
+AUTOMAKE = ${SHELL} '/home/ounce/proj/GolayPair/fftw-3.3.10/missing' automake-1.16
 AVX2_CFLAGS = 
 AVX512_CFLAGS = 
 AVX_128_FMA_CFLAGS = 
@@ -245,7 +245,7 @@ LN_S = ln -s
 LTLIBOBJS = 
 LT_SYS_LIBRARY_PATH = 
 MAINT = #
-MAKEINFO = ${SHELL} '/mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/missing' makeinfo
+MAKEINFO = ${SHELL} '/home/ounce/proj/GolayPair/fftw-3.3.10/missing' makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /usr/bin/mkdir -p
 MPICC = 
@@ -257,7 +257,7 @@ NMEDIT =
 OBJDUMP = objdump
 OBJEXT = o
 OCAMLBUILD = 
-OPENMP_CFLAGS = 
+OPENMP_CFLAGS = -fopenmp
 OTOOL = 
 OTOOL64 = 
 PACKAGE = fftw
@@ -271,7 +271,7 @@ PATH_SEPARATOR = :
 POW_LIB = 
 PRECISION = d
 PREC_SUFFIX = 
-PTHREAD_CC = 
+PTHREAD_CC = gcc
 PTHREAD_CFLAGS = 
 PTHREAD_LIBS = 
 RANLIB = ranlib
@@ -282,13 +282,13 @@ SHELL = /bin/bash
 SSE2_CFLAGS = 
 STACK_ALIGN_CFLAGS = 
 STRIP = strip
-THREADLIBS = 
+THREADLIBS =  
 VERSION = 3.3.10
 VSX_CFLAGS = 
-abs_builddir = /mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/tests
-abs_srcdir = /mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/tests
-abs_top_builddir = /mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10
-abs_top_srcdir = /mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10
+abs_builddir = /home/ounce/proj/GolayPair/fftw-3.3.10/tests
+abs_srcdir = /home/ounce/proj/GolayPair/fftw-3.3.10/tests
+abs_top_builddir = /home/ounce/proj/GolayPair/fftw-3.3.10
+abs_top_srcdir = /home/ounce/proj/GolayPair/fftw-3.3.10
 ac_ct_AR = ar
 ac_ct_CC = gcc
 ac_ct_DUMPBIN = 
@@ -319,7 +319,7 @@ host_vendor = pc
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /mnt/c/proj/proj/GolayPairNew/GolayPair/fftw-3.3.10/install-sh
+install_sh = ${SHELL} /home/ounce/proj/GolayPair/fftw-3.3.10/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -343,8 +343,8 @@ top_srcdir = ..
 AM_CPPFLAGS = -I $(top_srcdir)
 EXTRA_DIST = check.pl README
 #bench_CFLAGS = $(OPENMP_CFLAGS)
-#bench_CFLAGS = $(PTHREAD_CFLAGS)
-#LIBFFTWTHREADS = $(top_builddir)/threads/libfftw3_threads.la
+bench_CFLAGS = $(PTHREAD_CFLAGS)
+LIBFFTWTHREADS = $(top_builddir)/threads/libfftw3_threads.la
 #LIBFFTWTHREADS = $(top_builddir)/threads/libfftw3_omp.la
 bench_SOURCES = bench.c hook.c fftw-bench.c fftw-bench.h
 bench_LDADD = $(LIBFFTWTHREADS)				\
@@ -702,24 +702,24 @@ check-local: bench$(EXEEXT)
 	@echo "--------------------------------------------------------------"
 	@echo "         FFTW transforms passed basic tests!"
 	@echo "--------------------------------------------------------------"
-#	perl -w $(srcdir)/check.pl $(CHECK_PL_OPTS) -r -c=30 -v --nthreads=2 `pwd`/bench$(EXEEXT)
-#	perl -w $(srcdir)/check.pl $(CHECK_PL_OPTS) -r -c=5 -v --threads_callback --nthreads=2 `pwd`/bench$(EXEEXT)
-#	@echo "--------------------------------------------------------------"
-#	@echo "         FFTW threaded transforms passed basic tests!"
-#	@echo "--------------------------------------------------------------"
+	perl -w $(srcdir)/check.pl $(CHECK_PL_OPTS) -r -c=30 -v --nthreads=2 `pwd`/bench$(EXEEXT)
+	perl -w $(srcdir)/check.pl $(CHECK_PL_OPTS) -r -c=5 -v --threads_callback --nthreads=2 `pwd`/bench$(EXEEXT)
+	@echo "--------------------------------------------------------------"
+	@echo "         FFTW threaded transforms passed basic tests!"
+	@echo "--------------------------------------------------------------"
 
 bigcheck: bench$(EXEEXT)
 	perl -w $(srcdir)/check.pl $(CHECK_PL_OPTS) --validate-wisdom -a -v `pwd`/bench$(EXEEXT)
 	@echo "--------------------------------------------------------------"
 	@echo "         FFTW transforms passed big tests!"
 	@echo "--------------------------------------------------------------"
-#	perl -w $(srcdir)/check.pl $(CHECK_PL_OPTS) --validate-wisdom -a -v --nthreads=2 `pwd`/bench$(EXEEXT)
-#	perl -w $(srcdir)/check.pl $(CHECK_PL_OPTS) --validate-wisdom -a -v --nthreads=3 `pwd`/bench$(EXEEXT)
-#	perl -w $(srcdir)/check.pl $(CHECK_PL_OPTS) --validate-wisdom -a -v --nthreads=10 `pwd`/bench$(EXEEXT)
-#	perl -w $(srcdir)/check.pl $(CHECK_PL_OPTS) --validate-wisdom -a -v --threads_callback --nthreads=2 `pwd`/bench$(EXEEXT)
-#	@echo "--------------------------------------------------------------"
-#	@echo "         FFTW threaded transforms passed big tests!"
-#	@echo "--------------------------------------------------------------"
+	perl -w $(srcdir)/check.pl $(CHECK_PL_OPTS) --validate-wisdom -a -v --nthreads=2 `pwd`/bench$(EXEEXT)
+	perl -w $(srcdir)/check.pl $(CHECK_PL_OPTS) --validate-wisdom -a -v --nthreads=3 `pwd`/bench$(EXEEXT)
+	perl -w $(srcdir)/check.pl $(CHECK_PL_OPTS) --validate-wisdom -a -v --nthreads=10 `pwd`/bench$(EXEEXT)
+	perl -w $(srcdir)/check.pl $(CHECK_PL_OPTS) --validate-wisdom -a -v --threads_callback --nthreads=2 `pwd`/bench$(EXEEXT)
+	@echo "--------------------------------------------------------------"
+	@echo "         FFTW threaded transforms passed big tests!"
+	@echo "--------------------------------------------------------------"
 
 smallcheck: bench$(EXEEXT)
 	perl -w $(srcdir)/check.pl -r -c=1 -v `pwd`/bench$(EXEEXT)
@@ -727,24 +727,24 @@ smallcheck: bench$(EXEEXT)
 	@echo "--------------------------------------------------------------"
 	@echo "         FFTW transforms passed a few tests!"
 	@echo "--------------------------------------------------------------"
-#	perl -w $(srcdir)/check.pl -r --estimate -c=2 -v --nthreads=2 `pwd`/bench$(EXEEXT)
-#	@echo "--------------------------------------------------------------"
-#	@echo "         FFTW threaded transforms passed a few tests!"
-#	@echo "--------------------------------------------------------------"
+	perl -w $(srcdir)/check.pl -r --estimate -c=2 -v --nthreads=2 `pwd`/bench$(EXEEXT)
+	@echo "--------------------------------------------------------------"
+	@echo "         FFTW threaded transforms passed a few tests!"
+	@echo "--------------------------------------------------------------"
 
 paranoid-check: bench$(EXEEXT)
-#	perl -w $(srcdir)/check.pl -a --patient --nthreads=10 --paranoid `pwd`/bench$(EXEEXT)
-#	perl -w $(srcdir)/check.pl -a --patient --nthreads=7 --paranoid `pwd`/bench$(EXEEXT)
-#	perl -w $(srcdir)/check.pl -a --patient --nthreads=3 --paranoid `pwd`/bench$(EXEEXT)
-#	perl -w $(srcdir)/check.pl -a --patient --nthreads=2 --paranoid `pwd`/bench$(EXEEXT)
+	perl -w $(srcdir)/check.pl -a --patient --nthreads=10 --paranoid `pwd`/bench$(EXEEXT)
+	perl -w $(srcdir)/check.pl -a --patient --nthreads=7 --paranoid `pwd`/bench$(EXEEXT)
+	perl -w $(srcdir)/check.pl -a --patient --nthreads=3 --paranoid `pwd`/bench$(EXEEXT)
+	perl -w $(srcdir)/check.pl -a --patient --nthreads=2 --paranoid `pwd`/bench$(EXEEXT)
 	perl -w $(srcdir)/check.pl -a --patient --paranoid `pwd`/bench$(EXEEXT)
 
 exhaustive-check: bench$(EXEEXT)
-#	perl -w $(srcdir)/check.pl -a --exhaustive --nthreads=10 --paranoid `pwd`/bench$(EXEEXT)
-#	perl -w $(srcdir)/check.pl -a --exhaustive --nthreads=7 --paranoid `pwd`/bench$(EXEEXT)
-#	perl -w $(srcdir)/check.pl -a --exhaustive --nthreads=3 --paranoid `pwd`/bench$(EXEEXT)
-#	perl -w $(srcdir)/check.pl -a --exhaustive --nthreads=2 --paranoid `pwd`/bench$(EXEEXT)
-#	perl -w $(srcdir)/check.pl -a --exhaustive --threads_callback --nthreads=2 --paranoid `pwd`/bench$(EXEEXT)
+	perl -w $(srcdir)/check.pl -a --exhaustive --nthreads=10 --paranoid `pwd`/bench$(EXEEXT)
+	perl -w $(srcdir)/check.pl -a --exhaustive --nthreads=7 --paranoid `pwd`/bench$(EXEEXT)
+	perl -w $(srcdir)/check.pl -a --exhaustive --nthreads=3 --paranoid `pwd`/bench$(EXEEXT)
+	perl -w $(srcdir)/check.pl -a --exhaustive --nthreads=2 --paranoid `pwd`/bench$(EXEEXT)
+	perl -w $(srcdir)/check.pl -a --exhaustive --threads_callback --nthreads=2 --paranoid `pwd`/bench$(EXEEXT)
 	perl -w $(srcdir)/check.pl -a --exhaustive --paranoid `pwd`/bench$(EXEEXT)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
