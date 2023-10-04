@@ -107,6 +107,10 @@ rowsums 4,8
 
 ==> p(40, 22 * 18) = 12 digits
 
+8 implies 16 -, 24 +
+
+=> 11 digits
+
 
 
 
