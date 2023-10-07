@@ -15,24 +15,7 @@ void unishift_equivalence(set<array<int,ORDER>>& map, array<int,ORDER> seq);
 void decimation_equivalence(set<array<int, ORDER>>& map);
 void reverse_equivalence(set<array<int, ORDER>>& map);
 
-set<array<int, ORDER>> generateClassA(array<int, ORDER>& seq) {
-    set<array<int, ORDER>> map;
-
-    unsigned int size = 0;
-
-    map.insert(seq);
-
-    while(map.size() != size) {
-        size = map.size();
-        
-        shift_equivalence(map);  
-        decimation_equivalence(map);
-    }
-
-    return map;
-}
-
-set<array<int, ORDER>> generateClassB(array<int, ORDER>& seq) {
+set<array<int, ORDER>> generateClass(array<int, ORDER> seq, int flag) {
     set<array<int, ORDER>> map;
 
     unsigned int size = 0;
@@ -42,39 +25,24 @@ set<array<int, ORDER>> generateClassB(array<int, ORDER>& seq) {
     while(map.size() != size) {
         size = map.size();
 
+        if(flag == 0) {
+            decimation_equivalence(map);
+        }
+    
         shift_equivalence(map);  
         reverse_equivalence(map);
     }
 
     return map;
 }
-/*
-set<pair<array<int, ORDER>,array<int, ORDER>>> generateClassPairs(pair<array<int, ORDER>,array<int, ORDER>> seq) {
-    set<pair<array<int, ORDER>,array<int, ORDER>>> map;
-
-    unsigned int size = 0;
-
-    map.insert(seq);
-
-    while(map.size() != size) {
-        size = map.size();
-
-        decimation_equivalence(map);  
-    }
-
-    return map;
-}
-*/
-
-
 
 void shift_equivalence(set<array<int, ORDER>>& map) {
     for(array<int, ORDER> seq: map) {
         for(unsigned int i = 0; i < seq.size(); i++) {
             rotate(seq.begin(), seq.begin() + 1, seq.end());
-            if(seq[0] != 1) {
-                map.insert(seq);
-            }
+
+            map.insert(seq);
+
         }
     }
 }

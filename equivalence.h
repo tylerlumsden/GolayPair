@@ -5,5 +5,4 @@
 
 using namespace std;
 
-set<array<int, ORDER>> generateClassA(array<int, ORDER>& seq);
-set<array<int, ORDER>> generateClassB(array<int, ORDER>& seq);
+set<array<int, ORDER>> generateClass(array<int, ORDER> seq, int flag);
