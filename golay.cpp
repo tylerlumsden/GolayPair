@@ -14,6 +14,7 @@
 using namespace std;
 
 
+
 int PAF(array<int, ORDER> seq, int s) { 
     int result = 0;
     for(int i = 0; i < ORDER; i++) {

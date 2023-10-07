@@ -111,6 +111,13 @@ rowsums 4,8
 
 => 11 digits
 
+October 7
+----------------
 
+order 16 equivalence filter --> 30s
+order 20 equivalence filter --> 725s
+
+touch on how sharcnet runs 2x slower
+talk about the equivalence filter problem
 
 

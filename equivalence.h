@@ -6,3 +6,4 @@
 using namespace std;
 
 set<array<int, ORDER>> generateClass(array<int, ORDER> seq, int flag);
+set<GolayPair> generateClassPairs(GolayPair seq);

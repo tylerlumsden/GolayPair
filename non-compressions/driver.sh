@@ -43,3 +43,12 @@ pairs=$(wc -l < results/$order-pairs-found)
 total=$((runtime1 + runtime2))
 
 python3 -u "print_timings_table.py" $order $candidatesA $candidatesB $pairs $runtime1 $runtime2 $total > results.table
+
+
+start=`date +%s`
+./filter_equivalent
+end=`date +%s`
+
+runtime3=$((end-start))
+
+echo $runtime3 seconds
