@@ -63,7 +63,7 @@ int main() {
         GolayPair seq = strToPair(a, b);
 
         if(classes.find(seq) == classes.end()) {
-            set<GolayPair> equiv = generateClassPairs(seq);
+            vector<GolayPair> equiv = generateClassPairs(seq);
 
             classes.insert(equiv.begin(), equiv.end());
 

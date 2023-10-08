@@ -116,8 +116,29 @@ October 7
 
 order 16 equivalence filter --> 30s
 order 20 equivalence filter --> 725s
+order 26 equivalence filter --> 6282s
 
 touch on how sharcnet runs 2x slower
 talk about the equivalence filter problem
+
+
+equivalence operations will be tricky for the uncompression code, look at each operation individually (lots of unnecessary equivalences)
+
+shift by a multiple of N compression for equivalent un-compressions
+
+look into orderly generation kochen specker paper
+
+concatenate a and b ==> most of the shifts a will be irrelevant because most shifts will make a larger a
+if a shift of a is equal to itself ==> low bits become relevant (relatively unlikely)
+
+^^ considered equivalence class will become much smaller
+
+
+psd's of the compressions being integer values at n / 3
+
+Questions:
+How is concatenating any different from considering the sequences separately?
+Why wouldn't considering the higher bits and then the lower bits create an incomplete class (incomplete in the sense of sequences we require)?
+
 
 

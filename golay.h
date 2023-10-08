@@ -1,9 +1,10 @@
-#define ORDER 34
+#define ORDER 16
 
 #ifndef GOLAY_H
 #define GOLAY_H
 
 #include<array>
+#include<string>
 
 using namespace std;
 
@@ -18,7 +19,32 @@ class GolayPair {
             } else {
                 return a < golay.a;
             }
-}
+        }
+
+        operator std::string() {
+            std::string seq;
+
+            for(int i = 0; i < ORDER; i++) {
+                if(a[i] == 1) {
+                    seq.push_back('+'); 
+                }
+                if(a[i] == -1) {
+                    seq.push_back('-'); 
+                }
+            }
+
+            seq.push_back(' ');
+
+            for(int i = 0; i < ORDER; i++) {
+                if(b[i] == 1) {
+                    seq.push_back('+'); 
+                }
+                if(b[i] == -1) {
+                    seq.push_back('-'); 
+                }
+            }
+            return seq;
+        }
 };
 
 
