@@ -6,7 +6,7 @@
 #include"coprimes.h"
 #include<algorithm>
 #include<iostream>
-#include<time.h>
+#include<unordered_set>
 
 using namespace std;
 
@@ -16,36 +16,32 @@ void altnegative_equivalence(set<array<int,ORDER>>& map, array<int,ORDER> seq);
 void unishift_equivalence(set<array<int,ORDER>>& map, array<int,ORDER> seq);
 void decimation_equivalence(set<array<int, ORDER>>& map);
 void reverse_equivalence(set<array<int, ORDER>>& map);
-void shift_pair(vector<GolayPair>& map);
-void decimate_pair(vector<GolayPair>& map);
-void reverse_pair(vector<GolayPair>& map);
-void altnegative_pair(vector<GolayPair>& map);
-void negate_pair(vector<GolayPair>& map);
-void swap_pair(vector<GolayPair>& map);
+void shift_pair(unordered_set<GolayPair>& map);
+void decimate_pair(unordered_set<GolayPair>& map);
+void reverse_pair(unordered_set<GolayPair>& map);
+void altnegative_pair(unordered_set<GolayPair>& map);
+void negate_pair(unordered_set<GolayPair>& map);
+void swap_pair(unordered_set<GolayPair>& map);
 
-vector<GolayPair> generateClassPairs(GolayPair seq) {
-    vector<GolayPair> map;
+unordered_set<GolayPair> generateClassPairs(GolayPair seq) {
+    unordered_set<GolayPair> map;
+    map.rehash(100000000);
 
     unsigned int size = 0;
 
-    map.push_back(seq);
+    map.insert(seq);
 
     while(map.size() != size) {
         size = map.size();
 
-        clock_t start = clock();
         shift_pair(map);
-        printf("%d\n", (clock() - start) / CLOCKS_PER_SEC);
         altnegative_pair(map);
         reverse_pair(map);
         decimate_pair(map);
-        printf("%d\n", size);
         negate_pair(map);
         swap_pair(map);
-
+        printf("%d\n", size);
     }
-
-
 
     return map;
 }
@@ -71,30 +67,27 @@ set<array<int, ORDER>> generateClass(array<int, ORDER> seq, int flag) {
     return map;
 }
 
-void swap_pair(vector<GolayPair>& map) {
-    int size = map.size();
-    GolayPair seq;
-    for(int i = 0; i < size; i++) {
-        seq = map[i];
+void swap_pair(unordered_set<GolayPair>& map) {
+    for(GolayPair seq : map) {
         array<int, ORDER> temp = seq.a;
         seq.a = seq.b;
         seq.b = temp;
 
-        map.push_back(seq);
+        map.insert(seq);
     }
 }
 
 
-void shift_pair(vector<GolayPair>& map) {
-    int size = map.size();
-    GolayPair seq;
-    for(int k = 0; k < size; k++) {
-        seq = map[k];
+void shift_pair(unordered_set<GolayPair>& map) {
+    GolayPair temp;
+    for(GolayPair seq: map) {
+        temp = seq;
         for(unsigned int i = 0; i < seq.a.size() - 1; i++) {
             for(unsigned int j = 0; j < seq.a.size() - 1; j++) {
                 rotate(seq.b.begin(), seq.b.begin() + 1, seq.b.end());
 
-                map.push_back(seq);
+                map.insert(seq);
+
             }
             rotate(seq.a.begin(), seq.a.begin() + 1, seq.a.end());
         }
@@ -110,21 +103,18 @@ void shift_equivalence(set<array<int, ORDER>>& map) {
     }
 }
 
-void reverse_pair(vector<GolayPair>& map) {
-    int size = map.size();
-    GolayPair seq;
-    for(int k = 0; k < size; k++) {
-        seq = map[k];
+void reverse_pair(unordered_set<GolayPair>& map) {
+    for(GolayPair seq: map) { 
         array<int, ORDER> temp = seq.a;
 
         reverse(seq.a.begin(), seq.a.end());
-        map.push_back(seq);
+        map.insert(seq);
 
         reverse(seq.b.begin(), seq.b.end());
-        map.push_back(seq);
+        map.insert(seq);
 
         seq.a = temp;
-        map.push_back(seq);
+        map.insert(seq);
     }
 }
 
@@ -136,24 +126,21 @@ void reverse_equivalence(set<array<int, ORDER>>& map) {
     }
 }
 
-void negate_pair(vector<GolayPair>& map) {
-    int size = map.size();
-    GolayPair seq;
-    for(int k = 0; k < size; k++) {
-        seq = map[k];
+void negate_pair(unordered_set<GolayPair>& map) {
+    for(GolayPair seq : map) {
         array<int, ORDER> temp = seq.a;
         for(unsigned int i = 0; i < seq.a.size(); i++) {
                 seq.a[i] = -seq.a[i];
         }
-        map.push_back(seq);
+        map.insert(seq);
 
         for(unsigned int i = 0; i < seq.b.size(); i++) {
             seq.b[i] = -seq.b[i];
         }
-        map.push_back(seq);
+        map.insert(seq);
 
         seq.a = temp;
-        map.push_back(seq);
+        map.insert(seq);
     }
 }
 
@@ -164,28 +151,25 @@ void negative_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> seq) {
     map.insert(seq);
 }
 
-void altnegative_pair(vector<GolayPair>& map) {
-    int size = map.size();
-    GolayPair seq;
-    for(int k = 0; k < size; k++) {
-        seq = map[k];
+void altnegative_pair(unordered_set<GolayPair>& map) {
+    for(GolayPair seq: map) { 
         array<int, ORDER> temp = seq.a;
         for(unsigned int i = 0; i < seq.a.size(); i++) {
             if(i % 2 == 1) { 
                 seq.a[i] = -seq.a[i];
             }
         }
-        map.push_back(seq);
+        map.insert(seq);
 
         for(unsigned int i = 0; i < seq.b.size(); i++) {
             if(i % 2 == 1) { 
                 seq.b[i] = -seq.b[i];
             }
         }
-        map.push_back(seq);
+        map.insert(seq);
 
         seq.a = temp;
-        map.push_back(seq);
+        map.insert(seq);
     }
 }
 
@@ -206,16 +190,14 @@ array<int, ORDER> permute(array<int, ORDER>& seq, int coprime) {
     return newseq;
 }
 
-void decimate_pair(vector<GolayPair>& map) {
-    int size = map.size();
-    GolayPair seq;
-    for(int k = 0; k < size; k++) {
-        seq = map[k];
+void decimate_pair(unordered_set<GolayPair>& map) {
+    for(GolayPair seq : map) {
         for(int i = 0; i < coprimelength[ORDER]; i++) {
             GolayPair newseq;
             newseq.a = permute(seq.a, coprimelist[ORDER][i]);
             newseq.b = permute(seq.b, coprimelist[ORDER][i]);
-            map.push_back(newseq);
+
+            map.insert(newseq);
         }
     }
 }

@@ -9,6 +9,7 @@
 #include<fstream>
 #include"../golay.h"
 #include "../equivalence.h"
+#include<unordered_set>
 
 using namespace std;
 
@@ -48,7 +49,8 @@ int main() {
 
     //match every seq a with seq b, generate an equivalence class for this sequence 
     
-    set<GolayPair> classes;
+    unordered_set<GolayPair> classes;
+    classes.rehash(100000000);
 
     sprintf(fname, "results/%d-pairs-found", ORDER);
     std::ifstream pairs(fname);
@@ -63,7 +65,7 @@ int main() {
         GolayPair seq = strToPair(a, b);
 
         if(classes.find(seq) == classes.end()) {
-            vector<GolayPair> equiv = generateClassPairs(seq);
+            unordered_set<GolayPair> equiv = generateClassPairs(seq);
 
             classes.insert(equiv.begin(), equiv.end());
 

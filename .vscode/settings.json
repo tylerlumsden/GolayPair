@@ -60,7 +60,8 @@
     "xstddef": "cpp",
     "xtr1common": "cpp",
     "*.tcc": "cpp",
-    "memory_resource": "cpp"
+    "memory_resource": "cpp",
+    "unordered_set": "cpp"
   },
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "g++",
