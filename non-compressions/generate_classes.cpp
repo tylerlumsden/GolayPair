@@ -77,7 +77,7 @@ int main(int argc, char ** argv) {
             if(dftfilter(out, ORDER)) {
                 if(classes.find(seq) == classes.end()) {
                     candidates++;
-                    set<array<int, ORDER>> equiv;
+                    vector<array<int, ORDER>> equiv;
                     equiv = generateClass(seq, flag);
 
                     if(flag == 0) {

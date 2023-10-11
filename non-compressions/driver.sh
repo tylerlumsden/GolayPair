@@ -16,7 +16,7 @@ make all
 echo Generating Classes
 
 start=`date +%s`
-./generate_classes 0 & ./generate_classes 1
+mpirun -np 6 ./generate_classesMPI 0
 wait
 end=`date +%s`
 

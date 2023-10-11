@@ -140,5 +140,22 @@ Questions:
 How is concatenating any different from considering the sequences separately?
 Why wouldn't considering the higher bits and then the lower bits create an incomplete class (incomplete in the sense of sequences we require)?
 
+October 9:
+    Look into MPI approach with shared memory
+    fix the equivalence filter: try to apply shifts to only one sequence to remove the double for loop
 
 
+
+
+-+----+++-+++-+---+-
+
+9 +, 11 -
+
+rowsum -2
+
+
+---+-++-+++-++++-+++
+
+12 +, 8 -
+
+rowsums 4
