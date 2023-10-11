@@ -51,17 +51,15 @@ int main(int argc, char ** argv) {
 
     clock_t start = clock();
 
-    for(int i = 0; i < decomps_len[ORDER]; i++) {
-
         //write classes to file
         char fname[100];
-        sprintf(fname, "results/%d-unique-filtered-%d-%d-%d", ORDER, flag, i, rank);
+        sprintf(fname, "results/%d-unique-filtered-%d-%d", ORDER, flag, rank);
         FILE * outa = fopen(fname, "w");
 
         set<array<int, ORDER>> classes;
 
         array<int, ORDER> seq;
-        int negcount = (ORDER - decomps[ORDER][i][flag]) / 2;
+        int negcount = (ORDER - decomps[ORDER][0][flag]) / 2;
         seq.fill(1);
 
         unsigned long long int count = rank;
@@ -115,7 +113,6 @@ int main(int argc, char ** argv) {
         fftw_destroy_plan(plan);
 
         fclose(outa);
-    }
     
 }
 

@@ -12,7 +12,6 @@
 
 int main() {
     
-    for(int i = 0; i < decomps_len[ORDER]; i++) {
 
         char fname[100];
         sprintf(fname, "results/%d-pairs-found", ORDER);
@@ -25,9 +24,9 @@ int main() {
         std::string arrayB;
         std::string temp;
 
-        sprintf(fname, "results/%d-unique-filtered-0-%d-1.sorted", ORDER, i);
+        sprintf(fname, "results/%d-candidates-a.sorted", ORDER);
         std::ifstream filea(fname);
-        sprintf(fname, "results/%d-unique-filtered-1-%d-1.sorted", ORDER, i);
+        sprintf(fname, "results/%d-candidates-b.sorted", ORDER);
         std::ifstream fileb(fname);
 
         array<int, ORDER> seqa;
@@ -115,5 +114,4 @@ int main() {
                 }
             }
         }
-    }
 }
