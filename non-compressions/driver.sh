@@ -16,7 +16,7 @@ make all
 echo Generating Classes
 
 start=`date +%s`
-mpirun -np 6 ./generate_classesMPI 0
+./generate_orderly 0 1 1 & ./generate_orderly 1 1 1
 wait
 end=`date +%s`
 
@@ -27,8 +27,8 @@ echo Matching Candidates
 
 start=`date +%s`
 
-sort results/$order-unique-filtered-0-0 > results/$order-unique-filtered-0-0.sorted
-sort results/$order-unique-filtered-1-0 > results/$order-unique-filtered-1-0.sorted
+sort results/$order-unique-filtered-0-0-1 > results/$order-unique-filtered-0-0-1.sorted
+sort results/$order-unique-filtered-1-0-1 > results/$order-unique-filtered-1-0-1.sorted
 
 ./match_pairs
 end=`date +%s`
@@ -36,8 +36,8 @@ end=`date +%s`
 runtime2=$((end-start))
 echo $runtime2 seconds
 
-candidatesA=$(wc -l < results/$order-unique-filtered-0-0)
-candidatesB=$(wc -l < results/$order-unique-filtered-1-0)
+candidatesA=$(wc -l < results/$order-unique-filtered-0-0-1)
+candidatesB=$(wc -l < results/$order-unique-filtered-1-0-1)
 pairs=$(wc -l < results/$order-pairs-found)
 
 total=$((runtime1 + runtime2))

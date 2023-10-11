@@ -25,9 +25,9 @@ int main() {
         std::string arrayB;
         std::string temp;
 
-        sprintf(fname, "results/%d-unique-filtered-0-%d.sorted", ORDER, i);
+        sprintf(fname, "results/%d-unique-filtered-0-%d-1.sorted", ORDER, i);
         std::ifstream filea(fname);
-        sprintf(fname, "results/%d-unique-filtered-1-%d.sorted", ORDER, i);
+        sprintf(fname, "results/%d-unique-filtered-1-%d-1.sorted", ORDER, i);
         std::ifstream fileb(fname);
 
         array<int, ORDER> seqa;
