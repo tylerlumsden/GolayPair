@@ -1,4 +1,4 @@
-#define ORDER 16
+#define ORDER 34
 
 #ifndef GOLAY_H
 #define GOLAY_H

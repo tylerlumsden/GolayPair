@@ -10,9 +10,9 @@
 
 using namespace std;
 
-set<array<int, ORDER>> shift_equivalence(array<int, ORDER> seq, array<int, ORDER> base);
-set<array<int, ORDER>> decimation_equivalence(array<int, ORDER> seq, array<int, ORDER> base);
-set<array<int, ORDER>> reverse_equivalence(array<int, ORDER> seq, array<int, ORDER> base);
+int shift_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> base);
+int decimation_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> base);
+int reverse_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> base);
 
 int generateClass(array<int, ORDER> base, int flag) {
     set<array<int, ORDER>> map;
@@ -22,70 +22,55 @@ int generateClass(array<int, ORDER> base, int flag) {
     unsigned int size = 0;
 
     map.insert(base);
-    for(array<int, ORDER> seq : map) {
-        while(map.size() != size) {
-            size = map.size();
 
-            if(flag == 0) {
-                equiv = decimation_equivalence(seq, base);
+    while(map.size() != size) {
+        size = map.size();
 
-                if(equiv.size() == 0) {
-                    return 0;
-                }
-
-                map.insert(equiv.begin(), equiv.end());
-            }
-
-            equiv = shift_equivalence(seq, base);
-
-            if(equiv.size() == 0) {
+        if(flag == 0) {
+            if(!decimation_equivalence(map, base)) {
                 return 0;
             }
+        }
 
-            map.insert(equiv.begin(), equiv.end());
+        if(!shift_equivalence(map, base)) {
+            return 0;
+        }
+
        
-            equiv = reverse_equivalence(seq, base);
-            
-            if(equiv.size() == 0) {
-                return 0;
-            }
-            
-            map.insert(equiv.begin(), equiv.end());
+        if(!reverse_equivalence(map, base)) {
+            return 0;
         }
     }
 
     return 1;
 }
 
-set<array<int, ORDER>> shift_equivalence(array<int, ORDER> seq, array<int, ORDER> base) {
-    set<array<int,ORDER>> map;
-    set<array<int, ORDER>> null;
+int shift_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> base) {
+    for(array<int, ORDER> seq: map) {
+        for(unsigned int i = 0; i < seq.size(); i++) {
+            rotate(seq.begin(), seq.begin() + 1, seq.end());
 
-    for(unsigned int i = 0; i < seq.size(); i++) {
-        rotate(seq.begin(), seq.begin() + 1, seq.end());
+            if(seq < base) {
+                return 0;
+            }
+
+            map.insert(seq);
+        }
+    }
+    return 1;
+}
+
+int reverse_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> base) {
+    for(array<int, ORDER> seq: map) { 
+        reverse(seq.begin(), seq.end());
 
         if(seq < base) {
-            return null;
+            return 0;
         }
 
         map.insert(seq);
     }
-    return map;
-}
-
-set<array<int, ORDER>> reverse_equivalence(array<int, ORDER> seq, array<int, ORDER> base) {
-    set<array<int, ORDER>> map;
-    set<array<int, ORDER>> null;
-
-    reverse(seq.begin(), seq.end());
-
-    if(seq < base) {
-        return null;
-    }
-
-    map.insert(seq);
-
-    return map;
+    return 1;
 }
 
 array<int, ORDER> permute(array<int, ORDER> seq, int coprime) {
@@ -96,20 +81,19 @@ array<int, ORDER> permute(array<int, ORDER> seq, int coprime) {
     return newseq;
 }
 
-set<array<int, ORDER>> decimation_equivalence(array<int, ORDER> seq, array<int, ORDER> base) {
-    set<array<int, ORDER>> map;
-    set<array<int, ORDER>> null;
+int decimation_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> base) {
+    for(array<int, ORDER> seq : map) {
+        for(int i = 0; i < coprimelength[ORDER]; i++) {
+            array<int, ORDER> newseq = permute(seq, coprimelist[ORDER][i]);
 
-    for(int i = 0; i < coprimelength[ORDER]; i++) {
-        array<int, ORDER> newseq = permute(seq, coprimelist[ORDER][i]);
-
-        if(newseq < base) {
-            return null;
+            if(newseq < base) {
+                return 0;
+            }
+            
+            map.insert(newseq);
         }
-
-        map.insert(newseq);
     }
-    return map;
+    return 1;
 }
 
 
