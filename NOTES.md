@@ -290,3 +290,12 @@ PG72 running until it finds one solution
  20 parallel CPUs
 
  - 6 hours, (~50% done, candidates files are 1.3GB) no matches found
+
+
+October 29
+----------------
+- after 6 hours of no solutions, jobs ran overnight
+==> 668 total solutions after running overnight ~8 hours
+==> 673 total solutions after running another ~6 hours
+
+4.8GB file sizes for each candidates file

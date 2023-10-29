@@ -4,16 +4,19 @@
 #SBATCH --mem-per-cpu=2G
 #SBATCH --cpus-per-task=2
 
-#TO USE: ./driver.sh [ORDER] [Number of parallel divisions]
+#TO USE: ./driver.sh [ORDER] [Compression factor] [Number of parallel divisions]
 
 order=$1
-numproc=$2
+compress=$2
+numproc=$3
 
 [ $order -eq $order 2>/dev/null ] || exit 1
 [ $numproc -eq $numproc 2>/dev/null ] || exit 1
+[ $compress -eq $compress 2>/dev/null ] || exit 1
 
-
-sed -i "1s/.*/#define ORDER $order/" ../golay.h
+sed -i -E "s/#define COMPRESS [[:digit:]]+/#define COMPRESS $compress/" ../golay.h
+sed -i -E "s/#define LEN [[:digit:]]+/#define LEN $order/" ../golay.h
+#sed -i "1s/.*/#define LEN $order/" ../golay.h
 
 make all
 
@@ -21,18 +24,10 @@ echo Number of processes: $numproc
 
 start=`date +%s`
 
-for ((i = 1; i<=$numproc; i++))
+for ((i = 0; i<$numproc; i++))
 do  
     echo i: $i
-    ./generate_orderly 0 $i $numproc &
-done
-
-wait
-
-for ((i = 1; i<=$numproc; i++))
-do  
-    echo i: $i
-    ./generate_orderly 1 $i $numproc &
+    ./generate_orderly 0 $i $numproc & ./generate_orderly 1 $i $numproc &
 done
 
 wait
@@ -49,11 +44,11 @@ start=`date +%s`
 rm results/$order-candidates-a
 rm results/$order-candidates-b
 
-for ((i = 1; i<=$numproc; i++))
+for ((i = 0; i<$numproc; i++))
 do
 
-    cat results/$order-unique-filtered-0-$i >> results/$order-candidates-a
-    cat results/$order-unique-filtered-1-$i >> results/$order-candidates-b
+    cat results/$order-filtered-0-$i >> results/$order-candidates-a
+    cat results/$order-filtered-1-$i >> results/$order-candidates-b
 done
 
 sort results/$order-candidates-a | uniq > results/$order-candidates-a.sorted
