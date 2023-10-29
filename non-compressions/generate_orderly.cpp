@@ -19,6 +19,7 @@ using namespace std;
 void writeSeq(FILE * out, array<int, ORDER> seq);
 int classIsGenerated(vector<set<array<int, ORDER>>>& classes, array<int, ORDER>& seq);
 
+
 double norm(fftw_complex dft) {
     return dft[0] * dft[0] + dft[1] * dft[1];
 }

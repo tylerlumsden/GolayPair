@@ -24,10 +24,19 @@ start=`date +%s`
 for ((i = 1; i<=$numproc; i++))
 do  
     echo i: $i
-    ./generate_orderly 0 $i $numproc & ./generate_orderly 1 $i $numproc &
+    ./generate_orderly 0 $i $numproc &
 done
 
 wait
+
+for ((i = 1; i<=$numproc; i++))
+do  
+    echo i: $i
+    ./generate_orderly 1 $i $numproc &
+done
+
+wait
+
 end=`date +%s`
 
 runtime1=$((end-start))
@@ -37,9 +46,12 @@ echo Matching Candidates
 
 start=`date +%s`
 
+rm results/$order-candidates-a
+rm results/$order-candidates-b
 
 for ((i = 1; i<=$numproc; i++))
 do
+
     cat results/$order-unique-filtered-0-$i >> results/$order-candidates-a
     cat results/$order-unique-filtered-1-$i >> results/$order-candidates-b
 done

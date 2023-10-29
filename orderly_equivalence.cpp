@@ -95,9 +95,3 @@ int decimation_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> base) 
     }
     return 1;
 }
-
-
-
-
-
-
