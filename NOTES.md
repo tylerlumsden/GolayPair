@@ -299,3 +299,24 @@ October 29
 ==> 673 total solutions after running another ~6 hours
 
 4.8GB file sizes for each candidates file
+
+October 30
+-----------
+Can index the PSD's by line number in the file
+separate PSD's and actual sequences into two different files (line numbers are the same)
+give the PSD files the line numbers of the sequences
+
+get an estimate of total runtime for the 72 6-uncompression candidate
+
+benchmark the uncompression of the 72 3-uncompression code
+
+keep in mind that in current code, the 3-uncompression count variable will be roughly the same across each process, while for 6-uncompressions the count is the count of their own search space segment.
+
+72 3-uncompression code finished successfully in 90 seconds.
+
+72 6-uncompression code is projected to finish in 7 days with a parallel factor of 20.
+
+From testing, I've found that Order 50 will take over 65 CPU years with current code.
+The problem is that the permutations of the base sequence are not being parallelized, and whereas this was negligible before,
+I've calculated that it will take, on a single core, around 3 days to complete the permutation loop.
+This implies that Order 50 with a parallel factor of 8000 will use 65 CPU years.

@@ -13,7 +13,7 @@ void printvec(std::vector<int> vec) {
 
 int main() {
 
-    std::array<int, 30> vec = {-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3};
+    std::array<int, 50> vec = {-1, -1, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
 
     printf("%d\n", vec.size());
 
@@ -22,6 +22,9 @@ int main() {
     clock_t start = clock();
 
     while(std::next_permutation(vec.begin(), vec.end())) {
+        if(count % 1000000000 == 0) {
+            printf("count: %llu, %d\n", count, (clock() - start) / CLOCKS_PER_SEC);
+        }
         count++;
     }
 
