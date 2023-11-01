@@ -312,7 +312,7 @@ benchmark the uncompression of the 72 3-uncompression code
 
 keep in mind that in current code, the 3-uncompression count variable will be roughly the same across each process, while for 6-uncompressions the count is the count of their own search space segment.
 
-72 3-uncompression code finished successfully in 90 seconds.
+72 3-uncompression code finished successfully in 90 seconds (parallel factor of 40).
 
 72 6-uncompression code is projected to finish in 7 days with a parallel factor of 20.
 
