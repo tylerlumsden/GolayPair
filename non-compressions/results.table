@@ -1,4 +1,6 @@
 Order CandidatesA CandidatesB    Pairs Classes Matching   Total
+   26         289        1722      102     19s       0s     19s
+   26         289        1722      102     64s       0s     64s
    26         289        1722      102      8s       0s      8s
    26         289        1722      102      8s       0s      8s
    16          14          41       21      1s       0s      1s
