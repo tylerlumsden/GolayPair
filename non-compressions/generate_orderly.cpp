@@ -71,11 +71,20 @@ int main(int argc, char ** argv) {
         }
 
         //calculate starting and ending sequence
-        long long total = calculateBinomialCoefficient(ORDER - 1, negcount);
-        
-        int k = rank;
-
-        array<int, ORDER> seq = getPermutationK(k, baseseq);
+        long long total = calculateBinomialCoefficient(ORDER - 1, negcount - 1);
+        printf("%d, total: %lld\n", flag, total);
+        long long division = total / numproc;
+        long long index = rank * division;
+        long long endindex = (rank + 1) * division; 
+        array<int, ORDER> seq = getPermutationK(index, baseseq);
+        array<int, ORDER> endseq = getPermutationK(endindex, baseseq);
+    if(rank == 1) {
+        printArray(seq);
+        printf("\n");
+        printArray(endseq);
+        printf("\n");
+    }
+    array<int, ORDER> test = {-1, 1, -1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, 1, 1, 1, -1, 1, -1, 1, -1 , -1, 1, 1, 1, 1};
 
         printf("Generating Classes %d\n", flag);
 
@@ -86,7 +95,6 @@ int main(int argc, char ** argv) {
                 out = dft(seq, in, out, plan);  
                 if(dftfilter(out, ORDER)) {
                     if(generateClass(seq, flag)) {
-
                         if(flag == 0) {
                                 
                             for(int i = 0; i < ORDER / 2; i++) {
@@ -110,9 +118,9 @@ int main(int argc, char ** argv) {
                     }
             }
             count++;
-            k = k + numproc;
-            seq = getPermutationK(k, baseseq);
-        } while(k < total);
+        } while(seq != endseq && next_permutation(seq.begin(), seq.end()));
+
+        printf("%llu\n", count);
 
 
         fftw_free(in);
