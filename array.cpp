@@ -189,3 +189,63 @@ int nextCombinationB(std::array<int, ORDER>& seq) {
 
     return 1;
 }
+
+	/**
+* @brief Calculates the binomial coefficient C(n, k) using dynamic programming.
+*
+* @param n The total number of items.
+* @param k The number of items to be chosen.
+* @return long long The value of C(n, k).
+*/
+long long calculateBinomialCoefficient(int n, int k) {
+    // Create a 2D array to store the intermediate results.
+    long long dp[n + 1][k + 1];
+ 
+    // Fill the base cases.
+    for (int i = 0; i <= n; i++) {
+        for (int j = 0; j <= std::min(i, k); j++) {
+            if (j == 0 || j == i) {
+                dp[i][j] = 1;
+            } else {
+                dp[i][j] = dp[i - 1][j - 1] + dp[i - 1][j];
+            }
+        }
+    }
+ 
+    // Return the calculated binomial coefficient.
+    return dp[n][k];
+}
+
+//Assumes that k is within the bounds of the permutation count
+//Assumes that seq is a sorted sequence consisting of {-1, 1}
+array<int, ORDER> getPermutationK(int k, vector<int> seq) {
+
+    array<int, ORDER> finalseq;
+    finalseq[0] = -1;
+
+    seq.erase(seq.begin());
+
+    for(int i = 1; i < ORDER; i++) {
+        int count = 0;
+
+        for(unsigned int i = 1; i < seq.size() - 1; i++) {
+            if(seq[i] == -1) {
+                count++;
+            }
+        }
+
+        long long binomial = calculateBinomialCoefficient(seq.size() - 1, count);
+
+        if(k > binomial) {
+            finalseq[i] = *(seq.end() - 1);
+            k = k - binomial;
+
+            seq.erase(seq.end() - 1);
+        } else {
+            finalseq[i] = *seq.begin();
+
+            seq.erase(seq.begin());
+        }
+    }
+    return finalseq;
+}   

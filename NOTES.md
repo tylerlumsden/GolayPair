@@ -312,7 +312,7 @@ benchmark the uncompression of the 72 3-uncompression code
 
 keep in mind that in current code, the 3-uncompression count variable will be roughly the same across each process, while for 6-uncompressions the count is the count of their own search space segment.
 
-72 3-uncompression code finished successfully in 90 seconds (parallel factor of 40).
+72 3-uncompression code finished successfully in 90 seconds with a parallel factor of 40.
 
 72 6-uncompression code is projected to finish in 7 days with a parallel factor of 20.
 
@@ -320,3 +320,42 @@ From testing, I've found that Order 50 will take over 65 CPU years with current 
 The problem is that the permutations of the base sequence are not being parallelized, and whereas this was negligible before,
 I've calculated that it will take, on a single core, around 3 days to complete the permutation loop.
 This implies that Order 50 with a parallel factor of 8000 will use 65 CPU years.
+
+November 1
+------------
+legendre pairs of length 0 mod 5, length 87?
+- 2000 3-uncompressions
+- each uncompression was maybe a day
+and periodic golay pairs of length 72
+
+-mention that the post processing is trivial (with scripts), negligible compared to the time to produce the output
+
+see how long the pg72 will take after a day of runtime
+
+mention orderly generation for getting the uncompression time down
+
+copy the funding available table
+
+computational expertise, copy the table and add in combinatorial expertise
+(we have computed complex golay, williamson sequences)
+
+mention order 50 progress
+
+select graham (or cedar, higher job limit)
+
+perhaps suggest a higher job limit
+
+mention the exact speedup time when using orderly generation to generate the compressed sequences
+
+ask for 250 CPU years (justify why that specific number)
+
+
+- figure out how to separate the search space evenly
+
+50 {0, 10}
+
+0 can be divided evenly
+
+1000 processes ==>
+
+every permutation of the first 10 elements in the alphabet of {1, -1} as our parallel process factors

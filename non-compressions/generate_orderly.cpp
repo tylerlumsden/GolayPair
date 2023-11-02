@@ -26,7 +26,12 @@ double norm(fftw_complex dft) {
 
 void printArray(array<int, ORDER> seq) {
     for(unsigned int i = 0; i < seq.size(); i++) {
-        printf("%d ", seq[i]);
+        if(seq[i] == 1) {
+            printf("+");
+        }
+        if(seq[i] == -1) {
+            printf("-");
+        }
     }
 }
 
@@ -35,15 +40,6 @@ int main(int argc, char ** argv) {
     int flag = stoi(argv[1]);
     int rank = stoi(argv[2]);
     int numproc = stoi(argv[3]);
-
-    array<int, ORDER> seq;
-
-    if(flag == 0) {
-        seq = seqA;
-    }
-    if(flag == 1) {
-        seq = seqB;
-    }
 
     printf("Process Number: %d, Total Processes: %d\n", rank, numproc);
 
@@ -58,22 +54,42 @@ int main(int argc, char ** argv) {
 
         //write classes to file
         char fname[100];
-        sprintf(fname, "results/%d-filtered-%d-%d", LEN, flag, rank);
+        sprintf(fname, "results/%d-unique-filtered-%d-%d", ORDER, flag, rank);
         FILE * outa = fopen(fname, "w");
 
-        unsigned long long int count = 0;
+        set<array<int, ORDER>> classes;
+
+        vector<int> baseseq(ORDER);
+        int negcount = (ORDER - decomps[ORDER][0][flag]) / 2;
+        std::fill(baseseq.begin(), baseseq.end(), 1);
+
+        unsigned long long int count = rank;
+        int candidates = 0;
+
+        for(int i = 0; i < negcount; i++) {
+            baseseq[i] = -1;
+        }
+
+        //calculate starting and ending sequence
+        long long total = calculateBinomialCoefficient(ORDER - 1, negcount);
+        long long division = total / numproc;
+        long long index = rank * division;
+        long long endindex = (rank + 1) * division; 
+        array<int, ORDER> seq = getPermutationK(index, baseseq);
+        array<int, ORDER> endseq = getPermutationK(endindex, baseseq);
+
+        printArray(seq);
+        printf("\n");
+        printArray(endseq);
+        printf("\n");
+
 
         printf("Generating Classes %d\n", flag);
 
-        printf("%d Base sequence: ", flag);
-        printArray(seq);
-        printf("\n");
-
         do {
             if(count % 100000000 == 0) {
-                printf("%d | count: %llu, time elapsed: %lds\n", flag, count, (clock() - start) / CLOCKS_PER_SEC);
+                printf("%d | count: %llu, candidates: %d, time elapsed: %lds\n", flag, count, candidates, (clock() - start) / CLOCKS_PER_SEC);
             }
-            if((count % numproc) == rank) {
                 out = dft(seq, in, out, plan);  
                 if(dftfilter(out, ORDER)) {
                     if(generateClass(seq, flag)) {
@@ -92,17 +108,16 @@ int main(int argc, char ** argv) {
 
 
                             for(int i = 0; i < ORDER / 2; i++) {
-                                fprintf(outa, "%d",   LEN * 2 - (int)rint(norm(out[i])));
+                                fprintf(outa, "%d",   ORDER * 2 - (int)rint(norm(out[i])));
                             }
                             fprintf(outa, " ");
                             writeSeq(outa, seq);
                             fprintf(outa, "\n");
                         }
                     }
-                }
             }
             count++;
-        } while(next_permutation(seq.begin(), seq.end()));
+        } while(seq != endseq && next_permutation(seq.begin(), seq.end()));
 
 
         fftw_free(in);
