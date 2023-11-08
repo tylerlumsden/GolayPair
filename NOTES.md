@@ -359,3 +359,37 @@ ask for 250 CPU years (justify why that specific number)
 1000 processes ==>
 
 every permutation of the first 10 elements in the alphabet of {1, -1} as our parallel process factors
+
+November 3
+---------------
+72 6-uncompression still estimated to take around a week of real time with parallel factor of 20.
+
+mention fftw in dependencies, apparently compute canada already has fftw.
+
+linking my code not necessary, but I can.
+
+mention GNU sort, any code that I haven't written myself in the code pipeline section
+
+parallel approach -- splitting every uncompression into one individual job
+
+track details about the 3-uncompresson for 90, number of sequences in the 
+
+benchmark ilias's code with/without fftw to notice a speedup ()
+
+-- potential speedup: store all calculations in the fftw_complex data type rather than converting each time, could be negligible speedup though
+
+mention complex golay and williamson sequences in the management sections or others, cite that ilias and curtis co-authored them
+
+
+November 6, 2023
+------------------
+Define the PSD in terms of DFT's
+
+look at legendre pairs, how many sequences it took for them to find a solution, then scale that to our 250 CPU years
+
+outline the method of search stronger
+
+3-compressed pair, uncompress the a and b, and then match those results, describe how they are matched (psd's are equal), accomplished by 
+
+in this proposal' we will focus on 3-compressions because the uncompression time is significantly better than if the compression factor were larger
+(5-compression is about 330x larger for a typical sequence)

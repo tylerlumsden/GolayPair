@@ -84,14 +84,6 @@ std::array<int, 6> getPermutationK(int k, std::vector<int> seq) {
 int main() {
 
 
-
-    std::vector<int> guy = {-1, -1, -1, 1, 1, 1};
-
-    std::array<int, 6> seq = getPermutationK(7, guy);
-
-    printarray(seq);
-    /*
-
     std::vector<int> vec = {-1, -1, -1, 1, 1};
 
     printf("%d\n", vec.size());
@@ -105,14 +97,13 @@ int main() {
         if(count % 1000000000 == 0) {
             printf("count: %llu, %d\n", count, (clock() - start) / CLOCKS_PER_SEC);
         }
-        
+        */
 
        printvec(vec);
         count++;
     }
 
     printf("%lld, time: %f\n", count, float(clock() - start) / CLOCKS_PER_SEC);
-    */
 }
 
 //{-3, -3, -3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3}
