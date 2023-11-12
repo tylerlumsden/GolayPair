@@ -7,8 +7,8 @@
 #include<time.h>
 #include<string>
 #include<fstream>
-#include"../golay.h"
-#include "../equivalence.h"
+#include"../lib/golay.h"
+#include"../lib/equivalence.h"
 
 using namespace std;
 

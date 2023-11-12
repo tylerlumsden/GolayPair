@@ -5,11 +5,7 @@
 #include<set>
 #include<array>
 #include<time.h>
-#include"array.h"
-#include"decomps.h"
 #include"golay.h"
-#include"fourier.h"
-#include"equivalence.h"
 
 using namespace std;
 

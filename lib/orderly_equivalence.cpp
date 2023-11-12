@@ -4,7 +4,6 @@
 #include<vector>
 #include"golay.h"
 #include"coprimes.h"
-#include"decomps.h"
 #include<algorithm>
 #include<iostream>
 
@@ -14,7 +13,7 @@ int shift_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> base);
 int decimation_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> base);
 int reverse_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> base);
 
-int generateClass(array<int, ORDER> base, int flag) {
+int isOrderly(array<int, ORDER> base, int flag) {
     set<array<int, ORDER>> map;
     set<array<int, ORDER>> equiv;
 

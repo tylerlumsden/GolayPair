@@ -1,7 +1,7 @@
 #include"fftw-3.3.10/api/fftw3.h"
+#include"decomps.h"
 #include"golay.h"
 #include<array>
-#include"decomps.h"
 #include<math.h>
 
 

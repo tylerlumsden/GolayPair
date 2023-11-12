@@ -4,7 +4,6 @@
 #include<vector>
 #include"golay.h"
 #include"coprimes.h"
-#include"decomps.h"
 #include<algorithm>
 #include<iostream>
 
@@ -187,9 +186,6 @@ void decimation_equivalence(set<array<int, ORDER>>& map) {
         }
     }
 }
-
-
-
 
 
 

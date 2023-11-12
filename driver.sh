@@ -13,10 +13,10 @@ numproc=$2
 [ $numproc -eq $numproc 2>/dev/null ] || exit 1
 
 
-sed -i -E "s/#define ORDER [[:digit:]]+/#define ORDER $order/" ../golay.h
+sed -i -E "s/#define ORDER [[:digit:]]+/#define ORDER $order/" lib/golay.h
 #sed -i "1s/.*/#define LEN $order/" ../golay.h
 
-make all
+make ORDER="$order"
 
 echo Number of processes: $numproc
 
@@ -25,7 +25,7 @@ start=`date +%s`
 for ((i = 0; i<$numproc; i++))
 do  
     echo i: $i
-    ./generate_orderly 0 $i $numproc & ./generate_orderly 1 $i $numproc &
+    ./bin/generate_orderly 0 $i $numproc & ./bin/generate_orderly 1 $i $numproc &
 done
 
 wait
@@ -52,7 +52,7 @@ done
 sort results/$order-candidates-a | uniq > results/$order-candidates-a.sorted
 sort results/$order-candidates-b | uniq > results/$order-candidates-b.sorted
 
-./match_pairs
+./bin/match_pairs
 end=`date +%s`
 
 runtime2=$((end-start))
@@ -64,11 +64,11 @@ pairs=$(wc -l < results/$order-pairs-found)
 
 total=$((runtime1 + runtime2))
 
-python3 -u "print_timings_table.py" $order $candidatesA $candidatesB $pairs $runtime1 $runtime2 $total > results.table
+python3 -u "src/print_timings_table.py" $order $candidatesA $candidatesB $pairs $runtime1 $runtime2 $total > results.table
 
 
 start=`date +%s`
-./filter_equivalent
+./bin/filter_equivalent
 end=`date +%s`
 
 runtime3=$((end-start))

@@ -400,3 +400,11 @@ Refactor:
 - Have golay.h contain all of the includes for the header files, that way only one include is necessary.
 - have all of the header files use functions with templates so that arrays of variable length can be given (or even vectors and c arrays)
 - compile main search function with the order embedded to maintain previous philosophy
+
+November 12, 2023
+------------------------------------
+load balancing using the split search space approach is suboptimal when using orderly generation because 
+the lower sections are going to finish significantly slower, as the later sections will be found to not be candidates significantly faster.
+
+Interesting tidbit though, when I separate the search into thousands of threads, the splitting of the search space actually completes faster.
+Probably because when a core is split into threads of different search spaces, I'd imagine that it indirectly makes the splitting of the search space irregular.

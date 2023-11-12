@@ -5,14 +5,17 @@
 #include<set>
 #include<array>
 #include<time.h>
-#include"golay.h"
+#include"../lib/orderly_equivalence.h"
+#include"../lib/fftw-3.3.10/api/fftw3.h"
+#include"../lib/array.h"
+#include"../lib/decomps.h"
+#include"../lib/fourier.h"
 #include<tgmath.h>
 #include<algorithm>
 
 using namespace std;
 
 void writeSeq(FILE * out, array<int, ORDER> seq);
-int classIsGenerated(vector<set<array<int, ORDER>>>& classes, array<int, ORDER>& seq);
 
 
 double norm(fftw_complex dft) {
@@ -73,13 +76,8 @@ int main(int argc, char ** argv) {
         long long endindex = (rank + 1) * division; 
         array<int, ORDER> seq = getPermutationK(index, baseseq);
         array<int, ORDER> endseq = getPermutationK(endindex, baseseq);
-    if(rank == 1) {
-        printArray(seq);
-        printf("\n");
-        printArray(endseq);
-        printf("\n");
-    }
-    array<int, ORDER> test = {-1, 1, -1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, 1, 1, 1, -1, 1, -1, 1, -1 , -1, 1, 1, 1, 1};
+        
+    //array<int, ORDER> test = {-1, 1, -1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, 1, 1, 1, -1, 1, -1, 1, -1 , -1, 1, 1, 1, 1};
 
         printf("Generating Classes %d\n", flag);
 
@@ -89,7 +87,6 @@ int main(int argc, char ** argv) {
             }
                 out = dft(seq, in, out, plan);  
                 if(dftfilter(out, ORDER)) {
-                    if(generateClass(seq, flag)) {
                         if(flag == 0) {
                                 
                             for(int i = 0; i < ORDER / 2; i++) {
@@ -110,7 +107,6 @@ int main(int argc, char ** argv) {
                             writeSeq(outa, seq);
                             fprintf(outa, "\n");
                         }
-                    }
             }
             count++;
         } while(seq != endseq && next_permutation(seq.begin(), seq.end()));
