@@ -393,3 +393,10 @@ outline the method of search stronger
 
 in this proposal' we will focus on 3-compressions because the uncompression time is significantly better than if the compression factor were larger
 (5-compression is about 330x larger for a typical sequence)
+
+November 11, 2023
+------------------------
+Refactor: 
+- Have golay.h contain all of the includes for the header files, that way only one include is necessary.
+- have all of the header files use functions with templates so that arrays of variable length can be given (or even vectors and c arrays)
+- compile main search function with the order embedded to maintain previous philosophy

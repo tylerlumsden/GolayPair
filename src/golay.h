@@ -3,6 +3,12 @@
 #ifndef GOLAY_H
 #define GOLAY_H
 
+#include"../lib/array.h"
+#include"../lib/coprimes.h"
+#include"../lib/decomps.h"
+#include"../lib/fourier.h"
+#include"../lib/orderly_equivalence.h"
+#include"../lib/fftw-3.3.10/api/fftw3.h"
 #include<array>
 #include<string>
 
