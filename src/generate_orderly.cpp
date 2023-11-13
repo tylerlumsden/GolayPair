@@ -12,6 +12,9 @@
 #include"../lib/fourier.h"
 #include<tgmath.h>
 #include<algorithm>
+#include<string>
+#include<fstream>
+#include<iostream>
 
 using namespace std;
 
@@ -38,6 +41,34 @@ int main(int argc, char ** argv) {
     int flag = stoi(argv[1]);
     int rank = stoi(argv[2]);
     int numproc = stoi(argv[3]);
+    std::string filename = argv[4];
+    int linenumber = stoi(argv[5]);
+
+    std::string read;
+    std::ifstream seqfile("src/base/" + filename);
+
+    if(seqfile.fail()) {
+        std::cout << "Error: file does not exist: " + filename + "\n";
+        return 0;
+    }
+
+    for(int i = 1; i < linenumber && std::getline(seqfile, read) ; i++) {
+        seqfile >> read;
+    }
+
+    if(!seqfile.good()) {
+        printf("Error. Line number not found.\n");
+        return 0;
+    }
+
+    vector<int> baseseq;
+
+    for(int i = 0; seqfile.good() && i < ORDER; i++) {
+        seqfile >> read;
+        baseseq.push_back(stoi(read));
+    }
+
+    std::sort(baseseq.begin(), baseseq.end());
 
     printf("Process Number: %d, Total Processes: %d\n", rank, numproc);
 
@@ -52,30 +83,33 @@ int main(int argc, char ** argv) {
 
         //write classes to file
         char fname[100];
-        sprintf(fname, "results/%d-unique-filtered-%d-%d", ORDER, flag, rank);
+        sprintf(fname, "results/%d-unique-filtered-%d-%d-%d", ORDER, flag, rank, linenumber);
         FILE * outa = fopen(fname, "w");
 
-        set<array<int, ORDER>> classes;
-
-        vector<int> baseseq(ORDER);
         int negcount = (ORDER - decomps[ORDER][0][flag]) / 2;
-        std::fill(baseseq.begin(), baseseq.end(), 1);
 
         unsigned long long int count = rank;
         int candidates = 0;
 
-        for(int i = 0; i < negcount; i++) {
-            baseseq[i] = -1;
-        }
+        array<int, ORDER> seq;
+        array<int, ORDER> endseq;
 
-        //calculate starting and ending sequence
-        long long total = calculateBinomialCoefficient(ORDER - 1, negcount - 1);
-        printf("%d, total: %lld\n", flag, total);
-        long long division = total / numproc;
-        long long index = rank * division;
-        long long endindex = (rank + 1) * division; 
-        array<int, ORDER> seq = getPermutationK(index, baseseq);
-        array<int, ORDER> endseq = getPermutationK(endindex, baseseq);
+        if(numproc == 1) {
+            for(unsigned int i = 0; i < baseseq.size(); i++) {
+                seq[i] = baseseq[i];
+            }
+            endseq = seq;
+            std::sort(endseq.rbegin(), endseq.rend());
+        } else {
+            //calculate starting and ending sequence
+            long long total = calculateBinomialCoefficient(ORDER - 1, negcount - 1);
+            printf("%d, total: %lld\n", flag, total);
+            long long division = total / numproc;
+            long long index = rank * division;
+            long long endindex = (rank + 1) * division; 
+            seq = getPermutationK(index, baseseq);
+            endseq = getPermutationK(endindex, baseseq);
+        }
         
     //array<int, ORDER> test = {-1, 1, -1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, 1, 1, 1, -1, 1, -1, 1, -1 , -1, 1, 1, 1, 1};
 
@@ -86,7 +120,8 @@ int main(int argc, char ** argv) {
                 printf("%d | count: %llu, candidates: %d, time elapsed: %lds\n", flag, count, candidates, (clock() - start) / CLOCKS_PER_SEC);
             }
                 out = dft(seq, in, out, plan);  
-                if(dftfilter(out, ORDER)) {
+                if(dftfilter(out, LEN, ORDER)) {
+                    if(isOrderly(seq, flag)) {
                         if(flag == 0) {
                                 
                             for(int i = 0; i < ORDER / 2; i++) {
@@ -101,17 +136,18 @@ int main(int argc, char ** argv) {
 
 
                             for(int i = 0; i < ORDER / 2; i++) {
-                                fprintf(outa, "%d",   ORDER * 2 - (int)rint(norm(out[i])));
+                                fprintf(outa, "%d",   LEN * 2 - (int)rint(norm(out[i])));
                             }
                             fprintf(outa, " ");
                             writeSeq(outa, seq);
                             fprintf(outa, "\n");
                         }
+                    }
             }
             count++;
         } while(seq != endseq && next_permutation(seq.begin(), seq.end()));
 
-        printf("%llu\n", count);
+        printf("Done: %d, %d\n", count, flag);
 
 
         fftw_free(in);

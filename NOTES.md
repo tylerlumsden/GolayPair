@@ -408,3 +408,8 @@ the lower sections are going to finish significantly slower, as the later sectio
 
 Interesting tidbit though, when I separate the search into thousands of threads, the splitting of the search space actually completes faster.
 Probably because when a core is split into threads of different search spaces, I'd imagine that it indirectly makes the splitting of the search space irregular.
+
+//a sequences, line 90:
+//30.8x10^12 permutations ==> 13 digits
+
+A: line 95 is generating a lot of candidates

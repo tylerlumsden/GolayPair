@@ -26,14 +26,14 @@ int floatEqual(float a, int b) {
     return 0;
 }
 
-int dftfilter(fftw_complex * seqdft, int len) {
+int dftfilter(fftw_complex * seqdft, int order, int len) {
     int j = len / 2;
     float complex = seqdft[j][0] * seqdft[j][0] + seqdft[j][1] * seqdft[j][1];
-    if(!floatEqual(complex, decomps[len][0][1] * decomps[len][0][1]) && !floatEqual(complex, decomps[len][0][0] * decomps[len][0][0]) ) {
+    if(!floatEqual(complex, decomps[order][0][1] * decomps[order][0][1]) && !floatEqual(complex, decomps[order][0][0] * decomps[order][0][0]) ) {
         return 0;
     }
     for(int i = 1; i <= len / 2; i++) {
-        if((seqdft[i][0] * seqdft[i][0] + seqdft[i][1] * seqdft[i][1]) > len * 2 + 0.001) {
+        if((seqdft[i][0] * seqdft[i][0] + seqdft[i][1] * seqdft[i][1]) > order * 2 + 0.001) {
             return 0;
         }
     }

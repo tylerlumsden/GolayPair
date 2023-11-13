@@ -22,7 +22,7 @@ $(BIN)match_pairs: $(SRC)match_pairs.cpp $(DIR)golay.h $(BIN)golay.o
 	$(CC) -Wall -g $(SRC)match_pairs.cpp $(BIN)golay.o -o $(BIN)match_pairs
 
 $(BIN)generate_orderly: $(SRC)generate_orderly.cpp $(DIR)golay.h $(BIN)array.o $(BIN)fourier.o $(BIN)orderly_equivalence.o
-	$(CC) -Wall -g -O3 $(SRC)generate_orderly.cpp $(BIN)orderly_equivalence.o $(BIN)array.o $(BIN)fourier.o -o $(BIN)generate_orderly -fopenmp -Llib/fftw-3.3.10 -l:libfftw3.a -l:libfftw3_omp.a -lm -DORDER=$(ORDER)
+	$(CC) -Wall -g -O3 $(SRC)generate_orderly.cpp $(BIN)orderly_equivalence.o $(BIN)array.o $(BIN)fourier.o -o $(BIN)generate_orderly -fopenmp -Llib/fftw-3.3.10 -l:libfftw3.a -l:libfftw3_omp.a -lm -DORDER=$(ORDER) -DLEN=$(LEN)
 
 $(BIN)filter_equivalent: $(SRC)filter_equivalent.cpp $(DIR)golay.h $(BIN)equivalence.o
 	$(CC) -Wall -g -O3 $(SRC)filter_equivalent.cpp $(BIN)equivalence.o -o $(BIN)filter_equivalent
