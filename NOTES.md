@@ -92,7 +92,7 @@ bel     (ssh -Y ikotsire@beluga.calculcanada.ca)
 scp $1 ikotsire@niagara.computecanada.ca:$1
 bash cuw pg.tar
 where cuw is an 1-line bash script
-
+aa
 https://docs.alliancecan.ca/wiki/Niagara
 https://docs.alliancecan.ca/wiki/Running_jobs
 
@@ -409,7 +409,80 @@ the lower sections are going to finish significantly slower, as the later sectio
 Interesting tidbit though, when I separate the search into thousands of threads, the splitting of the search space actually completes faster.
 Probably because when a core is split into threads of different search spaces, I'd imagine that it indirectly makes the splitting of the search space irregular.
 
-//a sequences, line 90:
-//30.8x10^12 permutations ==> 13 digits
+//a sequences, line 90: //30.8x10^12 permutations ==> 13 digits
 
 A: line 95 is generating a lot of candidates
+
+- talk about partitioning the search set for orderly generation
+- talk about the FFTW results
+- talk about the existence of integer partition algorithms
+- talk about the course
+
+
+November 13, 2023
+----------------------
+
+begin implementing compressions with older raw searches to compute 50 exhaustively.
+good repo in the mathcheck repo: williamson sequences for compression examples.
+
+Lingering problem: computing the equivalence class of the end pairs.
+
+
+IDEA for compression: Get the alphabet somehow, generate all possible combinations of that alphabet into a length of n, use only those which have the correct rowsum.
+
+FIXED DUMB PROBLEM WHERE DECIMATION WASNT PROPERLY COMPUTED BECAUSE #define LEN ORDER / COMPRESS CAUSES ORDER OF OPERATIONS TO BE BUGGY WHEN COMPUTING INDEXES
+
+72 6-compression generation test found the candidate compression noted in the overleaf document.
+-6 0 0 0 0 0 6 0 0 0 0 0  0 0 0 0 0 6 0 0 0 0 0 6 is the exact sequence
+
+check_if_pair nukes very many pairs found in the candidate generation. In particular, the previously mentioned 72 6-compression candidate is nuked
+
+^fixed, was cause to due LEN issue
+
+generate the {-1, 1} partition of each element of the alphabet
+
+November 19, 2023
+------------------------
+For meeting:
+worked on uncompression code, doesnt seem to work (unknown if this is due to the compression generation or the uncompression generation).
+Order 26 seems to not generate any a sequences when compressed by 2; this could be a clue as to why the entire pipeline doesnt seem to work correctly.
+
+Interesting results on the 90 3-compression generation submitted a few days ago, the A sequences seem to be almost finished. It is at least 2/3 of the way complete, and
+it can be safely stopped after the first digit changes to a -1, as every permutation on will trivially be a shift of some permutation starting with -3.
+
+The B sequences are unknown, I couldn't manage to load the results file within vscode because it is so large; The progress is likely to be different, however.
+
+ORDER 26 A-Candidate: -1 -1 -1 -1 1 1 -1 -1 1 1 1 -1 1        -1 1 -1 1 1 -1 1 1 -1 1 1 1 1 
+
+
+
+2-compressed form: -2 0 -2 0 2 0 0 0 0 2 2 0 2
+
+IDEA: Since when we search all permutations that start with a certain letter, we can finish the search (as every permutation onwards is trivially a shift of some compression we already found), can't we abuse this fact to make the search space only a sequence with the smallest letter count as the first index? This creates a much smaller search space.
+
+
+Order 8: 0, 4
+
+particular combination for rowsum 4:
+
+permutations:
+
+-2, 2, 2, 2
+
+2, -2, 2, 2
+
+2, 2, -2, 2
+
+2, 2, 2, -2
+
+As is shown, the sequences starting with -2 are significantly less than the ones starting with 2. As well, they are trivially a shift of each other.
+
+
+-1 1 -1 1 -1 -1 -1 -1 1 -1 1 -1 1 -1 1 -1 
+
+6 1, 10 -1's
+
+
+
+
+

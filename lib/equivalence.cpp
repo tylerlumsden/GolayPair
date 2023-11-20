@@ -9,12 +9,12 @@
 
 using namespace std;
 
-void shift_equivalence(set<array<int,ORDER>>& map);
-void negative_equivalence(set<array<int,ORDER>>& map);
-void altnegative_equivalence(set<array<int,ORDER>>& map);
-void unishift_equivalence(set<array<int,ORDER>>& map, array<int,ORDER> seq);
-void decimation_equivalence(set<array<int, ORDER>>& map);
-void reverse_equivalence(set<array<int, ORDER>>& map);
+void shift_equivalence(set<array<int,LEN>>& map);
+void negative_equivalence(set<array<int,LEN>>& map);
+void altnegative_equivalence(set<array<int,LEN>>& map);
+void unishift_equivalence(set<array<int,LEN>>& map, array<int,LEN> seq);
+void decimation_equivalence(set<array<int, LEN>>& map);
+void reverse_equivalence(set<array<int, LEN>>& map);
 void shift_pair(set<GolayPair>& map);
 void decimate_pair(set<GolayPair>& map);
 void reverse_pair(set<GolayPair>& map);
@@ -43,8 +43,8 @@ set<GolayPair> generateClassPairs(GolayPair seq) {
     return map;
 }
 
-vector<array<int, ORDER>> generateClass(array<int, ORDER> seq, int flag) {
-    set<array<int, ORDER>> map;
+vector<array<int, LEN>> generateClass(array<int, LEN> seq, int flag) {
+    set<array<int, LEN>> map;
 
     unsigned int size = 0;
 
@@ -61,9 +61,9 @@ vector<array<int, ORDER>> generateClass(array<int, ORDER> seq, int flag) {
         reverse_equivalence(map);
     }
 
-    vector<array<int, ORDER>> out;
+    vector<array<int, LEN>> out;
 
-    for(array<int, ORDER> seq : map) {
+    for(array<int, LEN> seq : map) {
         out.push_back(seq);
     }
 
@@ -72,7 +72,7 @@ vector<array<int, ORDER>> generateClass(array<int, ORDER> seq, int flag) {
 
 void swap_pair(set<GolayPair>& map) {
     for(GolayPair seq : map) {
-        array<int, ORDER> temp = seq.a;
+        array<int, LEN> temp = seq.a;
         seq.a = seq.b;
         seq.b = temp;
 
@@ -83,15 +83,15 @@ void swap_pair(set<GolayPair>& map) {
 
 void shift_pair(set<GolayPair>& map) {
     for(GolayPair seq: map) {
-        for(unsigned int j = 0; j < ORDER; j++) {
+        for(unsigned int j = 0; j < LEN; j++) {
             rotate(seq.b.begin(), seq.b.begin() + 1, seq.b.end());
             map.insert(seq);
         }
     }
 }
 
-void shift_equivalence(set<array<int, ORDER>>& map) {
-    for(array<int, ORDER> seq: map) {
+void shift_equivalence(set<array<int, LEN>>& map) {
+    for(array<int, LEN> seq: map) {
         for(unsigned int i = 0; i < seq.size(); i++) {
             rotate(seq.begin(), seq.begin() + 1, seq.end());
             map.insert(seq);
@@ -108,8 +108,8 @@ void reverse_pair(set<GolayPair>& map) {
     }
 }
 
-void reverse_equivalence(set<array<int, ORDER>>& map) {
-    for(array<int, ORDER> seq: map) { 
+void reverse_equivalence(set<array<int, LEN>>& map) {
+    for(array<int, LEN> seq: map) { 
         reverse(seq.begin(), seq.end());
 
         map.insert(seq);
@@ -125,8 +125,8 @@ void negate_pair(set<GolayPair>& map) {
     }
 }
 
-void negative_equivalence(set<array<int, ORDER>>& map) {
-    for(array<int, ORDER> seq : map) {
+void negative_equivalence(set<array<int, LEN>>& map) {
+    for(array<int, LEN> seq : map) {
         for(unsigned int i = 0; i < seq.size(); i++) {
             seq[i] = -seq[i];
         }
@@ -146,8 +146,8 @@ void altnegative_pair(set<GolayPair>& map) {
     }
 }
 
-void altnegative_equivalence(set<array<int, ORDER>>& map) {
-    for(array<int, ORDER> seq : map) {
+void altnegative_equivalence(set<array<int, LEN>>& map) {
+    for(array<int, LEN> seq : map) {
         for(unsigned int i = 0; i < seq.size(); i++) {
             if(i % 2 == 1) { 
                 seq[i] = -seq[i];
@@ -157,30 +157,30 @@ void altnegative_equivalence(set<array<int, ORDER>>& map) {
     }
 }
 
-array<int, ORDER> permute(array<int, ORDER>& seq, int coprime) {
-    array<int, ORDER> newseq;
-    for(int i = 0; i < ORDER; i++) {
-        newseq[i] = seq[i * coprime % ORDER];
+array<int, LEN> permute(array<int, LEN>& seq, int coprime) {
+    array<int, LEN> newseq;
+    for(int i = 0; i < LEN; i++) {
+        newseq[i] = seq[i * coprime % LEN];
     }
     return newseq;
 }
 
 void decimate_pair(set<GolayPair>& map) {
     for(GolayPair seq : map) {
-        for(int i = 0; i < coprimelength[ORDER]; i++) {
+        for(int i = 0; i < coprimelength[LEN]; i++) {
             GolayPair newseq;
-            newseq.a = permute(seq.a, coprimelist[ORDER][i]);
-            newseq.b = permute(seq.b, coprimelist[ORDER][i]);
+            newseq.a = permute(seq.a, coprimelist[LEN][i]);
+            newseq.b = permute(seq.b, coprimelist[LEN][i]);
 
             map.insert(newseq);
         }
     }
 }
 
-void decimation_equivalence(set<array<int, ORDER>>& map) {
-    for(array<int, ORDER> seq : map) {
-        for(int i = 0; i < coprimelength[ORDER]; i++) {
-            array<int, ORDER> newseq = permute(seq, coprimelist[ORDER][i]);
+void decimation_equivalence(set<array<int, LEN>>& map) {
+    for(array<int, LEN> seq : map) {
+        for(int i = 0; i < coprimelength[LEN]; i++) {
+            array<int, LEN> newseq = permute(seq, coprimelist[LEN][i]);
 
             map.insert(newseq);
         }

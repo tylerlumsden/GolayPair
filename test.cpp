@@ -3,7 +3,8 @@
 #include<vector>
 #include<array>
 #include<time.h>
-
+#include<set>
+#include"lib/orderly_equivalence.h"
 
 void printarray(std::array<int, 6> seq) {
     for(int i = 0; i < seq.size(); i++) {
@@ -81,29 +82,47 @@ std::array<int, 6> getPermutationK(int k, std::vector<int> seq) {
     return finalseq;
 }   
 
-int main() {
+std::vector<std::vector<int>> getCombinations(int len, std::set<int> alphabet) {
+    std::vector<std::vector<int>> combinations;
+    std::set<int> subalphabet = alphabet;
+    
+    int smallest;
 
-
-    std::vector<int> vec = {-1, -1, -1, 1, 1};
-
-    printf("%d\n", vec.size());
-
-    unsigned long long int count = 1;
-
-    clock_t start = clock();
-
-    while(std::next_permutation(vec.begin(), vec.end())) {
-        /*
-        if(count % 1000000000 == 0) {
-            printf("count: %llu, %d\n", count, (clock() - start) / CLOCKS_PER_SEC);
+    if(len == 1) {
+        for(int letter : alphabet) {
+            std::vector<int> part;
+            part.push_back(letter);
+            combinations.push_back(part);
         }
-        */
-
-       printvec(vec);
-        count++;
+        return combinations;
     }
 
-    printf("%lld, time: %f\n", count, float(clock() - start) / CLOCKS_PER_SEC);
+    for(int letter : alphabet) {
+        std::vector<std::vector<int>> part;
+        smallest = *std::min_element(subalphabet.begin(), subalphabet.end());
+
+        std::vector<std::vector<int>> result = getCombinations(len - 1, subalphabet);
+        part.insert(part.end(), result.begin(), result.end());
+
+        for(std::vector<int>& combo : part) {
+            combo.insert(combo.begin(), letter);
+        }
+
+        combinations.insert(combinations.end(), part.begin(), part.end());
+
+        subalphabet.erase(letter);
+    }
+
+    return combinations;
+} 
+
+int main() {
+
+    std::array<int, 12> seq = {-5, 3, -1, 3, 5, 1, 3, 3, -3, -1, 1, 3};
+
+    printf("%d\n", isOrderly(seq, 0));
+
+
 }
 
 //{-3, -3, -3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3}

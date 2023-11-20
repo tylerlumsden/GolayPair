@@ -5,4 +5,4 @@
 
 using namespace std;
 
-int isOrderly(array<int, ORDER> base, int flag);
+int isOrderly(array<int, LEN> base, int flag);

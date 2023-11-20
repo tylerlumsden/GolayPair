@@ -29,21 +29,21 @@ int main() {
         sprintf(fname, "results/%d-candidates-b.sorted", ORDER);
         std::ifstream fileb(fname);
 
-        array<int, ORDER> seqa;
-        array<int, ORDER> seqb;
+        array<int, LEN> seqa;
+        array<int, LEN> seqb;
 
-        vector<array<int, ORDER>> matchA;
-        vector<array<int, ORDER>> matchB;
+        vector<array<int, LEN>> matchA;
+        vector<array<int, LEN>> matchB;
 
         filea >> a;
         fileb >> b;
 
-        for(int i = 0; i < ORDER; i++) {
+        for(int i = 0; i < LEN; i++) {
             filea >> arrayA;
             seqa[i] = stoi(arrayA);
         }
 
-        for(int i = 0; i < ORDER; i++) {
+        for(int i = 0; i < LEN; i++) {
             fileb >> arrayB;
             seqb[i] = stoi(arrayB);
         }
@@ -63,7 +63,7 @@ int main() {
                         matchA.push_back(seqa);
                         filea.ignore(std::numeric_limits<streamsize>::max(), '\n');
                         filea >> a;
-                        for(int i = 0; i < ORDER; i++) {
+                        for(int i = 0; i < LEN; i++) {
                             filea >> arrayA;
                             seqa[i] = stoi(arrayA);
                         }
@@ -73,14 +73,14 @@ int main() {
                         matchB.push_back(seqb);
                         fileb.ignore(std::numeric_limits<streamsize>::max(), '\n');
                         fileb >> b;
-                        for(int i = 0; i < ORDER; i++) {
+                        for(int i = 0; i < LEN; i++) {
                             fileb >> arrayB;
                             seqb[i] = stoi(arrayB);
                         }
                     }
 
-                    for(array<int, ORDER> sequenceA : matchA) {
-                        for(array<int, ORDER> sequenceB : matchB) {
+                    for(array<int, LEN> sequenceA : matchA) {
+                        for(array<int, LEN> sequenceB : matchB) {
                             if(check_if_pair(sequenceA, sequenceB)) {
                                 write_seq(out, sequenceA);
                                 fprintf(out, " ");
@@ -98,7 +98,7 @@ int main() {
                 //go to next line
                 filea.ignore(std::numeric_limits<streamsize>::max(), '\n');
                 filea >> a;
-                for(int i = 0; i < ORDER; i++) {
+                for(int i = 0; i < LEN; i++) {
                     filea >> arrayA;
                     seqa[i] = stoi(arrayA);
                 }
@@ -108,7 +108,7 @@ int main() {
                 //go to next line
                 fileb.ignore(std::numeric_limits<streamsize>::max(), '\n');
                 fileb >> b;
-                for(int i = 0; i < ORDER; i++) {
+                for(int i = 0; i < LEN; i++) {
                     fileb >> arrayB;
                     seqb[i] = stoi(arrayB);
                 }

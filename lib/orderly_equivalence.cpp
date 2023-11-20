@@ -9,13 +9,13 @@
 
 using namespace std;
 
-int shift_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> base);
-int decimation_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> base);
-int reverse_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> base);
+int shift_equivalence(set<array<int, LEN>>& map, array<int, LEN> base);
+int decimation_equivalence(set<array<int, LEN>>& map, array<int, LEN> base);
+int reverse_equivalence(set<array<int, LEN>>& map, array<int, LEN> base);
 
-int isOrderly(array<int, ORDER> base, int flag) {
-    set<array<int, ORDER>> map;
-    set<array<int, ORDER>> equiv;
+int isOrderly(array<int, LEN> base, int flag) {
+    set<array<int, LEN>> map;
+    set<array<int, LEN>> equiv;
 
 
     unsigned int size = 0;
@@ -44,8 +44,8 @@ int isOrderly(array<int, ORDER> base, int flag) {
     return 1;
 }
 
-int shift_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> base) {
-    for(array<int, ORDER> seq: map) {
+int shift_equivalence(set<array<int, LEN>>& map, array<int, LEN> base) {
+    for(array<int, LEN> seq: map) {
         for(unsigned int i = 0; i < seq.size(); i++) {
             rotate(seq.begin(), seq.begin() + 1, seq.end());
 
@@ -59,8 +59,8 @@ int shift_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> base) {
     return 1;
 }
 
-int reverse_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> base) {
-    for(array<int, ORDER> seq: map) { 
+int reverse_equivalence(set<array<int, LEN>>& map, array<int, LEN> base) {
+    for(array<int, LEN> seq: map) { 
         reverse(seq.begin(), seq.end());
 
         if(seq < base) {
@@ -72,18 +72,20 @@ int reverse_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> base) {
     return 1;
 }
 
-array<int, ORDER> permute(array<int, ORDER> seq, int coprime) {
-    array<int, ORDER> newseq;
-    for(int i = 0; i < ORDER; i++) {
-        newseq[i] = seq[i * coprime % ORDER];
+array<int, LEN> permute(array<int, LEN> seq, int coprime) {
+    array<int, LEN> newseq;
+    for(int i = 0; i < LEN; i++) {
+        newseq[i] = seq[(i * coprime) % (LEN)];
     }
     return newseq;
 }
 
-int decimation_equivalence(set<array<int, ORDER>>& map, array<int, ORDER> base) {
-    for(array<int, ORDER> seq : map) {
-        for(int i = 0; i < coprimelength[ORDER]; i++) {
-            array<int, ORDER> newseq = permute(seq, coprimelist[ORDER][i]);
+int decimation_equivalence(set<array<int, LEN>>& map, array<int, LEN> base) {
+
+    for(array<int, LEN> seq : map) {
+        for(int i = 0; i < coprimelength[LEN]; i++) {
+
+            array<int, LEN> newseq = permute(seq, coprimelist[LEN][i]);
 
             if(newseq < base) {
                 return 0;

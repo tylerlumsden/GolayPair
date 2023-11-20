@@ -1,11 +1,13 @@
 #include<stdio.h>
 #include<array>
 #include<algorithm>
+#include<set>
+#include<vector>
 #include"golay.h"
 
 using namespace std;
 
-int NextCombinationRowSums(array<int, ORDER>& arr, int length, int* currentSum) {
+int NextCombinationRowSums(array<int, LEN>& arr, int length, int* currentSum) {
         if((*currentSum) > length || (*currentSum) < -length) {
             printf("Error. currentSum out of bounds: %d\n", *currentSum);
             return 0;
@@ -98,10 +100,10 @@ int nextRowSums(array<int, 8>& seq, int start, int rowsum) {
 }
 
 //assumes that there are 7 +/- 3's and 23 +/- 1's in the sequence, the smallest is the sequence with only negative values.
-int nextCombinationA(std::array<int, ORDER>& seq) {
+int nextCombinationA(std::array<int, LEN>& seq) {
     int countThree = 0;
     int countOne = 0;
-    for(int i = 0; i < ORDER; i++) {
+    for(int i = 0; i < LEN; i++) {
         if(seq[i] == 3) {
             countThree++;
         }
@@ -115,13 +117,13 @@ int nextCombinationA(std::array<int, ORDER>& seq) {
     } 
     
     else if(countOne == 23) {
-        for(int i = 0; i < ORDER; i++) {
+        for(int i = 0; i < LEN; i++) {
             if(seq[i] == 1) {
                 seq[i] = -1;
             }
         }
 
-        for(int i = 0; i < ORDER; i++) {
+        for(int i = 0; i < LEN; i++) {
             if(seq[i] == -3) {
                 seq[i] = 3;
                 break;
@@ -131,7 +133,7 @@ int nextCombinationA(std::array<int, ORDER>& seq) {
     
 
     else {
-        for(int i = 0; i < ORDER; i++) {
+        for(int i = 0; i < LEN; i++) {
             if(seq[i] == -1) {
                 seq[i] = 1;
                 break;
@@ -144,10 +146,10 @@ int nextCombinationA(std::array<int, ORDER>& seq) {
     return 1;
 }
 
-int nextCombinationB(std::array<int, ORDER>& seq) {
+int nextCombinationB(std::array<int, LEN>& seq) {
     int countThree = 0;
     int countOne = 0;
-    for(int i = 0; i < ORDER; i++) {
+    for(int i = 0; i < LEN; i++) {
         if(seq[i] == 3) {
             countThree++;
         }
@@ -161,13 +163,13 @@ int nextCombinationB(std::array<int, ORDER>& seq) {
     } 
     
     else if(countOne == 22) {
-        for(int i = 0; i < ORDER; i++) {
+        for(int i = 0; i < LEN; i++) {
             if(seq[i] == 1) {
                 seq[i] = -1;
             }
         }
 
-        for(int i = 0; i < ORDER; i++) {
+        for(int i = 0; i < LEN; i++) {
             if(seq[i] == -3) {
                 seq[i] = 3;
                 break;
@@ -177,7 +179,7 @@ int nextCombinationB(std::array<int, ORDER>& seq) {
     
 
     else {
-        for(int i = 0; i < ORDER; i++) {
+        for(int i = 0; i < LEN; i++) {
             if(seq[i] == -1) {
                 seq[i] = 1;
                 break;
@@ -218,14 +220,14 @@ long long calculateBinomialCoefficient(int n, int k) {
 
 //Assumes that k is within the bounds of the permutation count
 //Assumes that seq is a sorted sequence consisting of {-1, 1}
-array<int, ORDER> getPermutationK(int k, vector<int> seq) {
+array<int, LEN> getPermutationK(int k, vector<int> seq) {
 
-    array<int, ORDER> finalseq;
+    array<int, LEN> finalseq;
     finalseq[0] = -1;
 
     seq.erase(seq.begin());
 
-    for(int i = 1; i < ORDER; i++) {
+    for(int i = 1; i < LEN; i++) {
         int count = 0;
 
         for(unsigned int i = 1; i < seq.size() - 1; i++) {
@@ -249,3 +251,34 @@ array<int, ORDER> getPermutationK(int k, vector<int> seq) {
     }
     return finalseq;
 }   
+
+std::vector<std::vector<int>> getCombinations(int len, std::set<int> alphabet) {
+    std::vector<std::vector<int>> combinations;
+    std::set<int> subalphabet = alphabet;
+
+    if(len == 1) {
+        for(int letter : alphabet) {
+            std::vector<int> part;
+            part.push_back(letter);
+            combinations.push_back(part);
+        }
+        return combinations;
+    }
+
+    for(int letter : alphabet) {
+        std::vector<std::vector<int>> part;
+
+        std::vector<std::vector<int>> result = getCombinations(len - 1, subalphabet);
+        part.insert(part.end(), result.begin(), result.end());
+
+        for(std::vector<int>& combo : part) {
+            combo.insert(combo.begin(), letter);
+        }
+
+        combinations.insert(combinations.end(), part.begin(), part.end());
+
+        subalphabet.erase(letter);
+    }
+
+    return combinations;
+} 

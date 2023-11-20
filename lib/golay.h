@@ -1,4 +1,6 @@
-#define ORDER 26
+#define ORDER 16
+#define COMPRESS 1
+#define LEN ORDER / COMPRESS
 
 #ifndef GOLAY_H
 #define GOLAY_H
@@ -10,8 +12,8 @@ using namespace std;
 
 class GolayPair {
     public:
-        array<int, ORDER> a;
-        array<int, ORDER> b;
+        array<int, LEN> a;
+        array<int, LEN> b;
         
         bool operator<(const GolayPair& golay) const {
             if(a == golay.a) {
@@ -85,9 +87,9 @@ namespace std
 
 
 
-void write_seq(FILE * out, array<int, ORDER> seq);
+void write_seq(FILE * out, array<int, LEN> seq);
 void write_unique_seq(FILE * out, int rowsum, int flag);
-int check_if_pair(array<int, ORDER> a, array<int, ORDER> b);
-void fill_from_string(array<int, ORDER>& seq, char str[]);
+int check_if_pair(array<int, LEN> a, array<int, LEN> b);
+void fill_from_string(array<int, LEN>& seq, char str[]);
 
 #endif

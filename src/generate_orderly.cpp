@@ -12,142 +12,135 @@
 #include"../lib/fourier.h"
 #include<tgmath.h>
 #include<algorithm>
-#include<string>
-#include<fstream>
-#include<iostream>
+
+#define LEN ORDER / COMPRESS
 
 using namespace std;
 
-void writeSeq(FILE * out, array<int, ORDER> seq);
+void writeSeq(FILE * out, array<int, LEN> seq);
 
 
 double norm(fftw_complex dft) {
     return dft[0] * dft[0] + dft[1] * dft[1];
 }
 
-void printArray(array<int, ORDER> seq) {
+void printArray(array<int, LEN> seq) {
     for(unsigned int i = 0; i < seq.size(); i++) {
-        if(seq[i] == 1) {
-            printf("+");
-        }
-        if(seq[i] == -1) {
-            printf("-");
-        }
+        printf("%d ", seq[i]);
     }
+    printf("\n");
 }
 
 int main(int argc, char ** argv) {
 
     int flag = stoi(argv[1]);
-    int rank = stoi(argv[2]);
-    int numproc = stoi(argv[3]);
-    std::string filename = argv[4];
-    int linenumber = stoi(argv[5]);
-
-    std::string read;
-    std::ifstream seqfile("src/base/" + filename);
-
-    if(seqfile.fail()) {
-        std::cout << "Error: file does not exist: " + filename + "\n";
-        return 0;
-    }
-
-    for(int i = 1; i < linenumber && std::getline(seqfile, read) ; i++) {
-        seqfile >> read;
-    }
-
-    if(!seqfile.good()) {
-        printf("Error. Line number not found.\n");
-        return 0;
-    }
-
-    vector<int> baseseq;
-
-    for(int i = 0; seqfile.good() && i < ORDER; i++) {
-        seqfile >> read;
-        baseseq.push_back(stoi(read));
-    }
-
-    std::sort(baseseq.begin(), baseseq.end());
-
-    printf("Process Number: %d, Total Processes: %d\n", rank, numproc);
 
     fftw_complex *in, *out;
     fftw_plan plan;
 
-    in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * ORDER);
-    out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * ORDER);
-    plan = fftw_plan_dft_1d(ORDER, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+    in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * LEN);
+    out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * LEN);
+    plan = fftw_plan_dft_1d(LEN, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
     clock_t start = clock();
 
         //write classes to file
         char fname[100];
-        sprintf(fname, "results/%d-unique-filtered-%d-%d-%d", ORDER, flag, rank, linenumber);
+        sprintf(fname, "results/%d-unique-filtered-%d", ORDER, flag);
         FILE * outa = fopen(fname, "w");
 
-        int negcount = (ORDER - decomps[ORDER][0][flag]) / 2;
-
-        unsigned long long int count = rank;
+        unsigned long long int count = 0;
         int candidates = 0;
 
-        array<int, ORDER> seq;
-        array<int, ORDER> endseq;
-
-        if(numproc == 1) {
-            for(unsigned int i = 0; i < baseseq.size(); i++) {
-                seq[i] = baseseq[i];
+        std::set<int> alphabet;
+ 
+        if(COMPRESS % 2 == 0) {
+            for(int i = 0; i <= COMPRESS; i += 2) {
+                alphabet.insert(i);
+                alphabet.insert(-i);
             }
-            endseq = seq;
-            std::sort(endseq.rbegin(), endseq.rend());
         } else {
-            //calculate starting and ending sequence
-            long long total = calculateBinomialCoefficient(ORDER - 1, negcount - 1);
-            printf("%d, total: %lld\n", flag, total);
-            long long division = total / numproc;
-            long long index = rank * division;
-            long long endindex = (rank + 1) * division; 
-            seq = getPermutationK(index, baseseq);
-            endseq = getPermutationK(endindex, baseseq);
+            for(int i = 1; i <= COMPRESS; i += 2) {
+                alphabet.insert(i);
+                alphabet.insert(-i);
+            }
         }
+
+        std::vector<std::vector<int>> combinations = getCombinations(LEN, alphabet);
+        std::vector<std::vector<int>> rowcombo;
+
+        for(std::vector<int> seq : combinations) {
+            int sum = 0;
+            for(int i = 0; i < LEN; i++) {
+                sum += seq[i];
+            }
+            if(sum == decomps[ORDER][0][flag]) {
+                rowcombo.push_back(seq);
+            }
+        }  
+
+        printf("%lu candidate combinations found for sum %d\n", rowcombo.size(), decomps[ORDER][0][flag]);
         
-    //array<int, ORDER> test = {-1, 1, -1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, 1, 1, 1, -1, 1, -1, 1, -1 , -1, 1, 1, 1, 1};
+
+        /*
+        //calculate starting and ending sequence
+        long long total = calculateBinomialCoefficient(LEN - 1, negcount - 1);
+        printf("%d, total: %lld\n", flag, total);
+        long long division = total / numproc;
+        long long index = rank * division;
+        long long endindex = (rank + 1) * division; 
+        array<int, LEN> seq = getPermutationK(index, baseseq);
+        array<int, LEN> endseq = getPermutationK(endindex, baseseq);
+        */
+        
+    //array<int, LEN> test = {-1, 1, -1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, 1, 1, 1, -1, 1, -1, 1, -1 , -1, 1, 1, 1, 1};
 
         printf("Generating Classes %d\n", flag);
-
-        do {
-            if(count % 100000000 == 0) {
-                printf("%d | count: %llu, candidates: %d, time elapsed: %lds\n", flag, count, candidates, (clock() - start) / CLOCKS_PER_SEC);
+        for(std::vector<int> base : rowcombo) {
+            array<int, LEN> seq;
+            for(int i = 0; i < LEN; i++) {
+                seq[i] = base[i];
             }
-                out = dft(seq, in, out, plan);  
-                if(dftfilter(out, LEN, ORDER)) {
-                    if(isOrderly(seq, flag)) {
-                        if(flag == 0) {
-                                
-                            for(int i = 0; i < ORDER / 2; i++) {
-                                fprintf(outa, "%d",    (int)rint(norm(out[i])));
+
+            std::sort(seq.begin(), seq.end());
+
+            do {
+
+
+                if(count % 100000000 == 0) {
+                    printf("%d | count: %llu, candidates: %d, time elapsed: %lds\n", flag, count, candidates, (clock() - start) / CLOCKS_PER_SEC);
+                }
+                    out = dft(seq, in, out, plan);
+
+                    if(dftfilter(out, LEN)) {
+                        if(isOrderly(seq, flag)) {
+
+                            if(flag == 0) {
+                                for(int i = 0; i < LEN / 2; i++) {
+                                    fprintf(outa, "%d",    (int)rint(norm(out[i])));
+                                }
+                                fprintf(outa, " ");
+                                writeSeq(outa, seq);
+                                fprintf(outa, "\n");
                             }
-                            fprintf(outa, " ");
-                            writeSeq(outa, seq);
-                            fprintf(outa, "\n");
-                        }
 
-                        if(flag == 1) {
+                            if(flag == 1) {
 
 
-                            for(int i = 0; i < ORDER / 2; i++) {
-                                fprintf(outa, "%d",   LEN * 2 - (int)rint(norm(out[i])));
+                                for(int i = 0; i < LEN / 2; i++) {
+                                    fprintf(outa, "%d",   ORDER * 2 - (int)rint(norm(out[i])));
+                                }
+                                fprintf(outa, " ");
+                                writeSeq(outa, seq);
+                                fprintf(outa, "\n");
                             }
-                            fprintf(outa, " ");
-                            writeSeq(outa, seq);
-                            fprintf(outa, "\n");
                         }
-                    }
-            }
-            count++;
-        } while(seq != endseq && next_permutation(seq.begin(), seq.end()));
+                }
+                count++;
+            } while(next_permutation(seq.begin(), seq.end()));
+        }
 
-        printf("Done: %d, %d\n", count, flag);
+        printf("%llu\n", count);
 
 
         fftw_free(in);
@@ -158,14 +151,14 @@ int main(int argc, char ** argv) {
     
 }
 
-void writeSeq(FILE * out, array<int, ORDER> seq) {
+void writeSeq(FILE * out, array<int, LEN> seq) {
     for(unsigned int i = 0; i < seq.size(); i++) {
         fprintf(out, "%d ", seq[i]);
     }
 }
 
-int classIsGenerated(vector<set<array<int, ORDER>>>& classes, array<int, ORDER>& seq) {
-    for(set<array<int, ORDER>> map : classes) {
+int classIsGenerated(vector<set<array<int, LEN>>>& classes, array<int, LEN>& seq) {
+    for(set<array<int, LEN>> map : classes) {
         if(map.find(seq) != map.end()) {
             return 1;
         }
