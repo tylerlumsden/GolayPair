@@ -9,9 +9,6 @@
 order=$1
 len=$2
 numproc=$3
-file=$4
-line=$5
-flag=$6
 
 
 [ $order -eq $order 2>/dev/null ] || exit 1
