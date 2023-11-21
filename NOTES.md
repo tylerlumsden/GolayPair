@@ -482,6 +482,11 @@ As is shown, the sequences starting with -2 are significantly less than the ones
 
 6 1, 10 -1's
 
+November 20, 2023
+------------------------
+72 6-compression generation: 131 seconds
+
+
 
 
 

@@ -66,8 +66,6 @@ pairs=$(wc -l < results/$order-pairs-found)
 
 total=$((runtime1 + runtime2))
 
-python3 -u "src/print_timings_table.py" $order $candidatesA $candidatesB $pairs $runtime1 $runtime2 $total > results.table
-
 
 #start=`date +%s`
 #./bin/filter_equivalent
@@ -77,8 +75,13 @@ python3 -u "src/print_timings_table.py" $order $candidatesA $candidatesB $pairs 
 
 #echo $runtime3 seconds
 
+runtime3=0
+uncompressedpairs=0
+
 if  [ $compress -gt 1 ]
 then
+
+    start=`date +%s`
 
     echo Uncompressing
 
@@ -93,14 +96,26 @@ then
         ./bin/uncompression $i
     done
 
+    end=`date +%s`
+    runtime3=$((end-start))
+    echo $runtime3 seconds
+
     sed -i -E "s/#define COMPRESS [[:digit:]]+/#define COMPRESS 1/" lib/golay.h
     make ORDER="$order" COMPRESS="1"
 
     sort results/$order-unique-filtered-0 | uniq > results/$order-candidates-a.sorted
     sort results/$order-unique-filtered-1 | uniq > results/$order-candidates-b.sorted
 
+    total=$((runtime1 + runtime2 + runtime3))
+
     ./match.sh $order
 
+    uncompressedpairs=$(wc -l < results/$order-pairs-found)
+
 fi
+
+python3 -u "src/print_timings_table.py" $order $compress $candidatesA $candidatesB $pairs $runtime1 $uncompressedpairs $runtime3 $total > results.table
+
+
 
 ./bin/filter_equivalent

@@ -50,7 +50,6 @@ int main(int argc, char ** argv) {
         FILE * outa = fopen(fname, "w");
 
         unsigned long long int count = 0;
-        int candidates = 0;
 
         std::set<int> alphabet;
  
@@ -95,12 +94,17 @@ int main(int argc, char ** argv) {
         
     //array<int, LEN> test = {-1, 1, -1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, 1, 1, 1, -1, 1, -1, 1, -1 , -1, 1, 1, 1, 1};
 
+        int numpartition = 0;
+
         printf("Generating Classes %d\n", flag);
         for(std::vector<int> base : rowcombo) {
+            numpartition++;
+            printf("%d | partition: %d\n", flag, numpartition);
+
             array<int, LEN> seq;
             for(int i = 0; i < LEN; i++) {
                 seq[i] = base[i];
-            }
+            }   
 
             std::sort(seq.begin(), seq.end());
 
@@ -108,7 +112,7 @@ int main(int argc, char ** argv) {
 
 
                 if(count % 100000000 == 0) {
-                    printf("%d | count: %llu, candidates: %d, time elapsed: %lds\n", flag, count, candidates, (clock() - start) / CLOCKS_PER_SEC);
+                    printf("%d | count: %llu, time elapsed: %lds\n", flag, count, (clock() - start) / CLOCKS_PER_SEC);
                 }
                     out = dft(seq, in, out, plan);
 
