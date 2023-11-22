@@ -1,5 +1,5 @@
-#define ORDER 50
-#define COMPRESS 2
+#define ORDER 18
+#define COMPRESS 1
 #define LEN ORDER / COMPRESS
 
 #ifndef GOLAY_H
