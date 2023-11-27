@@ -489,6 +489,46 @@ November 20, 2023
 50-unique-filtered-0: 53.43MB, 1:02PM
 
 
+November 25, 2023
+------------------------
+
+
+set all
+
+size = set.size
+
+set.insert base
+
+set new = all
+
+
+while(set.size != size)
+
+iter = equivalence(new)
+
+new = iter
+
+all.insert iter
+
+November 27, 2023
+-----------------------
+- New optimization
+- Permission to enroll in computational math
+
+- Generate sequences by prefix, use orderly generation on these prefixes; Should be a lot faster, can remove huge sections of a search space
+- reducing pairs of circulatant matrices to graph
+- construct hadamard matrix from pairs, reduce hadamard matrix to graph, run graph isomorphism on the new graph
+
+- algebraic graph theory, GTM, incidence graph, cited in ovals paper
+
+- run equivalence check on the list of 3-compressed sequences
+
+- send email to margaret for permission to enroll, CC bright
+
+
+ 
+
+
 
 
 

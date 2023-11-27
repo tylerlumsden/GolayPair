@@ -68,7 +68,7 @@ set<GolayPair> generateClassPairs(GolayPair seq) {
         map.insert(iter.begin(), iter.end());
         newmap = iter;
 
-        printf("%d\n", newmap.size());
+        printf("%d, %d\n", newmap.size(), map.size());
     }
 
     return map;

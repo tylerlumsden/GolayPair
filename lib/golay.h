@@ -1,4 +1,4 @@
-#define ORDER 18
+#define ORDER 32
 #define COMPRESS 1
 #define LEN ORDER / COMPRESS
 
