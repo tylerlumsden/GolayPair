@@ -39,23 +39,24 @@ set<GolayPair> generateClassPairs(GolayPair seq) {
 
         set<GolayPair> temp;
 
+        
         temp = shift_pair(newmap);
         iter.insert(temp.begin(), temp.end());
         newmap.insert(iter.begin(), iter.end());
-
+        /**
         temp = altnegative_pair(newmap);
         iter.insert(temp.begin(), temp.end());
         newmap.insert(iter.begin(), iter.end());
-
+        */
         temp = reverse_pair(newmap);
         iter.insert(temp.begin(), temp.end());
         newmap.insert(iter.begin(), iter.end());
 
-        temp = decimate_pair(newmap);
+        temp = swap_pair(newmap);
         iter.insert(temp.begin(), temp.end());
         newmap.insert(iter.begin(), iter.end());
 
-        temp = swap_pair(newmap);
+        temp = decimate_pair(newmap);
         iter.insert(temp.begin(), temp.end());
         newmap.insert(iter.begin(), iter.end());
 
@@ -200,7 +201,7 @@ void altnegative_equivalence(set<array<int, LEN>>& map) {
 array<int, LEN> permute(array<int, LEN>& seq, int coprime) {
     array<int, LEN> newseq;
     for(int i = 0; i < LEN; i++) {
-        newseq[i] = seq[i * coprime % LEN];
+        newseq[i] = seq[i * coprime % (LEN)];
     }
     return newseq;
 }
@@ -228,6 +229,3 @@ void decimation_equivalence(set<array<int, LEN>>& map) {
         }
     }
 }
-
-
-

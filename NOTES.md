@@ -525,6 +525,35 @@ November 27, 2023
 
 - send email to margaret for permission to enroll, CC bright
 
+December 1, 2023
+--------------------
+
+Filtering given list of 2000 90 3-compression pairs up to equivalence:
+
+Equivalence with altnegative practically memory bombed my computer, one equivalence class used all 16gb of my ram, and it wasnt even enumerated fully.
+
+took a look at the PG90 2022 paper, it seems they omit altnegative when they filter out equivalent compression pairs. Could they have found the same result?
+
+Equivalence without altnegative is very quick. 115200 equivalent sequences in each set.
+
+Not a big deal, because altnegative should rarely filter extra sequences (yet to be shown for compressions)
+
+^^ this was wrong. Apparently, decimation is memory bombing my computer.
+
+^^ fixed. was due to LEN decomposition again. Too many incorrect decimations were being generated.
+
+
+-----
+About 1m40s for a single equivalence class to be generated for a 90 3-compression pair.
+
+lets say 2 minutes per equivalence class, then for a list of 2000 pairs that leaves an upper bound of (2000 * 2) / 60 = 66 hours to complete
+
+without altnegative, a single equivalence class seems to take a few seconds. The equivalence class is 8 times smaller, maybe 16.
+
+Could be why the croatians omitted it.
+
+Upper bound of 2 hours to equivalence check the list of 2000 given pairs without altnegative.
+
 
  
 

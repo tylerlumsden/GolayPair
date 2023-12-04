@@ -39,9 +39,16 @@ int main() {
     //match every seq a with seq b, generate an equivalence class for this sequence 
     
     set<GolayPair> classes;
+    set<GolayPair> sequences;
+    set<GolayPair> newset;
 
-    sprintf(fname, "results/%d-pairs-found", ORDER);
+    sprintf(fname, "obe90.PG.2000.txt");
     std::ifstream pairs(fname);
+
+    if(!pairs.good()) {
+        printf("Bad File.\n");
+        return 0;
+    }
 
     std::string a;
     std::string b;
@@ -60,22 +67,37 @@ int main() {
             seq.b[i] = stoi(b);
         }
 
-        if(classes.find(seq) == classes.end()) {
-            set<GolayPair> equiv = generateClassPairs(seq);
-
-            classes.insert(equiv.begin(), equiv.end());
-
-            for(int i = 0; i < LEN; i++) {
-                fprintf(out, "%d ", seq.a[i]);
-            }
-
-            fprintf(out, " ");
-
-            for(int i = 0; i < LEN; i++) {
-                fprintf(out, "%d ", seq.b[i]);
-            }
-
-            fprintf(out, "\n");
-        }
+        sequences.insert(seq);
     }
+
+    printf("%d sequences loaded.\n", sequences.size());
+
+    for(auto it = sequences.begin(); it != sequences.end();) {
+        set<GolayPair> classes = generateClassPairs(*it);
+        for(auto iter = std::next(it, 1); iter != sequences.end();) {
+            GolayPair current = *iter;
+            iter++;
+            if(classes.find(current) != classes.end()) {
+                sequences.erase(current);
+            }
+        }
+        it++;
+    }
+
+    printf("%d unique sequences found.\n", sequences.size());
+
+    for(GolayPair seq : sequences) {
+        for(int i = 0; i < LEN; i++) {
+            fprintf(out, "%d ", seq.a[i]);
+        }
+
+        fprintf(out, " ");
+
+        for(int i = 0; i < LEN; i++) {
+            fprintf(out, "%d ", seq.b[i]);
+        }
+
+        fprintf(out, "\n");
+    }
+
 }
