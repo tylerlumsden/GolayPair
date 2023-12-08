@@ -13,7 +13,7 @@
 #include<tgmath.h>
 #include<algorithm>
 
-#define LEN ORDER / COMPRESS
+#define LEN (ORDER / COMPRESS)
 
 using namespace std;
 

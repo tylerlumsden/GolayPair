@@ -585,6 +585,21 @@ One equivalence class (through the generators) takes ~3 seconds, there are 9301 
 
 Very doable!
 
+December 8, 2023
+-------------------------
+
+Fixed bug with Order 32 incorrectly removing equivalence class solutions, I read the altnegative section wrong in the PGP 2022 paper, you are supposed to apply altnegative pair-wise, not sequence wise.
+
+Now the generators construct half as many, so the total runtime of my equivalence filtering algorithm has been halved (Order 32 takes ~800 seconds now)
+
+So for the new estimate of order 40 filter, 7.75 hours / 2 = 3.8 hours
+
+Very doable.
+
+Note: All of my computed equivalence class counts (up to Order 34) line up with the PGP2022 paper.
+
+Considering that I tested with compression enabled, this implies that my compression pipeline is likely correct.
+
 
 
  

@@ -51,15 +51,16 @@ set<GolayPair> generateExhaust(GolayPair seq) {
         temp = reverse_pair(newmap);
         iter.insert(temp.begin(), temp.end());
         newmap.insert(iter.begin(), iter.end());
-
+        
         temp = swap_pair(newmap);
         iter.insert(temp.begin(), temp.end());
         newmap.insert(iter.begin(), iter.end());
-
+        
+        
         temp = decimate_pair(newmap);
         iter.insert(temp.begin(), temp.end());
         newmap.insert(iter.begin(), iter.end());
-
+        
         for(GolayPair seq : map) {
             if(iter.count(seq)) {
                 iter.erase(seq);
@@ -238,6 +239,7 @@ set<GolayPair> altnegative_pair(set<GolayPair>& map) {
         for(unsigned int i = 0; i < seq.b.size(); i++) {
             if(i % 2 == 1) { 
                 seq.b[i] = -seq.b[i];
+                seq.a[i] = -seq.a[i];
             }
         }
         newmap.insert(seq);
