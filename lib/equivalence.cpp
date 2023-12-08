@@ -22,8 +22,8 @@ set<GolayPair> altnegative_pair(set<GolayPair>& map);
 set<GolayPair> negate_pair(set<GolayPair>& map);
 set<GolayPair> swap_pair(set<GolayPair>& map);
 
-set<GolayPair> generateClassPairs(GolayPair seq) {
-    set<GolayPair> map;
+set<GolayPair> generateExhaust(GolayPair seq) {
+        set<GolayPair> map;
     set<GolayPair> newmap;
 
     unsigned int size = 0;
@@ -43,11 +43,11 @@ set<GolayPair> generateClassPairs(GolayPair seq) {
         temp = shift_pair(newmap);
         iter.insert(temp.begin(), temp.end());
         newmap.insert(iter.begin(), iter.end());
-        /**
+        
         temp = altnegative_pair(newmap);
         iter.insert(temp.begin(), temp.end());
         newmap.insert(iter.begin(), iter.end());
-        */
+        
         temp = reverse_pair(newmap);
         iter.insert(temp.begin(), temp.end());
         newmap.insert(iter.begin(), iter.end());
@@ -73,6 +73,64 @@ set<GolayPair> generateClassPairs(GolayPair seq) {
     }
 
     return map;
+}
+
+set<GolayPair> constructGenerators() {
+    GolayPair seq;
+
+    for(int i = 1; i <= LEN; i++) {
+        seq.a[i - 1] = i;
+        seq.b[i - 1] = (LEN) + i;
+    }
+
+    return generateExhaust(seq);
+} 
+
+set<GolayPair> generateClassPairs(set<GolayPair> generators, GolayPair seq) {
+
+    set<GolayPair> equiv;
+
+    for(GolayPair item : generators) {
+        GolayPair newseq;
+
+        
+
+        if((item.a[0] < 0 && -item.a[0] > (LEN)) || (item.a[0] > 0 && item.a[0] > (LEN))) {
+            for(int i = 0; i < LEN; i++) {
+                if(item.a[i] < 0) {
+                    newseq.b[i] = -seq.a[(-item.a[i] - 1) % (LEN)];
+                } else {
+                    newseq.b[i] = seq.a[(item.a[i] - 1) % (LEN)];
+                }
+
+                if(item.b[i] < 0) {
+                    newseq.a[i] = -seq.b[(-item.b[i] - 1) % (LEN)];
+                } else {
+                    newseq.a[i] = seq.b[(item.b[i] - 1) % (LEN)];
+                }
+            }
+        } else {
+            for(int i = 0; i < LEN; i++) {
+                if(item.a[i] < 0) {
+                    newseq.a[i] = -seq.a[(-item.a[i] - 1) % (LEN)];
+                } else {
+                    newseq.a[i] = seq.a[(item.a[i] - 1) % (LEN)];
+                }
+
+                if(item.b[i] < 0) {
+                    newseq.b[i] = -seq.b[(-item.b[i] - 1) % (LEN)];
+                } else {
+                    newseq.b[i] = seq.b[(item.b[i] - 1) % (LEN)];
+                }
+            }
+        }
+
+        equiv.insert(newseq);
+    }
+
+    printf("%d\n", equiv.size());
+
+    return equiv;
 }
 
 vector<array<int, LEN>> generateClass(array<int, LEN> seq, int flag) {

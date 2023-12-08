@@ -1,22 +1,25 @@
 from pynauty import *
 import math
 
+#vertex count needs to account for the number of coprimes. Only running on one coprime right now
 
+seq = [-1, -1, 1, 1, -1]
+seq2 = [1, -1, -1, 1, -1]
 
-seq = [-1, -1, 1, 1, 1, 1, 1, 1, 1, 1]
-seq2 = [1, -1, 1, 1, 1, 1, 1, 1, -1, 1]
 
 
 size = len(seq)
 n = len(seq) * len(seq)
 
-coprimes = []
+coprimes = [2]
 
-for num in range(0, size):
-    if math.gcd(num, n) == 1:
-        coprimes.append(num)
+#for num in range(0, size):
+    #if math.gcd(num, n) == 1:
+        #coprimes.append(num)
 
 print(coprimes)
+
+print("Generating graphs")
 
 g = Graph(n)
 g2 = Graph(n)
@@ -35,7 +38,6 @@ for i in range(0, size):
 
             if vertex != newvert:
                 connect[vertex].add(newvert)
-
 
 for item in connect[0]:
     print(item)
@@ -66,9 +68,13 @@ for i in range(0, n):
 
 g2.set_vertex_coloring([set(negones)])
 
+
 #print(g)
 #print(g2)
 #print(canon_label(g))
 #print(canon_label(g2))
+print(autgrp(g))
+
+print("testing isomorphism")
  
 print(isomorphic(g, g2))

@@ -7,6 +7,7 @@
 #include<time.h>
 #include<string>
 #include<fstream>
+#include<iostream>
 #include"../lib/golay.h"
 #include"../lib/equivalence.h"
 
@@ -42,7 +43,7 @@ int main() {
     set<GolayPair> sequences;
     set<GolayPair> newset;
 
-    sprintf(fname, "obe90.PG.2000.txt");
+    sprintf(fname, "results/%d-pairs-found", ORDER);
     std::ifstream pairs(fname);
 
     if(!pairs.good()) {
@@ -72,8 +73,14 @@ int main() {
 
     printf("%d sequences loaded.\n", sequences.size());
 
+    printf("Constructing Generators\n");
+
+    set<GolayPair> generators = constructGenerators();
+
+    printf("Generating Equivalences\n");
+
     for(auto it = sequences.begin(); it != sequences.end();) {
-        set<GolayPair> classes = generateClassPairs(*it);
+        set<GolayPair> classes = generateClassPairs(generators, *it);
         for(auto iter = std::next(it, 1); iter != sequences.end();) {
             GolayPair current = *iter;
             iter++;
