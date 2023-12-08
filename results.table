@@ -1,4 +1,5 @@
 Order Compress CandidatesA CandidatesB  Pairs Candidates UncompressedPairs Uncompression  Total
+   40        2       31510      112499  30203       325s            135992           86s   411s
    34        2        2053       20500    797        41s              2964            1s    42s
    16        2          12          15     19         0s               256            0s     0s
    32        2        1234        3523   2330         7s             37312            3s    10s
