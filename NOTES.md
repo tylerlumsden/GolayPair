@@ -600,7 +600,13 @@ Note: All of my computed equivalence class counts (up to Order 34) line up with 
 
 Considering that I tested with compression enabled, this implies that my compression pipeline is likely correct.
 
+Order 26 search takes ~10 seconds, while the end equivalence filter takes ~40 seconds.
 
+Ran equivalence filter on Order 40. Results do not line up with the PG2022 paper.
+Mine: 9281 unique pairs, 14732 seconds
+theirs: 9301 unique pairs
+
+Likely losing solutions somewhere. Should test with the pairs file generated without compression to compare to these results that were generated with compression.
 
  
 

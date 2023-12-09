@@ -79,8 +79,12 @@ int main() {
 
     printf("Generating Equivalences\n");
 
+    int count = 0;
+
     for(auto it = sequences.begin(); it != sequences.end();) {
         set<GolayPair> classes = generateClassPairs(generators, *it);
+        count++;
+        printf("%d classes generated\n", count);
         for(auto iter = std::next(it, 1); iter != sequences.end();) {
             GolayPair current = *iter;
             iter++;
