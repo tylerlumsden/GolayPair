@@ -608,6 +608,13 @@ theirs: 9301 unique pairs
 
 Likely losing solutions somewhere. Should test with the pairs file generated without compression to compare to these results that were generated with compression.
 
+December 10, 2023
+---------------------------
+Ran equivalence filter on the order 40 results that were generated without compression.
+Interesting tidbit: Towards the end of the list, the classes generated are pretty much unanimously of size 204800. The expected size is 819200.
+
+The results were the same as on pairs generated with compressoin, 9281 unique pairs found.
+
  
 
 

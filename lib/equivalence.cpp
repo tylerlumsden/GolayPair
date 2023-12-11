@@ -94,7 +94,6 @@ set<GolayPair> generateClassPairs(set<GolayPair> generators, GolayPair seq) {
     for(GolayPair item : generators) {
         GolayPair newseq;
 
-        
 
         if((item.a[0] < 0 && -item.a[0] > (LEN)) || (item.a[0] > 0 && item.a[0] > (LEN))) {
             for(int i = 0; i < LEN; i++) {
