@@ -6,7 +6,6 @@
 #include<iostream>
 #include<vector>
 #include<fstream>
-#include"../lib/decomps.h"
 #include"../lib/golay.h"
 #include<limits>
 

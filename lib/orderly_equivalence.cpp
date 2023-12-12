@@ -12,8 +12,19 @@ using namespace std;
 int shift_equivalence(set<array<int, LEN>>& map, array<int, LEN> base);
 int decimation_equivalence(set<array<int, LEN>>& map, array<int, LEN> base);
 int reverse_equivalence(set<array<int, LEN>>& map, array<int, LEN> base);
+set<array<int, LEN>> generateExhaust(array<int, LEN> base, int flag);
 
-int isOrderly(array<int, LEN> base, int flag) {
+set<array<int, LEN>> constructGenerators(int flag) {
+    array<int, LEN> seq;
+
+    for(int i = 1; i <= LEN; i++) {
+        seq[i - 1] = i;
+    }
+
+    return generateExhaust(seq, flag);
+} 
+
+set<array<int, LEN>> generateExhaust(array<int, LEN> base, int flag) {
     set<array<int, LEN>> map;
     set<array<int, LEN>> equiv;
 
@@ -26,21 +37,29 @@ int isOrderly(array<int, LEN> base, int flag) {
         size = map.size();
 
         if(flag == 0) {
-            if(!decimation_equivalence(map, base)) {
-                return 0;
-            }
+            decimation_equivalence(map, base);
         }
 
-        if(!shift_equivalence(map, base)) {
-            return 0;
-        }
-
+        shift_equivalence(map, base);
        
-        if(!reverse_equivalence(map, base)) {
+        reverse_equivalence(map, base);
+    }
+
+    return map;
+}
+
+int isOrderly(array<int, LEN> seq, set<array<int, LEN>> generators) {
+
+    array<int, LEN> newseq;
+
+    for(array<int, LEN> item : generators) {
+        for(int i = 0; i < LEN; i++) {
+            newseq[i] = seq[item[i] - 1];
+        }
+        if(seq < newseq) {
             return 0;
         }
     }
-
     return 1;
 }
 
@@ -48,10 +67,6 @@ int shift_equivalence(set<array<int, LEN>>& map, array<int, LEN> base) {
     for(array<int, LEN> seq: map) {
         for(unsigned int i = 0; i < seq.size(); i++) {
             rotate(seq.begin(), seq.begin() + 1, seq.end());
-
-            if(seq < base) {
-                return 0;
-            }
 
             map.insert(seq);
         }
@@ -62,10 +77,6 @@ int shift_equivalence(set<array<int, LEN>>& map, array<int, LEN> base) {
 int reverse_equivalence(set<array<int, LEN>>& map, array<int, LEN> base) {
     for(array<int, LEN> seq: map) { 
         reverse(seq.begin(), seq.end());
-
-        if(seq < base) {
-            return 0;
-        }
 
         map.insert(seq);
     }
@@ -87,9 +98,6 @@ int decimation_equivalence(set<array<int, LEN>>& map, array<int, LEN> base) {
 
             array<int, LEN> newseq = permute(seq, coprimelist[LEN][i]);
 
-            if(newseq < base) {
-                return 0;
-            }
             
             map.insert(newseq);
         }

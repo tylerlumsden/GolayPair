@@ -94,6 +94,8 @@ int main(int argc, char ** argv) {
         
     //array<int, LEN> test = {-1, 1, -1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, 1, 1, 1, -1, 1, -1, 1, -1 , -1, 1, 1, 1, 1};
 
+        set<array<int, LEN>> generators = constructGenerators(flag);
+
         int numpartition = 0;
 
         printf("Generating Classes %d\n", flag);
@@ -117,7 +119,7 @@ int main(int argc, char ** argv) {
                     out = dft(seq, in, out, plan);
 
                     if(dftfilter(out, LEN)) {
-                        if(isOrderly(seq, flag)) {
+                        if(isOrderly(seq, generators)) {
 
                             if(flag == 0) {
                                 for(int i = 0; i < LEN / 2; i++) {

@@ -615,6 +615,30 @@ Interesting tidbit: Towards the end of the list, the classes generated are prett
 
 The results were the same as on pairs generated with compressoin, 9281 unique pairs found.
 
+
+pair => e1(pair) e2(pair)...
+
+e1 union e2
+
+{1, 2, 3, 4 ... n}  {n + 1, n + 2, ... n + n}
+
+
+{1, 2, 3, 4} {5, 6, 7, 8}
+
+{2, 3, 4, 1} {5, 6, 7, 8}
+
+{-1, 1, 1, 1} {-1, 1, 1 ,1}
+
+{1, 1, 1, -1} {-1, 1, 1, 1}
+
+
+
+
+
+
+
+
+
  
 
 

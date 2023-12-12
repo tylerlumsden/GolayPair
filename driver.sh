@@ -116,12 +116,12 @@ fi
 
 python3 -u "src/print_timings_table.py" $order $compress $candidatesA $candidatesB $pairs $runtime1 $uncompressedpairs $runtime3 $total > results.table
 
-start=`date +%s`
+#start=`date +%s`
 
 
-./bin/filter_equivalent
+#./bin/filter_equivalent
 
-end=`date +%s`
+#end=`date +%s`
 
-runtime3=$((end-start))
-echo $runtime3 seconds
+#runtime3=$((end-start))
+#echo $runtime3 seconds
