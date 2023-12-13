@@ -56,7 +56,7 @@ int isOrderly(array<int, LEN> seq, set<array<int, LEN>> generators) {
         for(int i = 0; i < LEN; i++) {
             newseq[i] = seq[item[i] - 1];
         }
-        if(seq < newseq) {
+        if(newseq < seq) {
             return 0;
         }
     }
