@@ -3,12 +3,13 @@
 #include"golay.h"
 #include<array>
 #include<math.h>
+#include<vector>
 
 
 using namespace std;
 
 
-fftw_complex * dft(array<int, LEN> seq, fftw_complex * in, fftw_complex * out, fftw_plan p) {
+fftw_complex * dft(vector<int> seq, fftw_complex * in, fftw_complex * out, fftw_plan p) {
     for(int i = 0; i < LEN; i++) {
         in[i][0] = (double)seq[i];
         in[i][1] = 0;

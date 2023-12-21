@@ -8,14 +8,15 @@
 #include<iostream>
 
 using namespace std;
+ 
+int shift_equivalence(set<vector<int>>& map, vector<int> base);
+int decimation_equivalence(set<vector<int>>& map, vector<int> base);
+int reverse_equivalence(set<vector<int>>& map, vector<int> base);
+set<vector<int>> generateExhaust(vector<int> base, int flag);
 
-int shift_equivalence(set<array<int, LEN>>& map, array<int, LEN> base);
-int decimation_equivalence(set<array<int, LEN>>& map, array<int, LEN> base);
-int reverse_equivalence(set<array<int, LEN>>& map, array<int, LEN> base);
-set<array<int, LEN>> generateExhaust(array<int, LEN> base, int flag);
-
-set<array<int, LEN>> constructGenerators(int flag) {
-    array<int, LEN> seq;
+set<vector<int>> constructGenerators(int flag) {
+    vector<int> seq;
+    seq.resize(LEN);
 
     for(int i = 1; i <= LEN; i++) {
         seq[i - 1] = i;
@@ -24,9 +25,9 @@ set<array<int, LEN>> constructGenerators(int flag) {
     return generateExhaust(seq, flag);
 } 
 
-set<array<int, LEN>> generateExhaust(array<int, LEN> base, int flag) {
-    set<array<int, LEN>> map;
-    set<array<int, LEN>> equiv;
+set<vector<int>> generateExhaust(vector<int> base, int flag) {
+    set<vector<int>> map;
+    set<vector<int>> equiv;
 
 
     unsigned int size = 0;
@@ -48,11 +49,12 @@ set<array<int, LEN>> generateExhaust(array<int, LEN> base, int flag) {
     return map;
 }
 
-int isOrderly(array<int, LEN> seq, set<array<int, LEN>> generators) {
+int isOrderly(vector<int> seq, set<vector<int>> generators) {
 
-    array<int, LEN> newseq;
+    vector<int> newseq;
+    newseq.resize(LEN);
 
-    for(array<int, LEN> item : generators) {
+    for(vector<int> item : generators) {
         for(int i = 0; i < LEN; i++) {
             newseq[i] = seq[item[i] - 1];
         }
@@ -63,8 +65,8 @@ int isOrderly(array<int, LEN> seq, set<array<int, LEN>> generators) {
     return 1;
 }
 
-int shift_equivalence(set<array<int, LEN>>& map, array<int, LEN> base) {
-    for(array<int, LEN> seq: map) {
+int shift_equivalence(set<vector<int>>& map, vector<int> base) {
+    for(vector<int> seq: map) {
         for(unsigned int i = 0; i < seq.size(); i++) {
             rotate(seq.begin(), seq.begin() + 1, seq.end());
 
@@ -74,8 +76,8 @@ int shift_equivalence(set<array<int, LEN>>& map, array<int, LEN> base) {
     return 1;
 }
 
-int reverse_equivalence(set<array<int, LEN>>& map, array<int, LEN> base) {
-    for(array<int, LEN> seq: map) { 
+int reverse_equivalence(set<vector<int>>& map, vector<int> base) {
+    for(vector<int> seq: map) { 
         reverse(seq.begin(), seq.end());
 
         map.insert(seq);
@@ -83,20 +85,22 @@ int reverse_equivalence(set<array<int, LEN>>& map, array<int, LEN> base) {
     return 1;
 }
 
-array<int, LEN> permute(array<int, LEN> seq, int coprime) {
-    array<int, LEN> newseq;
+vector<int> permute(vector<int> seq, int coprime) {
+    vector<int> newseq;
+    newseq.resize(LEN);
     for(int i = 0; i < LEN; i++) {
         newseq[i] = seq[(i * coprime) % (LEN)];
     }
     return newseq;
 }
 
-int decimation_equivalence(set<array<int, LEN>>& map, array<int, LEN> base) {
-
-    for(array<int, LEN> seq : map) {
+int decimation_equivalence(set<vector<int>>& map, vector<int> base) {
+    for(vector<int> seq : map) {
         for(int i = 0; i < coprimelength[LEN]; i++) {
 
-            array<int, LEN> newseq = permute(seq, coprimelist[LEN][i]);
+            vector<int> newseq;
+            newseq.resize(LEN);  
+            newseq = permute(seq, coprimelist[LEN][i]);
 
             
             map.insert(newseq);

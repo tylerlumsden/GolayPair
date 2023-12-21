@@ -17,14 +17,14 @@
 
 using namespace std;
 
-void writeSeq(FILE * out, array<int, LEN> seq);
+void writeSeq(FILE * out, vector<int> seq);
 
 
 double norm(fftw_complex dft) {
     return dft[0] * dft[0] + dft[1] * dft[1];
 }
 
-void printArray(array<int, LEN> seq) {
+void printArray(vector<int> seq) {
     for(unsigned int i = 0; i < seq.size(); i++) {
         printf("%d ", seq[i]);
     }
@@ -78,8 +78,8 @@ int main(int argc, char ** argv) {
             }
         }  
 
+
         printf("%lu candidate combinations found for sum %d\n", rowcombo.size(), decomps[ORDER][0][flag]);
-        
 
         /*
         //calculate starting and ending sequence
@@ -88,14 +88,15 @@ int main(int argc, char ** argv) {
         long long division = total / numproc;
         long long index = rank * division;
         long long endindex = (rank + 1) * division; 
-        array<int, LEN> seq = getPermutationK(index, baseseq);
-        array<int, LEN> endseq = getPermutationK(endindex, baseseq);
+        vector<int> seq = getPermutationK(index, baseseq);
+        vector<int> endseq = getPermutationK(endindex, baseseq);
         */
         
-    //array<int, LEN> test = {-1, 1, -1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, 1, 1, 1, -1, 1, -1, 1, -1 , -1, 1, 1, 1, 1};
+    //vector<int> test = {-1, 1, -1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, 1, 1, 1, -1, 1, -1, 1, -1 , -1, 1, 1, 1, 1};
 
-        set<array<int, LEN>> generators = constructGenerators(flag);
+        set<vector<int>> generators = constructGenerators(flag);
 
+        printf("test\n");
         int numpartition = 0;
 
         printf("Generating Classes %d\n", flag);
@@ -103,7 +104,8 @@ int main(int argc, char ** argv) {
             numpartition++;
             printf("%d | partition: %d\n", flag, numpartition);
 
-            array<int, LEN> seq;
+            vector<int> seq;
+            seq.resize(LEN);
             for(int i = 0; i < LEN; i++) {
                 seq[i] = base[i];
             }   
@@ -157,14 +159,14 @@ int main(int argc, char ** argv) {
     
 }
 
-void writeSeq(FILE * out, array<int, LEN> seq) {
+void writeSeq(FILE * out, vector<int> seq) {
     for(unsigned int i = 0; i < seq.size(); i++) {
         fprintf(out, "%d ", seq[i]);
     }
 }
 
-int classIsGenerated(vector<set<array<int, LEN>>>& classes, array<int, LEN>& seq) {
-    for(set<array<int, LEN>> map : classes) {
+int classIsGenerated(vector<set<vector<int>>>& classes, vector<int>& seq) {
+    for(set<vector<int>> map : classes) {
         if(map.find(seq) != map.end()) {
             return 1;
         }
