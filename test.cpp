@@ -7,57 +7,100 @@
 #include"lib/orderly_equivalence.h"
 #include"lib/equivalence.h"
 #include"lib/golay.h"
+#include<ctime>
+#include<stack>
+
+template<class BidirIt>
+bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet) {
+    int min = *std::min_element(alphabet.begin(), alphabet.end());
+    int max = *std::max_element(alphabet.begin(), alphabet.end());
+
+    last = last - 1;
+
+    auto curr = last;
+
+    if(*curr != max) {
+
+        *curr = *curr + 2;
+        return true;
+
+    } else if(*curr == max) {
+
+        while(curr != first - 1) {
+            if(*curr != max) {
+                *curr = *curr + 2;
+                curr++;
+                while(curr != last + 1) {
+                    *curr = min;
+                    curr++;
+                }
+                return true;
+            }
+            curr--;
+        }
+        return false;
+        
+    }
+}
+
+bool searchTree(vector<int> seq, int num, int len) {
+    if(seq.size() == len) {
+        return true;
+    }
+
+    seq.push_back(num);
+
+    searchTree(seq, 1, len);
+    searchTree(seq, -1, len);
+
+    return false;
+}
+
+bool nextBranch(vector<int>& seq, int len) {
+
+        if(seq.size() == len) {
+            while(seq.size() != 0 && seq[seq.size() - 1] == 1) {
+                seq.pop_back();
+            }
+            if(seq.size() == 0) {
+                return false;
+            }
+            seq.pop_back();
+            seq.push_back(1);
+        } else {
+            seq.push_back(-1);
+        }
+    
+    return true;
+
+}
 
 int main() {
 
-    std::set<GolayPair> generators = constructGenerators();
 
-    GolayPair seq;
+    unsigned long long count = 0;
 
-    for(int i = 0; i < 15; i++) {
-        seq.a[i] = -1;
-        seq.b[i] = -1;
+    clock_t start = clock();
+
+    stack<int> stack;
+
+    vector<int> seq;
+
+    printf("%d\n", seq.size());
+
+
+    while(nextBranch(seq, 26)) {
+         if(seq.size() == 26) {
+            count++;
+         }
     }
 
-    for(int i = 15; i < 30; i++) {
-        seq.a[i] = 1;
-        seq.b[i] = 1;
-    }
+    printf("test\n");
 
-    printf("Generating test equivalence class.\n");
+    printf("Done %ld seconds, %llu\n", (clock() - start) / CLOCKS_PER_SEC, count);
 
-    std::set<GolayPair> equiv;
 
-    for(GolayPair item : generators) {
-        GolayPair newseq;
-
-        for(int i = 0; i < LEN; i++) {
-            printf("%d ", item.a[i]);
-        }
-        printf("\n");
-        for(int i = 0; i < LEN; i++) {
-            printf("%d ", item.b[i]);
-        }
-        printf("\n");
-
-        for(int i = 0; i < LEN; i++) {
-            if(item.a[i] < 0) {
-                newseq.a[i] = -seq.a[-item.a[i]];
-            } else {
-                newseq.a[i] = seq.a[item.a[i]];
-            }
-
-            if(item.b[i] < 0) {
-                newseq.b[i] = -seq.b[-item.b[i]];
-            } else {
-                newseq.b[i] = seq.b[item.b[i]];
-            }
-        }
-
-        equiv.insert(newseq);
-    }
-
-    printf("Done, size: %d\n", equiv.size());
+    return 0;
 }
 
 //{-3, -3, -3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3}

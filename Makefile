@@ -7,7 +7,7 @@ CC = g++
 all: bin/golay.o bin/fourier.o bin/orderly_equivalence.o bin/equivalence.o bin/array.o bin/generate_orderly bin/filter_equivalent bin/match_pairs bin/uncompression
 
 $(BIN)orderly_equivalence.o: $(DIR)orderly_equivalence.cpp $(DIR)golay.h $(DIR)coprimes.h
-	$(CC) -Wall -g -c $(DIR)orderly_equivalence.cpp -o $(BIN)orderly_equivalence.o	
+	$(CC) -Wall -g -c -O3 $(DIR)orderly_equivalence.cpp -o $(BIN)orderly_equivalence.o	
 
 $(BIN)array.o: $(DIR)array.cpp $(DIR)golay.h
 	$(CC) -Wall -g -c $(DIR)array.cpp -o $(BIN)array.o

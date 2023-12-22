@@ -31,6 +31,19 @@ void printArray(vector<int> seq) {
     printf("\n");
 }
 
+int rowsum(vector<int> seq) {
+    int sum = 0;
+    for(unsigned int i = 0; i < seq.size(); i++) {
+        sum = sum + seq[i];
+    }
+    return sum;
+}
+
+bool nextBranch(vector<int>& seq, unsigned int len);
+
+template<class BidirIt>
+bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet);
+
 int main(int argc, char ** argv) {
 
     int flag = stoi(argv[1]);
@@ -42,87 +55,41 @@ int main(int argc, char ** argv) {
     out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * LEN);
     plan = fftw_plan_dft_1d(LEN, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
-    clock_t start = clock();
+    //write classes to file
+    char fname[100];
+    sprintf(fname, "results/%d-unique-filtered-%d", ORDER, flag);
+    FILE * outa = fopen(fname, "w");
 
-        //write classes to file
-        char fname[100];
-        sprintf(fname, "results/%d-unique-filtered-%d", ORDER, flag);
-        FILE * outa = fopen(fname, "w");
+    unsigned long long int count = 0;
 
-        unsigned long long int count = 0;
-
-        std::set<int> alphabet;
+    std::set<int> alphabet;
  
-        if(COMPRESS % 2 == 0) {
-            for(int i = 0; i <= COMPRESS; i += 2) {
-                alphabet.insert(i);
-                alphabet.insert(-i);
-            }
-        } else {
-            for(int i = 1; i <= COMPRESS; i += 2) {
-                alphabet.insert(i);
-                alphabet.insert(-i);
-            }
+    if(COMPRESS % 2 == 0) {
+        for(int i = 0; i <= COMPRESS; i += 2) {
+            alphabet.insert(i);
+            alphabet.insert(-i);
+        }
+    } else {
+        for(int i = 1; i <= COMPRESS; i += 2) {
+            alphabet.insert(i);
+            alphabet.insert(-i);
+        }
+    }
+
+
+    set<vector<int>> partialsols;
+    vector<int> seq;
+
+    while(nextBranch(seq, LEN)) {
+        if(seq.size() != LEN && !isOrderly(seq)) {
+            nextBranch(seq, seq.size());
         }
 
-        std::vector<std::vector<int>> combinations = getCombinations(LEN, alphabet);
-        std::vector<std::vector<int>> rowcombo;
-
-        for(std::vector<int> seq : combinations) {
-            int sum = 0;
-            for(int i = 0; i < LEN; i++) {
-                sum += seq[i];
-            }
-            if(sum == decomps[ORDER][0][flag]) {
-                rowcombo.push_back(seq);
-            }
-        }  
-
-
-        printf("%lu candidate combinations found for sum %d\n", rowcombo.size(), decomps[ORDER][0][flag]);
-
-        /*
-        //calculate starting and ending sequence
-        long long total = calculateBinomialCoefficient(LEN - 1, negcount - 1);
-        printf("%d, total: %lld\n", flag, total);
-        long long division = total / numproc;
-        long long index = rank * division;
-        long long endindex = (rank + 1) * division; 
-        vector<int> seq = getPermutationK(index, baseseq);
-        vector<int> endseq = getPermutationK(endindex, baseseq);
-        */
-        
-    //vector<int> test = {-1, 1, -1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, 1, 1, 1, -1, 1, -1, 1, -1 , -1, 1, 1, 1, 1};
-
-        set<vector<int>> generators = constructGenerators(flag);
-
-        printf("test\n");
-        int numpartition = 0;
-
-        printf("Generating Classes %d\n", flag);
-        for(std::vector<int> base : rowcombo) {
-            numpartition++;
-            printf("%d | partition: %d\n", flag, numpartition);
-
-            vector<int> seq;
-            seq.resize(LEN);
-            for(int i = 0; i < LEN; i++) {
-                seq[i] = base[i];
-            }   
-
-            std::sort(seq.begin(), seq.end());
-
-            do {
-
-
-                if(count % 100000000 == 0) {
-                    printf("%d | count: %llu, time elapsed: %lds\n", flag, count, (clock() - start) / CLOCKS_PER_SEC);
-                }
-                    out = dft(seq, in, out, plan);
-
-                    if(dftfilter(out, LEN)) {
-                        if(isOrderly(seq, generators)) {
-
+        if(seq.size() == LEN) {
+            if(rowsum(seq) == decomps[ORDER][0][0] || rowsum(seq) == decomps[ORDER][0][1]) {
+            out = dft(seq, in, out, plan);
+            if(dftfilter(out, LEN)) {
+                            count++;
                             if(flag == 0) {
                                 for(int i = 0; i < LEN / 2; i++) {
                                     fprintf(outa, "%d",    (int)rint(norm(out[i])));
@@ -142,22 +109,80 @@ int main(int argc, char ** argv) {
                                 writeSeq(outa, seq);
                                 fprintf(outa, "\n");
                             }
-                        }
                 }
-                count++;
-            } while(next_permutation(seq.begin(), seq.end()));
+                }
         }
+    }
 
-        printf("%llu\n", count);
+    printf("%llu\n", count);
 
+    fftw_free(in);
+    fftw_free(out);
+    fftw_destroy_plan(plan);
 
-        fftw_free(in);
-        fftw_free(out);
-        fftw_destroy_plan(plan);
-
-        fclose(outa);
+    fclose(outa);
     
 }
+template<class BidirIt>
+bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet) {
+    int min = *std::min_element(alphabet.begin(), alphabet.end());
+    int max = *std::max_element(alphabet.begin(), alphabet.end());
+
+    last = last - 1;
+
+    auto curr = last;
+
+    if(*curr != max) {
+
+        *curr = *curr + 2;
+        return true;
+
+    } else if(*curr == max) {
+
+        while(curr != first - 1) {
+            if(*curr != max) {
+                *curr = *curr + 2;
+                curr++;
+                while(curr != last + 1) {
+                    *curr = min;
+                    curr++;
+                }
+                return true;
+            }
+            curr--;
+        }
+
+        curr++;
+        while(curr != last) {
+            *curr = min;
+        }
+        
+        return false;
+        
+    }
+
+    return false;
+}
+
+bool nextBranch(vector<int>& seq, unsigned int len) {
+
+        if(seq.size() == len) {
+            while(seq.size() != 0 && seq[seq.size() - 1] == 1) {
+                seq.pop_back();
+            }
+            if(seq.size() == 0) {
+                return false;
+            }
+            seq.pop_back();
+            seq.push_back(1);
+        } else {
+            seq.push_back(-1);
+        }
+    
+    return true;
+
+}
+
 
 void writeSeq(FILE * out, vector<int> seq) {
     for(unsigned int i = 0; i < seq.size(); i++) {

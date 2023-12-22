@@ -5,5 +5,4 @@
 
 using namespace std;
 
-int isOrderly(vector<int> base, set<vector<int>> generators);
-set<vector<int>> constructGenerators(int flag);
+int isOrderly(vector<int> base);

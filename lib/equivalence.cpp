@@ -70,7 +70,7 @@ set<GolayPair> generateExhaust(GolayPair seq) {
         map.insert(iter.begin(), iter.end());
         newmap = iter;
 
-        printf("%d, %d\n", newmap.size(), map.size());
+        printf("%lu, %lu\n", newmap.size(), map.size());
     }
 
     return map;
@@ -128,7 +128,7 @@ set<GolayPair> generateClassPairs(set<GolayPair> generators, GolayPair seq) {
         equiv.insert(newseq);
     }
 
-    printf("%d\n", equiv.size());
+    printf("%lu\n", equiv.size());
 
     return equiv;
 }

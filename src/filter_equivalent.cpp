@@ -71,7 +71,7 @@ int main() {
         sequences.insert(seq);
     }
 
-    printf("%d sequences loaded.\n", sequences.size());
+    printf("%lu sequences loaded.\n", sequences.size());
 
     printf("Constructing Generators\n");
 
@@ -95,7 +95,7 @@ int main() {
         it++;
     }
 
-    printf("%d unique sequences found.\n", sequences.size());
+    printf("%lu unique sequences found.\n", sequences.size());
 
     for(GolayPair seq : sequences) {
         for(int i = 0; i < LEN; i++) {
