@@ -112,13 +112,16 @@ int main(int argc, char ** argv) {
 
             std::sort(seq.begin(), seq.end());
 
+            int min = *min_element(seq.begin(), seq.end());
+
             do {
 
-                if(seq.front() == 1) {
+
+                if(seq.front() != min) {
                     break;
                 }
 
-                if(seq.back() == -1) {
+                if(seq.back() == min) {
                     continue;
                 }
                 if(count % 100000000 == 0) {
