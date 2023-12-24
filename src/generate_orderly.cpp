@@ -114,7 +114,13 @@ int main(int argc, char ** argv) {
 
             do {
 
+                if(seq.front() == 1) {
+                    break;
+                }
 
+                if(seq.back() == -1) {
+                    continue;
+                }
                 if(count % 100000000 == 0) {
                     printf("%d | count: %llu, time elapsed: %lds\n", flag, count, (clock() - start) / CLOCKS_PER_SEC);
                 }
