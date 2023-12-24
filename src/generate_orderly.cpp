@@ -81,7 +81,7 @@ int main(int argc, char ** argv) {
     vector<int> seq;
 
     while(nextBranch(seq, LEN)) {
-        if(seq.size() != LEN && !isOrderly(seq)) {
+        if(seq.size() != LEN && seq.size() < (LEN / 2) && !isOrderly(seq)) {
             nextBranch(seq, seq.size());
         }
 
