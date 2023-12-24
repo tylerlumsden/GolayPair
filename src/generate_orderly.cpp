@@ -85,7 +85,7 @@ int main(int argc, char ** argv) {
             nextBranch(seq, seq.size());
         }
 
-        if(seq.size() == LEN) {
+        if(seq.size() == LEN && seq.back() != -1) {
             if(rowsum(seq) == decomps[ORDER][0][0] || rowsum(seq) == decomps[ORDER][0][1]) {
             out = dft(seq, in, out, plan);
             if(dftfilter(out, LEN)) {
