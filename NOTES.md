@@ -639,7 +639,7 @@ Orderly seems to outpace partition method when considering uncompressed sequence
 
 34 
 partitions: ~267s
-orderly: ~?
+orderly: ~161s
 
 Interestingly enough, the partition method seems to outpace the orderly method when considering compressed sequences.
 This could be due to the overhead created when generating tail combinations?
