@@ -1,4 +1,6 @@
 Order,Compress,CandidatesA,CandidatesB,Pairs,Candidates,UncompressedPairs,Uncompression,Total
+34,2,2053,20500,797,3s,2964,1s,4s
+34,2,2053,20500,797,15s,2964,1s,16s
 26,1,289,1722,102,35s,0,0s,35s
 32,1,7588,53408,2752,61s,0,0s,61s
 32,1,7588,53408,2752,244s,0,0s,244s
