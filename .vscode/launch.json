@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": false,
-      "cwd": "/home/ounce/proj/GolayPairNew/GolayPair",
-      "program": "/home/ounce/proj/GolayPairNew/GolayPair/build/Debug/outDebug",
+      "cwd": "/home/ounce/proj/GPairOld/GolayPair",
+      "program": "/home/ounce/proj/GPairOld/GolayPair/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [

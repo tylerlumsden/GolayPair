@@ -631,6 +631,25 @@ e1 union e2
 
 {1, 1, 1, -1} {-1, 1, 1, 1}
 
+December 24, 2023 
+-------------------------
+Applied a few optimizations to partition/orderly methods. 
+
+Orderly seems to outpace partition method when considering uncompressed sequences.
+
+34 
+partitions: ~267s
+orderly: ~?
+
+Interestingly enough, the partition method seems to outpace the orderly method when considering compressed sequences.
+This could be due to the overhead created when generating tail combinations?
+
+40 2-compressed
+partitions: ~20s
+orderly: ~46s
+
+Lex least/largest discrepancy still not investigated.
+
 
 
 
