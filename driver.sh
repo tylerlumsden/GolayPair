@@ -27,7 +27,7 @@ start=`date +%s`
 for ((i = 0; i<$numproc; i++))
 do  
     echo i: $i
-    ./bin/generate_orderly 0 $i $numproc & ./bin/generate_orderly 1 $i $numproc &
+    ./bin/generate_orderly
 done
 
 wait

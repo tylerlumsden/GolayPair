@@ -39,14 +39,12 @@ int rowsum(vector<int> seq) {
     return sum;
 }
 
-bool nextBranch(vector<int>& seq, unsigned int len);
+bool nextBranch(vector<int>& seq, unsigned int len, set<int> alphabet);
 
 template<class BidirIt>
 bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet);
 
 int main(int argc, char ** argv) {
-
-    int flag = stoi(argv[1]);
 
     fftw_complex *in, *out;
     fftw_plan plan;
@@ -57,8 +55,11 @@ int main(int argc, char ** argv) {
 
     //write classes to file
     char fname[100];
-    sprintf(fname, "results/%d-unique-filtered-%d", ORDER, flag);
+    sprintf(fname, "results/%d-unique-filtered-0", ORDER);
     FILE * outa = fopen(fname, "w");
+
+    sprintf(fname, "results/%d-unique-filtered-1", ORDER);
+    FILE * outb = fopen(fname, "w");
 
     unsigned long long int count = 0;
 
@@ -76,41 +77,45 @@ int main(int argc, char ** argv) {
         }
     }
 
-
     set<vector<int>> partialsols;
     vector<int> seq;
+    set<vector<int>> generatorsA = constructGenerators(0);
+    set<vector<int>> generatorsB = constructGenerators(1);
 
-    while(nextBranch(seq, LEN)) {
-        if(seq.size() != LEN && !isOrderly(seq)) {
-            nextBranch(seq, seq.size());
+    while(nextBranch(seq, LEN, alphabet)) {
+        if(seq.size() != LEN && seq.size() < (LEN / 2) && !partialCanonical(seq)) {
+            nextBranch(seq, seq.size(), alphabet);
         }
 
-        if(seq.size() == LEN && seq.back() != -1) {
-            if(rowsum(seq) == decomps[ORDER][0][0] || rowsum(seq) == decomps[ORDER][0][1]) {
-            out = dft(seq, in, out, plan);
-            if(dftfilter(out, LEN)) {
-                            count++;
-                            if(flag == 0) {
-                                for(int i = 0; i < LEN / 2; i++) {
-                                    fprintf(outa, "%d",    (int)rint(norm(out[i])));
-                                }
-                                fprintf(outa, " ");
-                                writeSeq(outa, seq);
-                                fprintf(outa, "\n");
-                            }
+        if(seq.size() == LEN && seq.back() != *alphabet.begin()) {
 
-                            if(flag == 1) {
-
-
-                                for(int i = 0; i < LEN / 2; i++) {
-                                    fprintf(outa, "%d",   ORDER * 2 - (int)rint(norm(out[i])));
-                                }
-                                fprintf(outa, " ");
-                                writeSeq(outa, seq);
-                                fprintf(outa, "\n");
-                            }
+            if(rowsum(seq) == decomps[ORDER][0][0]) {
+                out = dft(seq, in, out, plan);
+                if(dftfilter(out, LEN) && isCanonical(seq, generatorsA)) {
+                    count++;
+                    for(int i = 0; i < LEN / 2; i++) {
+                        fprintf(outa, "%d",    (int)rint(norm(out[i])));
+                    }
+                    fprintf(outa, " ");
+                    writeSeq(outa, seq);
+                    fprintf(outa, "\n");
                 }
+            }
+
+            if(rowsum(seq) == decomps[ORDER][0][1]) {
+                out = dft(seq, in, out, plan);
+                if(dftfilter(out, LEN) && isCanonical(seq, generatorsB)) {
+                    count++;
+                    for(int i = 0; i < LEN / 2; i++) {
+                        fprintf(outb, "%d",   ORDER * 2 - (int)rint(norm(out[i])));
+                    }
+                    fprintf(outb, " ");
+                    writeSeq(outb, seq);
+                    fprintf(outb, "\n");
                 }
+            }
+        
+
         }
     }
 
@@ -164,19 +169,23 @@ bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet) {
     return false;
 }
 
-bool nextBranch(vector<int>& seq, unsigned int len) {
+bool nextBranch(vector<int>& seq, unsigned int len, set<int> alphabet) {
+
+    int max = *alphabet.rbegin();
+    int min = *alphabet.begin();
 
         if(seq.size() == len) {
-            while(seq.size() != 0 && seq[seq.size() - 1] == 1) {
+            while(seq.size() != 0 && seq[seq.size() - 1] == max) {
                 seq.pop_back();
             }
             if(seq.size() == 0) {
                 return false;
             }
+            int next = seq.back() + 2;
             seq.pop_back();
-            seq.push_back(1);
+            seq.push_back(next);
         } else {
-            seq.push_back(-1);
+            seq.push_back(min);
         }
     
     return true;

@@ -5,4 +5,6 @@
 
 using namespace std;
 
-int isOrderly(vector<int> base);
+int isCanonical(vector<int> seq, set<vector<int>> generators); 
+bool partialCanonical(vector<int> base);
+set<vector<int>> constructGenerators(int flag);
