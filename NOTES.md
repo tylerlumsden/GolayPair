@@ -650,6 +650,12 @@ orderly: ~46s
 
 Lex least/largest discrepancy still not investigated.
 
+December 25, 2023
+----------------------
+New idea! For the orderly method, what if we constructed the sequences from the outside inward?
+EX: 1 ??? 1 ==> 1 1 ? 1 1 ==> 1 1 1 1 1
+The first and last indexes should be the most significant in terms of filtering power, so it makes more sense to generate them at the start (most sequences get filtered earlier)
+
 
 
 
