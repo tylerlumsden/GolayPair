@@ -656,6 +656,25 @@ New idea! For the orderly method, what if we constructed the sequences from the 
 EX: 1 ??? 1 ==> 1 1 ? 1 1 ==> 1 1 1 1 1
 The first and last indexes should be the most significant in terms of filtering power, so it makes more sense to generate them at the start (most sequences get filtered earlier)
 
+January 1, 2024
+--------------------
+- Balonin email is "headache-inducing"
+
+January 4, 2024
+-----------------
+Explored the use of compression-layering to speed up the compression search step, order 50 goes from 8 hours to 20 minutes.
+order 40 goes from 380 seconds to 2 seconds
+
+The difference in ratios of these two orders are likey due to the compression factors.
+order 50 goes:
+50 -> 25 -> 5
+    2     5
+order 40 goes:
+40 -> 20 -> 10
+    2    2
+
+The 5-uncompression for order 50 is probably very expensive relative to its candidate generation
+
 
 
 

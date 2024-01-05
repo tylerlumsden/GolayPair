@@ -81,36 +81,7 @@ uncompressedpairs=0
 if  [ $compress -gt 1 ]
 then
 
-    start=`date +%s`
-
-    echo Uncompressing
-
-    rm results/$order-unique-filtered-0
-    rm results/$order-unique-filtered-1
-
-    linecount=$(wc -l < results/$order-pairs-found)
-
-    for ((i = 1; i<=$linecount; i++))
-    do
-        echo line $i
-        ./bin/uncompression $i
-    done
-
-    end=`date +%s`
-    runtime3=$((end-start))
-    echo $runtime3 seconds
-
-    sed -i -E "s/#define COMPRESS [[:digit:]]+/#define COMPRESS 1/" lib/golay.h
-    make ORDER="$order" COMPRESS="1"
-
-    sort results/$order-unique-filtered-0 | uniq > results/$order-candidates-a.sorted
-    sort results/$order-unique-filtered-1 | uniq > results/$order-candidates-b.sorted
-
-    total=$((runtime1 + runtime2 + runtime3))
-
-    ./match.sh $order
-
-    uncompressedpairs=$(wc -l < results/$order-pairs-found)
+#./uncompress.sh $order $newcompress
 
 fi
 
