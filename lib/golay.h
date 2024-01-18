@@ -1,4 +1,4 @@
-#define ORDER 50
+#define ORDER 90
 #define COMPRESS 2
 #define LEN (ORDER / COMPRESS)
 

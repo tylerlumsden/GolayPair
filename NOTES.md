@@ -675,6 +675,20 @@ order 40 goes:
 
 The 5-uncompression for order 50 is probably very expensive relative to its candidate generation
 
+January 16, 2024
+----------------
+Original filter_equivalent method measuring up to around 12 hours with 32540 classes generated.
+Equivalence class sizes are 7200 and num of pairs is 16000000.
+
+New method takes around 2 minutes to get to the same number of classes.
+
+Interesting tidbit:
+Using fewer equivalences in our generators actually filters sequences faster. ex. We omitted reverse and swap, and the filter was extremely faster.
+important note: the new equivalence class sizes were 120, 60x smaller.
+
+Possible strategy: Filter in waves, e.g. filter with shifts ==> filter with shifts + decimation ==> filter with shifts + decimation + reverse, etc.
+
+The fewer the sizes of our sets the easier it will be to filter quickly.
 
 
 

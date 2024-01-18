@@ -44,9 +44,11 @@ set<GolayPair> generateExhaust(GolayPair seq) {
         iter.insert(temp.begin(), temp.end());
         newmap.insert(iter.begin(), iter.end());
         
+        /*
         temp = altnegative_pair(newmap);
         iter.insert(temp.begin(), temp.end());
         newmap.insert(iter.begin(), iter.end());
+        */
         
         temp = reverse_pair(newmap);
         iter.insert(temp.begin(), temp.end());
@@ -127,6 +129,8 @@ set<GolayPair> generateClassPairs(set<GolayPair> generators, GolayPair seq) {
 
         equiv.insert(newseq);
     }
+    
+    equiv.erase(seq);
 
     printf("%d\n", equiv.size());
 

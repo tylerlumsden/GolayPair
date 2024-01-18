@@ -85,14 +85,25 @@ int main() {
         set<GolayPair> classes = generateClassPairs(generators, *it);
         count++;
         printf("%d classes generated\n", count);
-        for(auto iter = std::next(it, 1); iter != sequences.end();) {
-            GolayPair current = *iter;
-            iter++;
-            if(classes.find(current) != classes.end()) {
-                sequences.erase(current);
+
+        if(classes.size() > sequences.size()) {
+
+            for(auto iter = std::next(it, 1); iter != sequences.end();) {
+                GolayPair current = *iter;
+                iter++;
+                if(classes.find(current) != classes.end()) {
+                    sequences.erase(current);
+                }
             }
+            printf("Filtered. Size: %u\n", sequences.size());
+            it++;
+        } else {
+            for(GolayPair seq : classes) {
+                sequences.erase(seq);
+            }
+            printf("Classwise filter. Size: %u\n", sequences.size());
+            it++;
         }
-        it++;
     }
 
     printf("%d unique sequences found.\n", sequences.size());
