@@ -11,16 +11,16 @@ using namespace std;
 
 
 
-int PAF(array<int, LEN> seq, int s) { 
+int PAF(vector<int> seq, int s) { 
     int result = 0;
-    for(int i = 0; i < LEN; i++) {
-        result = result + (seq[i] * seq[(i + s) % (LEN)]);
+    for(size_t i = 0; i < seq.size(); i++) {
+        result = result + (seq[i] * seq[(i + s) % seq.size()]);
     }
     return result;
 }
 
-int check_if_pair(array<int, LEN> a, array<int, LEN> b) {
-    for(int i = 1; i <= (LEN) / 2; i++) {
+int check_if_pair(vector<int> a, vector<int> b) {
+    for(size_t i = 1; i <= a.size() / 2; i++) {
         if(PAF(a, i) + PAF(b, i) != 0) {
             return 0;
         }
@@ -29,21 +29,9 @@ int check_if_pair(array<int, LEN> a, array<int, LEN> b) {
     return 1;
 }
 
-void fill_from_string(array<int, LEN>& seq, char str[]) {
-    for(int i = 0; i < LEN; i++) {
-        if(str[i] == '+') {
-            seq[i] = 1;
-            continue;
-        } 
-        if(str[i] == '-') {
-            seq[i] = -1;
-            continue;
-        }
-    }
-}
 
-void write_seq(FILE * out, array<int, LEN> seq) {
-    for(int i = 0; i < LEN; i++) {
+void write_seq(FILE * out, vector<int> seq) {
+    for(size_t i = 0; i < seq.size(); i++) {
         fprintf(out, "%d ", seq[i]);
     }
 }

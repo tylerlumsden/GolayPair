@@ -1,6 +1,9 @@
+make
+
 echo Matching Candidates
 
 order=$1
+len=$2
 
 start=`date +%s`
 
@@ -15,7 +18,7 @@ rm results/$order-candidates-b
 sort results/$order-candidates-a | uniq > results/$order-candidates-a.sorted
 sort results/$order-candidates-b | uniq > results/$order-candidates-b.sorted
 
-./bin/match_pairs
+./bin/match_pairs $order $len
 end=`date +%s`
 
 runtime2=$((end-start))

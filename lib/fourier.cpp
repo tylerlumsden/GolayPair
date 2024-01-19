@@ -10,7 +10,7 @@ using namespace std;
 
 
 fftw_complex * dft(vector<int> seq, fftw_complex * in, fftw_complex * out, fftw_plan p) {
-    for(int i = 0; i < LEN; i++) {
+    for(size_t i = 0; i < seq.size(); i++) {
         in[i][0] = (double)seq[i];
         in[i][1] = 0;
     } 
@@ -27,7 +27,7 @@ int floatEqual(float a, int b) {
     return 0;
 }
 
-int dftfilter(fftw_complex * seqdft, int len) {
+int dftfilter(fftw_complex * seqdft, int len, int ORDER) {
 
     if(len % 2 == 0) {
         int j = len / 2;

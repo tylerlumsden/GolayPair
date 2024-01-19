@@ -1,19 +1,16 @@
-#define ORDER 34
-#define COMPRESS 1
-#define LEN (ORDER / COMPRESS)
-
 #ifndef GOLAY_H
 #define GOLAY_H
 
 #include<array>
 #include<string>
+#include<vector>
 
 using namespace std;
 
 class GolayPair {
     public:
-        array<int, LEN> a;
-        array<int, LEN> b;
+        vector<int> a;
+        vector<int> b;
         
         bool operator<(const GolayPair& golay) const {
             if(a == golay.a) {
@@ -25,31 +22,6 @@ class GolayPair {
 
         bool operator==(const GolayPair& golay) const {
             return (a == golay.a && b == golay.b);
-        }
-
-        operator std::string() {
-            std::string seq;
-
-            for(int i = 0; i < ORDER; i++) {
-                if(a[i] == 1) {
-                    seq.push_back('+'); 
-                }
-                if(a[i] == -1) {
-                    seq.push_back('-'); 
-                }
-            }
-
-            seq.push_back(' ');
-
-            for(int i = 0; i < ORDER; i++) {
-                if(b[i] == 1) {
-                    seq.push_back('+'); 
-                }
-                if(b[i] == -1) {
-                    seq.push_back('-'); 
-                }
-            }
-            return seq;
         }
 };
 
@@ -87,9 +59,8 @@ namespace std
 
 
 
-void write_seq(FILE * out, array<int, LEN> seq);
+void write_seq(FILE * out, vector<int> seq);
 void write_unique_seq(FILE * out, int rowsum, int flag);
-int check_if_pair(array<int, LEN> a, array<int, LEN> b);
-void fill_from_string(array<int, LEN>& seq, char str[]);
+int check_if_pair(vector<int> a, vector<int> b);
 
 #endif

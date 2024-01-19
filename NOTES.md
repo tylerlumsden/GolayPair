@@ -635,6 +635,28 @@ e1 union e2
 
 
 
+x -> list of sequences
+y -> list of sequences with A decimated
+z -> list of sequences with A and B decimated
+
+y should always be a subset of z.
+
+
+
+
+
+-1 -1 1 1
+==>
+-1 1 1 -1
+
+
+-1 -1 1 1   -1 -1 1 1
+==> -1 1 1 -1   -1 1 1 -1
+
+
+
+
+
 
 
 

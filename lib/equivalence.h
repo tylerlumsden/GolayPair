@@ -5,6 +5,5 @@
 
 using namespace std;
 
-vector<array<int, LEN>> generateClass(array<int, LEN> seq, int flag);
 set<GolayPair> generateClassPairs(set<GolayPair> generators, GolayPair seq);
-set<GolayPair> constructGenerators();
+set<GolayPair> constructGenerators(int LEN);

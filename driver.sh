@@ -10,15 +10,12 @@ order=$1
 compress=$2
 numproc=$3
 
+len=$(($order / $compress))
+
 [ $order -eq $order 2>/dev/null ] || exit 1
 [ $numproc -eq $numproc 2>/dev/null ] || exit 1
 
-
-sed -i -E "s/#define ORDER [[:digit:]]+/#define ORDER $order/" lib/golay.h
-sed -i -E "s/#define COMPRESS [[:digit:]]+/#define COMPRESS $compress/" lib/golay.h
-#sed -i "1s/.*/#define LEN $order/" ../golay.h
-
-make ORDER="$order" COMPRESS="$compress"
+make
 
 echo Number of processes: $numproc
 
@@ -27,7 +24,7 @@ start=`date +%s`
 for ((i = 0; i<$numproc; i++))
 do  
     echo i: $i
-    ./bin/generate_orderly 0 $i $numproc & ./bin/generate_orderly 1 $i $numproc &
+    ./bin/generate_orderly $order $compress
 done
 
 wait
@@ -54,7 +51,7 @@ done
 sort results/$order-candidates-a | uniq > results/$order-candidates-a.sorted
 sort results/$order-candidates-b | uniq > results/$order-candidates-b.sorted
 
-./bin/match_pairs
+./bin/match_pairs $order $len
 end=`date +%s`
 
 runtime2=$((end-start))
@@ -78,43 +75,9 @@ total=$((runtime1 + runtime2))
 runtime3=0
 uncompressedpairs=0
 
-if  [ $compress -gt 1 ]
-then
+./bin/filter_equivalent $order $(($order / $compress))
 
-    start=`date +%s`
-
-    echo Uncompressing
-
-    rm results/$order-unique-filtered-0
-    rm results/$order-unique-filtered-1
-
-    linecount=$(wc -l < results/$order-pairs-found)
-
-    for ((i = 1; i<=$linecount; i++))
-    do
-        echo line $i
-        ./bin/uncompression $i
-    done
-
-    end=`date +%s`
-    runtime3=$((end-start))
-    echo $runtime3 seconds
-
-    sed -i -E "s/#define COMPRESS [[:digit:]]+/#define COMPRESS 1/" lib/golay.h
-    make ORDER="$order" COMPRESS="1"
-
-    sort results/$order-unique-filtered-0 | uniq > results/$order-candidates-a.sorted
-    sort results/$order-unique-filtered-1 | uniq > results/$order-candidates-b.sorted
-
-    total=$((runtime1 + runtime2 + runtime3))
-
-    ./match.sh $order
-
-    uncompressedpairs=$(wc -l < results/$order-pairs-found)
-
-fi
-
-python3 -u "src/print_timings_table.py" $order $compress $candidatesA $candidatesB $pairs $runtime1 $uncompressedpairs $runtime3 $total > results.table
+#python3 -u "src/print_timings_table.py" $order $compress $candidatesA $candidatesB $pairs $runtime1 $uncompressedpairs $runtime3 $total > results.table
 
 #start=`date +%s`
 

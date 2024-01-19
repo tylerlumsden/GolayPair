@@ -7,7 +7,7 @@
 
 using namespace std;
 
-int NextCombinationRowSums(array<int, LEN>& arr, int length, int* currentSum) {
+int NextCombinationRowSums(vector<int>& arr, int length, int* currentSum) {
         if((*currentSum) > length || (*currentSum) < -length) {
             printf("Error. currentSum out of bounds: %d\n", *currentSum);
             return 0;
@@ -99,99 +99,6 @@ int nextRowSums(array<int, 8>& seq, int start, int rowsum) {
     }
 }
 
-//assumes that there are 7 +/- 3's and 23 +/- 1's in the sequence, the smallest is the sequence with only negative values.
-int nextCombinationA(std::array<int, LEN>& seq) {
-    int countThree = 0;
-    int countOne = 0;
-    for(int i = 0; i < LEN; i++) {
-        if(seq[i] == 3) {
-            countThree++;
-        }
-        if(seq[i] == 1) {
-            countOne++;
-        }
-    }
-    
-    if(countOne == 23 && countThree == 7) {
-        return 0;
-    } 
-    
-    else if(countOne == 23) {
-        for(int i = 0; i < LEN; i++) {
-            if(seq[i] == 1) {
-                seq[i] = -1;
-            }
-        }
-
-        for(int i = 0; i < LEN; i++) {
-            if(seq[i] == -3) {
-                seq[i] = 3;
-                break;
-            }
-        }
-    } 
-    
-
-    else {
-        for(int i = 0; i < LEN; i++) {
-            if(seq[i] == -1) {
-                seq[i] = 1;
-                break;
-            }
-        }
-    }
-
-    std::sort(seq.begin(), seq.end());
-
-    return 1;
-}
-
-int nextCombinationB(std::array<int, LEN>& seq) {
-    int countThree = 0;
-    int countOne = 0;
-    for(int i = 0; i < LEN; i++) {
-        if(seq[i] == 3) {
-            countThree++;
-        }
-        if(seq[i] == 1) {
-            countOne++;
-        }
-    }
-    
-    if(countOne == 22 && countThree == 8) {
-        return 0;
-    } 
-    
-    else if(countOne == 22) {
-        for(int i = 0; i < LEN; i++) {
-            if(seq[i] == 1) {
-                seq[i] = -1;
-            }
-        }
-
-        for(int i = 0; i < LEN; i++) {
-            if(seq[i] == -3) {
-                seq[i] = 3;
-                break;
-            }
-        }
-    } 
-    
-
-    else {
-        for(int i = 0; i < LEN; i++) {
-            if(seq[i] == -1) {
-                seq[i] = 1;
-                break;
-            }
-        }
-    }
-
-    std::sort(seq.begin(), seq.end());
-
-    return 1;
-}
-
 	/**
 * @brief Calculates the binomial coefficient C(n, k) using dynamic programming.
 *
@@ -220,9 +127,10 @@ long long calculateBinomialCoefficient(int n, int k) {
 
 //Assumes that k is within the bounds of the permutation count
 //Assumes that seq is a sorted sequence consisting of {-1, 1}
-array<int, LEN> getPermutationK(int k, vector<int> seq) {
+vector<int> getPermutationK(int k, vector<int> seq) {
+    int LEN = seq.size();
 
-    array<int, LEN> finalseq;
+    vector<int> finalseq;
     finalseq[0] = -1;
 
     seq.erase(seq.begin());
