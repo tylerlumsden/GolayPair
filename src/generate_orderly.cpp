@@ -13,8 +13,6 @@
 #include<tgmath.h>
 #include<algorithm>
 
-#define LEN (ORDER / COMPRESS)
-
 using namespace std;
 
 void writeSeq(FILE * out, vector<int> seq);
@@ -45,6 +43,10 @@ template<class BidirIt>
 bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet);
 
 int main(int argc, char ** argv) {
+
+    int ORDER = stoi(argv[1]);
+    int COMPRESS = stoi(argv[2]);
+    int LEN = ORDER / COMPRESS;
 
     fftw_complex *in, *out;
     fftw_plan plan;
@@ -79,8 +81,8 @@ int main(int argc, char ** argv) {
 
     set<vector<int>> partialsols;
     vector<int> seq;
-    set<vector<int>> generatorsA = constructGenerators(0);
-    set<vector<int>> generatorsB = constructGenerators(1);
+    set<vector<int>> generatorsA = constructGenerators(0, LEN);
+    set<vector<int>> generatorsB = constructGenerators(1, LEN);
 
     while(nextBranch(seq, LEN / 2, alphabet)) {
 
@@ -90,7 +92,7 @@ int main(int argc, char ** argv) {
             }
         }
 
-        if(seq.size() == LEN / 2) {
+        if((int)seq.size() == LEN / 2) {
 
             //finish the constructions
             vector<vector<int>> combinations = getCombinations(LEN - seq.size(), alphabet);
@@ -119,7 +121,7 @@ int main(int argc, char ** argv) {
 
                     if(rowsum(newseq) == decomps[ORDER][0][0]) {
                         out = dft(newseq, in, out, plan);
-                        if(dftfilter(out, LEN) && isCanonical(newseq, generatorsA)) {
+                        if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsA)) {
                             count++;
                             for(int i = 0; i < LEN / 2; i++) {
                                 fprintf(outa, "%d",    (int)rint(norm(out[i])));
@@ -132,7 +134,7 @@ int main(int argc, char ** argv) {
 
                     if(rowsum(newseq) == decomps[ORDER][0][1]) {
                         out = dft(newseq, in, out, plan);
-                        if(dftfilter(out, LEN) && isCanonical(newseq, generatorsB)) {
+                        if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsB)) {
                             count++;
                             for(int i = 0; i < LEN / 2; i++) {
                                 fprintf(outb, "%d",   ORDER * 2 - (int)rint(norm(out[i])));

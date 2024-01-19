@@ -7,4 +7,4 @@ using namespace std;
 
 int isCanonical(vector<int> seq, set<vector<int>> generators); 
 bool partialCanonical(vector<int> base);
-set<vector<int>> constructGenerators(int flag);
+set<vector<int>> constructGenerators(int flag, int LEN);

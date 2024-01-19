@@ -13,23 +13,10 @@
 
 using namespace std;
 
-GolayPair strToPair(std::string a, std::string b) {
-    array<int, LEN> seqa;
-    array<int, LEN> seqb;
-    for(int i = 0; i < LEN; i++) {
-        seqa[i] = int(a[i]);
+int main(int argc, char ** argv) {
 
-        seqb[i] = int(b[i]);
-    }
-
-    GolayPair seq;
-    seq.a = seqa;
-    seq.b = seqb;
-
-    return seq;
-}
-
-int main() {
+    int ORDER = stoi(argv[1]);
+    int LEN = stoi(argv[2]);
 
     printf("Filtering Equivalent Pairs...\n");
 
@@ -57,6 +44,8 @@ int main() {
     while(pairs.good()) {
 
         GolayPair seq;
+        seq.a.resize(LEN);
+        seq.b.resize(LEN);
 
         for(int i = 0; i < LEN; i++) {
             pairs >> a;
@@ -75,24 +64,63 @@ int main() {
 
     printf("Constructing Generators\n");
 
-    set<GolayPair> generators = constructGenerators();
+    set<GolayPair> generators = constructGenerators(LEN);
 
     printf("Generating Equivalences\n");
 
     int count = 0;
+/*
+    set<GolayPair> equiv;
+
+    auto prev = sequences.begin();
+    auto it = sequences.begin();
+    it++;
+    while(it != sequences.end()) {
+
+        if(equiv.find(*it) != equiv.end()) {
+            sequences.erase(*it);
+            
+            it = prev;
+        } else {
+            set<GolayPair> classes = generateClassPairs(generators, *it);
+            equiv.insert(classes.begin(), classes.end());
+            count++;
+            printf("%d classes generated\n", count);
+
+            prev = it;
+        }
+
+        it++;
+    }
+*/
 
     for(auto it = sequences.begin(); it != sequences.end();) {
         set<GolayPair> classes = generateClassPairs(generators, *it);
         count++;
         printf("%d classes generated\n", count);
-        for(auto iter = std::next(it, 1); iter != sequences.end();) {
-            GolayPair current = *iter;
-            iter++;
-            if(classes.find(current) != classes.end()) {
-                sequences.erase(current);
+
+        if(classes.size() > sequences.size()) {
+
+            for(auto iter = std::next(it, 1); iter != sequences.end();) {
+                GolayPair current = *iter;
+                iter++;
+                if(classes.find(current) != classes.end()) {
+                    sequences.erase(current);
+                }
             }
+            printf("Filtered. Size: %lu\n", sequences.size());
+            it++;
+        } else {
+            set<GolayPair> newset;
+            GolayPair base = *it;
+            for(GolayPair seq : classes) {
+                sequences.erase(seq);
+            }
+            sequences.insert(base);
+            printf("Classwise filter. Size: %lu\n", sequences.size());
+            it = sequences.find(base);
+            it++;
         }
-        it++;
     }
 
     printf("%lu unique sequences found.\n", sequences.size());

@@ -9,7 +9,10 @@
 #include"../lib/golay.h"
 #include<limits>
 
-int main() {
+int main(int argc, char ** argv) {
+
+    int ORDER = stoi(argv[1]);
+    int LEN = stoi(argv[2]);
     
 
         char fname[100];
@@ -28,11 +31,13 @@ int main() {
         sprintf(fname, "results/%d-candidates-b.sorted", ORDER);
         std::ifstream fileb(fname);
 
-        array<int, LEN> seqa;
-        array<int, LEN> seqb;
+        vector<int> seqa;
+        seqa.resize(LEN);
+        vector<int> seqb;
+        seqb.resize(LEN);
 
-        vector<array<int, LEN>> matchA;
-        vector<array<int, LEN>> matchB;
+        vector<vector<int>> matchA;
+        vector<vector<int>> matchB;
 
         filea >> a;
         fileb >> b;
@@ -78,8 +83,8 @@ int main() {
                         }
                     }
 
-                    for(array<int, LEN> sequenceA : matchA) {
-                        for(array<int, LEN> sequenceB : matchB) {
+                    for(vector<int> sequenceA : matchA) {
+                        for(vector<int> sequenceB : matchB) {
                             if(check_if_pair(sequenceA, sequenceB)) {
                                 write_seq(out, sequenceA);
                                 fprintf(out, " ");

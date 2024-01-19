@@ -14,7 +14,7 @@ int decimation_equivalence(set<vector<int>>& map, vector<int> base);
 int reverse_equivalence(set<vector<int>>& map, vector<int> base);
 set<vector<int>> generateExhaust(vector<int> base, int flag);
 
-set<vector<int>> constructGenerators(int flag) {
+set<vector<int>> constructGenerators(int flag, int LEN) {
     vector<int> seq;
     seq.resize(LEN);
 
@@ -36,20 +36,22 @@ set<vector<int>> generateExhaust(vector<int> base, int flag) {
 
     while(map.size() != size) {
         size = map.size();
-
+    
         if(flag == 0) {
             decimation_equivalence(map, base);
         }
-
+        
         shift_equivalence(map, base);
        
         reverse_equivalence(map, base);
+        
     }
 
     return map;
 }
 
 int isCanonical(vector<int> seq, set<vector<int>> generators) {
+    int LEN = seq.size();
 
     vector<int> newseq;
     newseq.resize(LEN);
@@ -108,6 +110,7 @@ int reverse_equivalence(set<vector<int>>& map, vector<int> base) {
 }
 
 vector<int> permute(vector<int> seq, int coprime) {
+    int LEN = seq.size();
     vector<int> newseq;
     newseq.resize(LEN);
     for(int i = 0; i < LEN; i++) {
@@ -117,6 +120,7 @@ vector<int> permute(vector<int> seq, int coprime) {
 }
 
 int decimation_equivalence(set<vector<int>>& map, vector<int> base) {
+    int LEN = base.size();
 
     for(vector<int> seq : map) {
         for(int i = 0; i < coprimelength[LEN]; i++) {
