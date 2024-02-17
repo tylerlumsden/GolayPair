@@ -70,9 +70,9 @@ void uncompressIndex(std::map<int, std::vector<std::vector<int>>>& permutations,
 
 int main(int argc, char ** argv) {
 
-    int ORDER = stoi(argv[2]);
-    int COMPRESS = stoi(argv[3]);
-    int NEWCOMPRESS = stoi(argv[4]);
+    int ORDER = stoi(argv[3]);
+    int COMPRESS = stoi(argv[4]);
+    int NEWCOMPRESS = stoi(argv[5]);
 
     int LEN = ORDER / COMPRESS;
 
@@ -85,8 +85,10 @@ int main(int argc, char ** argv) {
 
     int linenumber = stoi(argv[1]);
 
+    int procnum = stoi(argv[2]);
+
     char fname[100];
-    sprintf(fname, "results/%d-pairs-found", ORDER);
+    sprintf(fname, "results/%d-pairs-found-%d", ORDER, procnum);
     std::ifstream file(fname);
     std::string line;
     std::string letter;
@@ -100,6 +102,7 @@ int main(int argc, char ** argv) {
     origa.resize(LEN);
     vector<int> origb;
     origb.resize(LEN);
+    
 
     int i = 1;
     while(i < linenumber && getline(file, line)) {
@@ -174,11 +177,11 @@ int main(int argc, char ** argv) {
         partitions.insert(make_pair(letter, partition));
     }
     
-    sprintf(fname, "results/%d-unique-filtered-%d", ORDER, 0);
-    FILE * outa = fopen(fname, "a");
+    sprintf(fname, "results/%d/%d-candidates-%d_%d", ORDER, ORDER, 0, procnum);
+    FILE * outa = fopen(fname, "w");
 
-    sprintf(fname, "results/%d-unique-filtered-%d", ORDER, 1);
-    FILE * outb = fopen(fname, "a");
+    sprintf(fname, "results/%d/%d-candidates-%d_%d", ORDER, ORDER, 1, procnum);
+    FILE * outb = fopen(fname, "w");
 
     uncompressIndex(partitions, origa, seq, ORDER, COMPRESS, NEWCOMPRESS, LEN, LEN, outa, in, out, plan, 0);
     uncompressIndex(partitions, origb, seq, ORDER, COMPRESS, NEWCOMPRESS, LEN, LEN, outb, in, out, plan, 1);

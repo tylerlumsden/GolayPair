@@ -57,10 +57,10 @@ int main(int argc, char ** argv) {
 
     //write classes to file
     char fname[100];
-    sprintf(fname, "results/%d-unique-filtered-0", ORDER);
+    sprintf(fname, "results/%d/%d-unique-filtered-a_%d", ORDER, ORDER, 1);
     FILE * outa = fopen(fname, "w");
 
-    sprintf(fname, "results/%d-unique-filtered-1", ORDER);
+    sprintf(fname, "results/%d/%d-unique-filtered-b_%d", ORDER, ORDER, 1);
     FILE * outb = fopen(fname, "w");
 
     unsigned long long int count = 0;

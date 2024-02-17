@@ -1,25 +1,20 @@
-make
-
-echo Matching Candidates
+#echo Matching Candidates
 
 order=$1
 len=$2
+proc=$3
+i=$4
 
 start=`date +%s`
 
-rm results/$order-candidates-a
-rm results/$order-candidates-b
+sort -u -S 1G -T results/$order results/$order/$order-candidates-0_$proc | uniq > results/$order/$order-candidates-a.sorted_$proc
+sort -u -S 1G -T results/$order results/$order/$order-candidates-1_$proc | uniq > results/$order/$order-candidates-b.sorted_$proc
 
+#echo Sorting complete
+#echo Matching
 
-    cat results/$order-unique-filtered-0 >> results/$order-candidates-a
-    cat results/$order-unique-filtered-1 >> results/$order-candidates-b
-
-
-sort results/$order-candidates-a | uniq > results/$order-candidates-a.sorted
-sort results/$order-candidates-b | uniq > results/$order-candidates-b.sorted
-
-./bin/match_pairs $order $len
+./bin/match_pairs $order $len $proc $i
 end=`date +%s`
 
 runtime2=$((end-start))
-echo $runtime2 seconds
+#echo $runtime2 seconds
