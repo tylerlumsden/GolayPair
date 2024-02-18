@@ -1,7 +1,7 @@
 order=$1
 
-cat ./results/$order/$order-pairs-found-* > results/$order/$order-pairs-found
-rm ./results/$order/$order-pairs-found-*
+cat ./results/$order/$order-pairs-found-* | uniq > results/$order/$order-pairs-found
+#rm ./results/$order/$order-pairs-found-*
 
 rm ./results/$order/$order-candidates-0_*
 rm ./results/$order/$order-candidates-1_*

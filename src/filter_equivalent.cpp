@@ -41,15 +41,19 @@ int main(int argc, char ** argv) {
     std::string a;
     std::string b;
 
-    while(pairs.good()) {
+    GolayPair seq;
+    seq.a.resize(LEN);
+    seq.b.resize(LEN);
 
-        GolayPair seq;
-        seq.a.resize(LEN);
-        seq.b.resize(LEN);
+    while(pairs.good()) {
 
         for(int i = 0; i < LEN; i++) {
             pairs >> a;
             seq.a[i] = stoi(a);
+        }
+
+        if(!pairs.good()) {
+            break;
         }
 
         for(int i = 0; i < LEN; i++) {

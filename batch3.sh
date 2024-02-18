@@ -16,9 +16,9 @@ mkdir ./results/$order
 
 linecount=$(wc -l < results/$order-pairs-found)
 
-sed -n '655072p' results/$order-pairs-found > results/$order-pairs-found-3
+sed -n '670903p' results/$order-pairs-found > results/$order-pairs-found-3
 
-./bin/uncompression 3 $order $compress $newcompress
+./bin/uncompression 1 3 $order $compress $newcompress
 
 wait
 

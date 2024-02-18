@@ -4,9 +4,9 @@
 #SBATCH --mem-per-cpu=2G
 #SBATCH --cpus-per-task=1
 #SBATCH -o ./Report/output.%a.out # STDOUT
-#SBATCH --array=1-200
+#SBATCH --array=1-100
 
-cores=200
+cores=100
 
 order=64
 compress=4

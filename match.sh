@@ -3,7 +3,6 @@
 order=$1
 len=$2
 proc=$3
-i=$4
 
 start=`date +%s`
 
@@ -13,7 +12,7 @@ sort -u -S 1G -T results/$order results/$order/$order-candidates-1_$proc | uniq 
 #echo Sorting complete
 #echo Matching
 
-./bin/match_pairs $order $len $proc $i
+./bin/match_pairs $order $len $proc
 end=`date +%s`
 
 runtime2=$((end-start))

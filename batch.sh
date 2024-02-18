@@ -18,7 +18,7 @@ linecount=$(wc -l < results/$order-pairs-found)
 
 sed -n '655072p' results/$order-pairs-found > results/$order-pairs-found-1
 
-./bin/uncompression 1 $order $compress $newcompress
+./bin/uncompression 1 1 $order $compress $newcompress
 
 wait
 
