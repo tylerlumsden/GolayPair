@@ -145,7 +145,7 @@ int main(int argc, char ** argv) {
                         }
                     }
 
-                } while(next_permutation(newseq.begin() - 1 + LEN / 2, newseq.end()));
+                } while(next_permutation(newseq.begin() + LEN / 2, newseq.end()));
             }
         }
     }

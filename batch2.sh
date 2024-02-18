@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --account=def-cbright
+#SBATCH --account=rrg-cbright
 #SBATCH --time=7-00:00
 #SBATCH --mem-per-cpu=2G
 #SBATCH --cpus-per-task=1
@@ -16,9 +16,9 @@ mkdir ./results/$order
 
 linecount=$(wc -l < results/$order-pairs-found)
 
-sed -n '655072p' results/$order-pairs-found > results/$order/$order-pair-670898
+sed -n '655072p' results/$order-pairs-found > results/$order-pairs-found-2
 
-./bin/uncompression 670898 $order $compress $newcompress
+./bin/uncompression 2 $order $compress $newcompress
 
 wait
 

@@ -663,6 +663,18 @@ next is the a candidate with all zeroes
 next is 670903
 
 
+90 6-compressions uncompressed:
+line 1
+line 343578
+line 343579
+line 343580
+line 343581
+
+(all pairs with the specified a-pair)
+
+
+order 64 candidate 2-compression generation took 17 hours, at least 18 times faster than order 58. (order 58 took ~18 days)
+
 
 
 
