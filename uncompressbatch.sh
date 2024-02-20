@@ -4,20 +4,20 @@
 #SBATCH --mem-per-cpu=2G
 #SBATCH --cpus-per-task=1
 #SBATCH -o ./Report/output.%a.out # STDOUT
-#SBATCH --array=1-100
+#SBATCH --array=1-1
 
-cores=100
+cores=1
 
-order=64
-compress=4
-newcompress=2
+order=40
+compress=2
+newcompress=1
 
 ############################################### INPUT ABOVE
 make
 
 mkdir ./results/$order
 
-linecount=$(wc -l < results/$order-pairs-found)
+#linecount=$(wc -l < results/$order-pairs-found)
 
 ./split.sh $order $cores
 

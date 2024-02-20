@@ -17,56 +17,6 @@
 double norm(fftw_complex dft) {
     return dft[0] * dft[0] + dft[1] * dft[1];
 }
-void uncompressIndex(std::map<int, std::vector<std::vector<int>>>& permutations, std::vector<int> orig, std::vector<int>& seq, int ORDER, int COMPRESS, int newcompress, int LEN, int len, FILE * outfile, fftw_complex * in, fftw_complex * out, fftw_plan p, int flag) {
-    if(len == 1) { 
-        for(std::vector<int> permutation : permutations.at(orig[LEN - len])) {
-            for(int i = 0; i < COMPRESS / newcompress; i++) {
-                seq[LEN - len + (LEN * i)] = permutation[i];
-            }
-
-            for(unsigned int i = 0; i < seq.size(); i++) {
-                in[i][0] = (double)seq[i];
-                in[i][1] = 0;
-            } 
-
-            fftw_execute(p);
-
-            if(dftfilter(out, seq.size(), ORDER)) { 
-
-                if(flag == 0) {
-                    for(unsigned int i = 0; i < seq.size() / 2; i++) {
-                        fprintf(outfile, "%d",    (int)rint(norm(out[i])));
-                    }
-                    fprintf(outfile, " ");
-                    for(int num : seq) {
-                        fprintf(outfile, "%d ", num);
-                    }
-                    fprintf(outfile, "\n");
-                }
-
-                if(flag == 1) {
-                    for(unsigned int i = 0; i < seq.size() / 2; i++) {
-                        fprintf(outfile, "%d",   ORDER * 2 - (int)rint(norm(out[i])));
-                    }
-                    fprintf(outfile, " ");
-                    for(int num : seq) {
-                        fprintf(outfile, "%d ", num);
-                    }
-                    fprintf(outfile, "\n");
-                }
-            }
-        }
-        
-        return;
-    }
-
-    for(std::vector<int> permutation : permutations.at(orig[LEN - len])) {
-        for(int i = 0; i < COMPRESS / newcompress; i++) {
-            seq[LEN - len + (LEN * i)] = permutation[i];
-        }
-        uncompressIndex(permutations, orig, seq, ORDER, COMPRESS, newcompress, LEN, len - 1, outfile, in, out, p, flag);
-    }
-}
 
 int main(int argc, char ** argv) {
 
@@ -77,11 +27,11 @@ int main(int argc, char ** argv) {
     int LEN = ORDER / COMPRESS;
 
     fftw_complex *in, *out;
-    fftw_plan plan;
+    fftw_plan p;
 
     in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * (ORDER / NEWCOMPRESS));
     out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * (ORDER / NEWCOMPRESS));
-    plan = fftw_plan_dft_1d((ORDER) / NEWCOMPRESS, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+    p = fftw_plan_dft_1d((ORDER) / NEWCOMPRESS, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
     int linenumber = stoi(argv[1]);
 
@@ -183,12 +133,119 @@ int main(int argc, char ** argv) {
     sprintf(fname, "results/%d/%d-candidates-%d_%d", ORDER, ORDER, 1, procnum);
     FILE * outb = fopen(fname, "w");
 
-    uncompressIndex(partitions, origa, seq, ORDER, COMPRESS, NEWCOMPRESS, LEN, LEN, outa, in, out, plan, 0);
-    uncompressIndex(partitions, origb, seq, ORDER, COMPRESS, NEWCOMPRESS, LEN, LEN, outb, in, out, plan, 1);
+    int curr = 0;
+    vector<int> stack(LEN, 0);
+
+    while(curr != -1) {
+
+        while(curr != LEN - 1) {
+            std::vector<int> permutation = partitions.at(origa[curr])[stack[curr]];
+
+            for(int i = 0; i < COMPRESS / NEWCOMPRESS; i++) {
+                seq[curr + (LEN * i)] = permutation[i];
+            }
+            stack[curr]++;
+            curr++;
+        }
+
+        //if curr is final element of original sequence, base case
+        if(curr == LEN - 1) {
+
+            for(std::vector<int> permutation : partitions.at(origa[curr])) {
+
+                for(int i = 0; i < COMPRESS / NEWCOMPRESS; i++) {
+                    seq[curr + (LEN * i)] = permutation[i];
+                }
+
+                for(unsigned int i = 0; i < seq.size(); i++) {
+                    in[i][0] = (double)seq[i];
+                    in[i][1] = 0;
+                } 
+
+                fftw_execute(p);
+
+                if(dftfilter(out, seq.size(), ORDER)) { 
+                    for(unsigned int i = 0; i < seq.size() / 2; i++) {
+                        fprintf(outa, "%d",    (int)rint(norm(out[i])));
+                    }
+                    fprintf(outa, " ");
+                    for(int num : seq) {
+                            fprintf(outa, "%d ", num);
+                    }
+                    fprintf(outa, "\n");
+                }
+            }
+            
+            curr--;
+
+            while(stack[curr] == partitions.at(origa[curr]).size()) {
+                stack[curr] = 0;
+                curr--;
+                if(curr == -1) {
+                    break;
+                }
+            }
+        }
+    }
+
+    curr = 0;
+    vector<int> stackb(LEN, 0);
+    stack = stackb;
+
+    while(curr != -1) {
+
+        while(curr != LEN - 1) {
+            std::vector<int> permutation = partitions.at(origb[curr])[stack[curr]];
+
+            for(int i = 0; i < COMPRESS / NEWCOMPRESS; i++) {
+                seq[curr + (LEN * i)] = permutation[i];
+            }
+            stack[curr]++;
+            curr++;
+        }
+
+        if(curr == LEN - 1) {
+
+            for(std::vector<int> permutation : partitions.at(origb[curr])) {
+
+                for(int i = 0; i < COMPRESS / NEWCOMPRESS; i++) {
+                    seq[curr + (LEN * i)] = permutation[i];
+                }
+
+                for(unsigned int i = 0; i < seq.size(); i++) {
+                    in[i][0] = (double)seq[i];
+                    in[i][1] = 0;
+                } 
+
+                fftw_execute(p);
+
+                if(dftfilter(out, seq.size(), ORDER)) { 
+                    for(unsigned int i = 0; i < seq.size() / 2; i++) {
+                        fprintf(outb, "%d",    ORDER * 2 - (int)rint(norm(out[i])));
+                    }
+                    fprintf(outb, " ");
+                    for(int num : seq) {
+                            fprintf(outb, "%d ", num);
+                    }
+                    fprintf(outb, "\n");
+                }
+            }
+            
+            curr--;
+
+            while(stack[curr] == partitions.at(origb[curr]).size()) {
+                stack[curr] = 0;
+                curr--;
+                if(curr == -1) {
+                    break;
+                }
+            }
+        }
+    }
 
     fftw_free(in);
     fftw_free(out);
-    fftw_destroy_plan(plan);
+    fftw_destroy_plan(p);
 
     fclose(outa);
     fclose(outb);
