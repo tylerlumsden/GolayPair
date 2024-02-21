@@ -39,21 +39,21 @@ set<GolayPair> generateExhaust(GolayPair seq) {
 
         set<GolayPair> temp;
 
-        
+        /*
         temp = shift_pair(newmap);
         iter.insert(temp.begin(), temp.end());
         newmap.insert(iter.begin(), iter.end());
-        
+        */
         /*
         temp = altnegative_pair(newmap);
         iter.insert(temp.begin(), temp.end());
         newmap.insert(iter.begin(), iter.end());
         */
-       
+       /*
         temp = reverse_pair(newmap);
         iter.insert(temp.begin(), temp.end());
         newmap.insert(iter.begin(), iter.end());
-        
+        */
         
         temp = swap_pair(newmap);
         iter.insert(temp.begin(), temp.end());

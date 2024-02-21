@@ -178,7 +178,7 @@ int main(int argc, char ** argv) {
             
             curr--;
 
-            while(stack[curr] == partitions.at(origa[curr]).size()) {
+            while((unsigned int)stack[curr] == partitions.at(origa[curr]).size()) {
                 stack[curr] = 0;
                 curr--;
                 if(curr == -1) {
@@ -233,7 +233,7 @@ int main(int argc, char ** argv) {
             
             curr--;
 
-            while(stack[curr] == partitions.at(origb[curr]).size()) {
+            while((unsigned int)stack[curr] == partitions.at(origb[curr]).size()) {
                 stack[curr] = 0;
                 curr--;
                 if(curr == -1) {
