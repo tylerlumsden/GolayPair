@@ -670,10 +670,21 @@ line 343579
 line 343580
 line 343581
 
+line 655072
+line 670898
+line 670903
+
+next to uncompress:
+
+655073 to 655075
+
+
 (all pairs with the specified a-pair)
 
 
 order 64 candidate 2-compression generation took 17 hours, at least 18 times faster than order 58. (order 58 took ~18 days)
+
+
 
 
 

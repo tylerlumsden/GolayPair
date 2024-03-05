@@ -84,6 +84,8 @@ int main(int argc, char ** argv) {
                         }
                     }
 
+                    temp = b;
+
                     while(fileb.good() && b == temp) {
                         matchB.push_back(seqb);
                         fileb.ignore(std::numeric_limits<streamsize>::max(), '\n');

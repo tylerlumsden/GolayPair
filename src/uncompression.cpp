@@ -26,6 +26,8 @@ int main(int argc, char ** argv) {
 
     int LEN = ORDER / COMPRESS;
 
+    printf("Uncompressing sequence of length %d\n", LEN);
+
     fftw_complex *in, *out;
     fftw_plan p;
 
@@ -133,8 +135,11 @@ int main(int argc, char ** argv) {
     sprintf(fname, "results/%d/%d-candidates-%d_%d", ORDER, ORDER, 1, procnum);
     FILE * outb = fopen(fname, "w");
 
+    
+
     int curr = 0;
     vector<int> stack(LEN, 0);
+
 
     while(curr != -1) {
 
@@ -191,6 +196,7 @@ int main(int argc, char ** argv) {
     curr = 0;
     vector<int> stackb(LEN, 0);
     stack = stackb;
+
 
     while(curr != -1) {
 

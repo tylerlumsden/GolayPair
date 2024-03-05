@@ -4,7 +4,7 @@ DIR = lib/
 BIN = bin/
 SRC = src/
 CC = g++
-all: bin/golay.o bin/fourier.o bin/orderly_equivalence.o bin/equivalence.o bin/array.o bin/generate_orderly bin/filter_equivalent bin/match_pairs bin/uncompression
+all: bin/golay.o bin/fourier.o bin/orderly_equivalence.o bin/equivalence.o bin/array.o bin/generate_orderly bin/filter_equivalent bin/match_pairs bin/uncompression bin/compress
 
 $(BIN)orderly_equivalence.o: $(DIR)orderly_equivalence.cpp $(DIR)golay.h $(DIR)coprimes.h
 	$(CC) -Wall -g -c -O3 $(DIR)orderly_equivalence.cpp -o $(BIN)orderly_equivalence.o 
@@ -32,6 +32,9 @@ $(BIN)equivalence.o: $(DIR)equivalence.cpp $(DIR)golay.h $(DIR)coprimes.h
 
 $(BIN)uncompression: $(SRC)uncompression.cpp $(BIN)array.o
 	$(CC) -Wall -g -O3 $(SRC)uncompression.cpp $(BIN)fourier.o $(BIN)array.o -o $(BIN)uncompression -L./lib/fftw-3.3.10/.libs -l:libfftw3.a 
+
+$(BIN)compress: $(SRC)compress.cpp
+	$(CC) -Wall -g -O3 $(SRC)compress.cpp -o $(BIN)compress
 clean:
 	@echo "Cleaning up..."
 	rm -f bin/*

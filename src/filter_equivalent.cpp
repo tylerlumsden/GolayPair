@@ -72,7 +72,7 @@ int main(int argc, char ** argv) {
 
         seq = *classes.begin();
 
-        if(count % 1000 == 0) {
+        if(count % 1 == 0) {
             printf("%llu classes generated\n", count);
         }
 

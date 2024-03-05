@@ -1,14 +1,14 @@
 #!/bin/bash
 #SBATCH --account=rrg-cbright
-#SBATCH --time=01:00:00
+#SBATCH --time=07-00:00
 #SBATCH --mem-per-cpu=2G
 #SBATCH --cpus-per-task=1
 #SBATCH -o ./Report/output.%a.out # STDOUT
-#SBATCH --array=1-1
+#SBATCH --array=1-997
 
-cores=1
+cores=997
 
-order=40
+order=64
 compress=2
 newcompress=1
 

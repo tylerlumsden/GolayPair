@@ -20,7 +20,18 @@ int PAF(vector<int> seq, int s) {
 }
 
 int check_if_pair(vector<int> a, vector<int> b) {
+
+    for(int i = 0; i < a.size(); i++) {
+        printf("%d ", a[i]);
+    }
+    printf("\n");
+    for(int i = 0; i < a.size(); i++) {
+        printf("%d ", b[i]);
+    }
+    printf("\n");
+
     for(size_t i = 1; i <= a.size() / 2; i++) {
+        printf("%d %d\n", PAF(a, i), PAF(b, i));
         if(PAF(a, i) + PAF(b, i) != 0) {
             return 0;
         }
