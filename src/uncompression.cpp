@@ -131,7 +131,7 @@ int main(int argc, char ** argv) {
     
     sprintf(fname, "results/%d/%d-candidates-%d_%d", ORDER, ORDER, 0, procnum);
     FILE * outa = fopen(fname, "w");
-
+    
     sprintf(fname, "results/%d/%d-candidates-%d_%d", ORDER, ORDER, 1, procnum);
     FILE * outb = fopen(fname, "w");
 
@@ -140,7 +140,7 @@ int main(int argc, char ** argv) {
     int curr = 0;
     vector<int> stack(LEN, 0);
 
-
+    
     while(curr != -1) {
 
         while(curr != LEN - 1) {
@@ -192,12 +192,12 @@ int main(int argc, char ** argv) {
             }
         }
     }
-
+    
     curr = 0;
     vector<int> stackb(LEN, 0);
     stack = stackb;
 
-
+    
     while(curr != -1) {
 
         while(curr != LEN - 1) {
@@ -248,7 +248,7 @@ int main(int argc, char ** argv) {
             }
         }
     }
-
+    
     fftw_free(in);
     fftw_free(out);
     fftw_destroy_plan(p);

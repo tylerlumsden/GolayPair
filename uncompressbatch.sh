@@ -1,16 +1,16 @@
 #!/bin/bash
 #SBATCH --account=rrg-cbright
 #SBATCH --time=07-00:00
-#SBATCH --mem-per-cpu=2G
+#SBATCH --mem-per-cpu=4G
 #SBATCH --cpus-per-task=1
 #SBATCH -o ./Report/output.%a.out # STDOUT
-#SBATCH --array=1-997
+#SBATCH --array=1-14
 
-cores=997
+cores=14
 
-order=64
-compress=2
-newcompress=1
+order=90
+compress=6
+newcompress=2
 
 ############################################### INPUT ABOVE
 make

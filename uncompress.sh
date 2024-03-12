@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --account=rrg-cbright
 #SBATCH --time=07-00:00
-#SBATCH --mem-per-cpu=2G
+#SBATCH --mem-per-cpu=4G
 #SBATCH --cpus-per-task=1
 #SBATCH -o ./Report/output.%a.out # STDOUT 
 

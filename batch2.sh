@@ -16,9 +16,9 @@ newcompress=2
 
 #linecount=$(wc -l < results/$order-pairs-found)
 
-sed -n '670898p' results/$order-pairs-found > results/$order-pairs-found-2
+sed -n '670900p' results/$order-pairs-found > results/$order-pairs-found-2
 
-#./bin/uncompression 1 2 $order $compress $newcompress
+./bin/uncompression 1 2 $order $compress $newcompress
 
 #wait
 
