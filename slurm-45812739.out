@@ -1,0 +1,11 @@
+mkdir: cannot create directory ‘results’: File exists
+make: Nothing to be done for 'all'.
+Number of processes: 1
+i: 0
+13325291
+10180 seconds
+Matching Candidates
+108 seconds
+/localscratch/spool/slurmd/job45812739/slurm_script: line 53: results/68/68-candidates-a.sorted: No such file or directory
+/localscratch/spool/slurmd/job45812739/slurm_script: line 54: results/68/68-candidates-b.sorted: No such file or directory
+/localscratch/spool/slurmd/job45812739/slurm_script: line 55: results/68/68-pairs-found: No such file or directory

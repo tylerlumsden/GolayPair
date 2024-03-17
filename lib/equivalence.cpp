@@ -22,6 +22,26 @@ set<GolayPair> altnegative_pair(set<GolayPair>& map);
 set<GolayPair> negate_pair(set<GolayPair>& map);
 set<GolayPair> swap_pair(set<GolayPair>& map);
 
+set<vector<int>> generateUncompress(vector<int> seq) {
+    set<vector<int>> map;
+
+    unsigned int size = 0;
+
+    map.insert(seq);
+
+    while(map.size() != size) {
+
+        size = map.size();
+
+        shift_equivalence(map);
+
+        reverse_equivalence(map);
+
+    }
+
+    return map;
+}  
+
 set<GolayPair> generateExhaust(GolayPair seq) {
     set<GolayPair> map;
     set<GolayPair> newmap;
@@ -43,21 +63,19 @@ set<GolayPair> generateExhaust(GolayPair seq) {
         temp = shift_pair(newmap);
         iter.insert(temp.begin(), temp.end());
         newmap.insert(iter.begin(), iter.end());
-        /*
+
         temp = altnegative_pair(newmap);
         iter.insert(temp.begin(), temp.end());
         newmap.insert(iter.begin(), iter.end());
-        
-       
+
         temp = reverse_pair(newmap);
         iter.insert(temp.begin(), temp.end());
         newmap.insert(iter.begin(), iter.end());
-        */
-        /*
+
         temp = swap_pair(newmap);
         iter.insert(temp.begin(), temp.end());
         newmap.insert(iter.begin(), iter.end());
-        */
+        
         
         temp = decimate_pair(newmap);
         iter.insert(temp.begin(), temp.end());

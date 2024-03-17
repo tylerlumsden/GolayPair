@@ -13,10 +13,13 @@ int main(int argc, char ** argv) {
 
     int ORDER = stoi(argv[1]);
     int LEN = stoi(argv[2]);
+    int procnum = stoi(argv[3]);
+
+    printf("Matching\n");
     
 
         char fname[100];
-        sprintf(fname, "results/%d-pairs-found", ORDER);
+        sprintf(fname, "results/%d/%d-pairs-found_%d", ORDER, ORDER, procnum);
         FILE * out = fopen(fname, "w");
 
         std::ifstream res(fname);
@@ -26,9 +29,9 @@ int main(int argc, char ** argv) {
         std::string arrayB;
         std::string temp;
 
-        sprintf(fname, "results/%d-candidates-a.sorted", ORDER);
+        sprintf(fname, "results/%d/%d-candidates-a.sorted_%d", ORDER, ORDER, procnum);
         std::ifstream filea(fname);
-        sprintf(fname, "results/%d-candidates-b.sorted", ORDER);
+        sprintf(fname, "results/%d/%d-candidates-b.sorted_%d", ORDER, ORDER, procnum);
         std::ifstream fileb(fname);
 
         vector<int> seqa;
@@ -38,6 +41,16 @@ int main(int argc, char ** argv) {
 
         vector<vector<int>> matchA;
         vector<vector<int>> matchB;
+
+        if(filea.peek() == EOF) {
+            printf("A file is empty.\n");
+            return 1;
+        }
+
+        if(fileb.peek() == EOF) {
+            printf("B file is empty.\n");
+            return 1;
+        }
 
         filea >> a;
         fileb >> b;
@@ -72,6 +85,8 @@ int main(int argc, char ** argv) {
                             seqa[i] = stoi(arrayA);
                         }
                     }
+
+                    temp = b;
 
                     while(fileb.good() && b == temp) {
                         matchB.push_back(seqb);

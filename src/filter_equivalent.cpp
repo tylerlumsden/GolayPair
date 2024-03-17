@@ -17,11 +17,12 @@ int main(int argc, char ** argv) {
 
     int ORDER = stoi(argv[1]);
     int LEN = stoi(argv[2]);
+    int proc = stoi(argv[3]);
 
     printf("Filtering Equivalent Pairs...\n");
 
     char fname[100];
-    sprintf(fname, "results/%d-unique-pairs-found", ORDER);
+    sprintf(fname, "results/%d-unique-pairs-found-%d", ORDER, proc);
     FILE * out = fopen(fname, "w");
 
     //match every seq a with seq b, generate an equivalence class for this sequence 
@@ -30,7 +31,7 @@ int main(int argc, char ** argv) {
     set<GolayPair> sequences;
     set<GolayPair> newset;
 
-    sprintf(fname, "results/%d-pairs-found", ORDER);
+    sprintf(fname, "results/%d-pairs-found-%d", ORDER, proc);
     std::ifstream pairs(fname);
 
     if(!pairs.good()) {
@@ -41,12 +42,17 @@ int main(int argc, char ** argv) {
     std::string a;
     std::string b;
 
+    GolayPair seq;
+    seq.a.resize(LEN);
+    seq.b.resize(LEN);
+
+    set<GolayPair> generators = constructGenerators(LEN);
+
+    printf("Generating Equivalences\n");
+
+    unsigned long long count = 0;
+
     while(pairs.good()) {
-
-        GolayPair seq;
-        seq.a.resize(LEN);
-        seq.b.resize(LEN);
-
         for(int i = 0; i < LEN; i++) {
             pairs >> a;
             seq.a[i] = stoi(a);
@@ -57,75 +63,19 @@ int main(int argc, char ** argv) {
             seq.b[i] = stoi(b);
         }
 
-        sequences.insert(seq);
-    }
-
-    printf("%lu sequences loaded.\n", sequences.size());
-
-    printf("Constructing Generators\n");
-
-    set<GolayPair> generators = constructGenerators(LEN);
-
-    printf("Generating Equivalences\n");
-
-    int count = 0;
-/*
-    set<GolayPair> equiv;
-
-    auto prev = sequences.begin();
-    auto it = sequences.begin();
-    it++;
-    while(it != sequences.end()) {
-
-        if(equiv.find(*it) != equiv.end()) {
-            sequences.erase(*it);
-            
-            it = prev;
-        } else {
-            set<GolayPair> classes = generateClassPairs(generators, *it);
-            equiv.insert(classes.begin(), classes.end());
-            count++;
-            printf("%d classes generated\n", count);
-
-            prev = it;
+        if(!pairs.good()) {
+            break;
         }
 
-        it++;
-    }
-*/
-
-    for(auto it = sequences.begin(); it != sequences.end();) {
-        set<GolayPair> classes = generateClassPairs(generators, *it);
+        set<GolayPair> classes = generateClassPairs(generators, seq);
         count++;
-        printf("%d classes generated\n", count);
 
-        if(classes.size() > sequences.size()) {
+        seq = *classes.begin();
 
-            for(auto iter = std::next(it, 1); iter != sequences.end();) {
-                GolayPair current = *iter;
-                iter++;
-                if(classes.find(current) != classes.end()) {
-                    sequences.erase(current);
-                }
-            }
-            printf("Filtered. Size: %lu\n", sequences.size());
-            it++;
-        } else {
-            set<GolayPair> newset;
-            GolayPair base = *it;
-            for(GolayPair seq : classes) {
-                sequences.erase(seq);
-            }
-            sequences.insert(base);
-            printf("Classwise filter. Size: %lu\n", sequences.size());
-            it = sequences.find(base);
-            it++;
+        if(count % 1 == 0) {
+            printf("%llu classes generated\n", count);
         }
-    }
 
-    printf("%lu unique sequences found.\n", sequences.size());
-
-    for(GolayPair seq : sequences) {
         for(int i = 0; i < LEN; i++) {
             fprintf(out, "%d ", seq.a[i]);
         }
@@ -137,6 +87,6 @@ int main(int argc, char ** argv) {
         }
 
         fprintf(out, "\n");
-    }
 
+    }
 }

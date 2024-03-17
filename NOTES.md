@@ -654,7 +654,13 @@ y should always be a subset of z.
 ==> -1 1 1 -1   -1 1 1 -1
 
 
+655072 for the first next 90 6-compression with zero PAFs
 
+next is 670898
+
+next is the a candidate with all zeroes
+
+next is 670903
 
 
 

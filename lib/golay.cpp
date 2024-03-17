@@ -9,6 +9,8 @@
 
 using namespace std;
 
+#define BOUND 0
+
 
 
 int PAF(vector<int> seq, int s) { 
@@ -21,7 +23,7 @@ int PAF(vector<int> seq, int s) {
 
 int check_if_pair(vector<int> a, vector<int> b) {
     for(size_t i = 1; i <= a.size() / 2; i++) {
-        if(PAF(a, i) + PAF(b, i) != 0) {
+        if(PAF(a, i) + PAF(b, i) != BOUND) {
             return 0;
         }
     }

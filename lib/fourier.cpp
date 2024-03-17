@@ -5,6 +5,8 @@
 #include<math.h>
 #include<vector>
 
+#define BOUND ORDER * 2
+
 
 using namespace std;
 
@@ -37,7 +39,7 @@ int dftfilter(fftw_complex * seqdft, int len, int ORDER) {
         }
     }
     for(int i = 0; i < len / 2; i++) {
-        if((seqdft[i][0] * seqdft[i][0] + seqdft[i][1] * seqdft[i][1]) > ORDER * 2 + 0.001) {
+        if((seqdft[i][0] * seqdft[i][0] + seqdft[i][1] * seqdft[i][1]) > BOUND + 0.001) {
             return 0;
         }
     }

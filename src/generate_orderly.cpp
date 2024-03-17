@@ -57,10 +57,10 @@ int main(int argc, char ** argv) {
 
     //write classes to file
     char fname[100];
-    sprintf(fname, "results/%d-unique-filtered-0", ORDER);
+    sprintf(fname, "results/%d/%d-unique-filtered-a_%d", ORDER, ORDER, 1);
     FILE * outa = fopen(fname, "w");
 
-    sprintf(fname, "results/%d-unique-filtered-1", ORDER);
+    sprintf(fname, "results/%d/%d-unique-filtered-b_%d", ORDER, ORDER, 1);
     FILE * outb = fopen(fname, "w");
 
     unsigned long long int count = 0;
@@ -83,6 +83,8 @@ int main(int argc, char ** argv) {
     vector<int> seq;
     set<vector<int>> generatorsA = constructGenerators(0, LEN);
     set<vector<int>> generatorsB = constructGenerators(1, LEN);
+
+    vector<int> test = {1};
 
     while(nextBranch(seq, LEN / 2, alphabet)) {
 
@@ -115,6 +117,7 @@ int main(int argc, char ** argv) {
 
                 do {
 
+
                     if(newseq.back() == *alphabet.begin()) {
                         continue;
                     }
@@ -129,6 +132,14 @@ int main(int argc, char ** argv) {
                             fprintf(outa, " ");
                             writeSeq(outa, newseq);
                             fprintf(outa, "\n");
+                                                if(newseq == test) {
+                            printf("REPEAT!\n");
+                            for(int i = 0; i < newseq.size(); i++) {
+                                printf("%d ", newseq[i]);
+                            }
+                            printf("\n");
+                        }
+                        test = newseq;
                         }
                     }
 
@@ -145,7 +156,8 @@ int main(int argc, char ** argv) {
                         }
                     }
 
-                } while(next_permutation(newseq.begin() - 1 + LEN / 2, newseq.end()));
+                } while(next_permutation(newseq.begin() + LEN / 2, newseq.end()));
+                
             }
         }
     }
