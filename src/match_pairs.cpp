@@ -14,8 +14,11 @@ int main(int argc, char ** argv) {
     int ORDER = stoi(argv[1]);
     int LEN = stoi(argv[2]);
     int procnum = stoi(argv[3]);
+<<<<<<< HEAD
 
     printf("Matching\n");
+=======
+>>>>>>> 9e74f94e75d9464949a78554e178c43b165663af
     
 
         char fname[100];

@@ -655,6 +655,47 @@ y should always be a subset of z.
 
 
 655072 for the first next 90 6-compression with zero PAFs
+<<<<<<< HEAD
+=======
+
+next is 670898
+
+next is the a candidate with all zeroes
+
+next is 670903
+
+
+90 6-compressions uncompressed:
+line 1
+line 343578
+line 343579
+line 343580
+line 343581
+
+line 655072
+line 670898
+line 670903
+
+line 655073
+line 670899
+line 670904
+
+next to uncompress:
+
+655073 to 655075
+
+670898 to 670900
+
+670903 to 670905
+
+
+(all pairs with the specified a-pair)
+
+
+order 64 candidate 2-compression generation took 17 hours, at least 18 times faster than order 58. (order 58 took ~18 days)
+
+UNCOMPRESSING ALL 90 6-uncompression PAIRS WITH ZERO-PAFS EXCEPT THE ONES WITH ONLY ZEROES AS ELEMENTSw
+>>>>>>> 9e74f94e75d9464949a78554e178c43b165663af
 
 next is 670898
 

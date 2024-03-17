@@ -1,9 +1,19 @@
 #!/bin/bash
+<<<<<<< HEAD
 #SBATCH --account=def-cbright
 #SBATCH --time=01:00:00
 #SBATCH --mem-per-cpu=4G
 #SBATCH --cpus-per-task=1
 #SBATCH -o ./Report90/output.%a.out # STDOUT 
+=======
+#SBATCH --account=rrg-cbright
+#SBATCH --time=07-00:00
+#SBATCH --mem-per-cpu=4G
+#SBATCH --cpus-per-task=1
+#SBATCH -o ./Report/output.%a.out # STDOUT 
+
+    proc=$SLURM_ARRAY_TASK_ID
+>>>>>>> 9e74f94e75d9464949a78554e178c43b165663af
     
     make
     

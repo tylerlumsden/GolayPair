@@ -1,7 +1,13 @@
 #!/bin/bash
+<<<<<<< HEAD
 #SBATCH --account=def-cbright
 #SBATCH --time=03-00:00
 #SBATCH --mem-per-cpu=4G
+=======
+#SBATCH --account=rrg-cbright
+#SBATCH --time=1-00:00
+#SBATCH --mem-per-cpu=2G
+>>>>>>> 9e74f94e75d9464949a78554e178c43b165663af
 #SBATCH --cpus-per-task=1
 
 #TO USE: ./driver.sh [ORDER] [Compression Factor] [Number of parallel divisions]
