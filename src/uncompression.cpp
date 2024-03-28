@@ -80,6 +80,7 @@ int main(int argc, char ** argv) {
     seq.resize(ORDER / NEWCOMPRESS);
 
     std::set<int> alphabet;
+    
 
     if(COMPRESS % 2 == 0) {
         for(int i = 0; i <= COMPRESS; i += 2) {
@@ -130,24 +131,90 @@ int main(int argc, char ** argv) {
         partitions.insert(make_pair(letter, partition));
     }
     
-    sprintf(fname, "results/%d/%d-candidates-%d_%d", ORDER, ORDER, 0, procnum);
+    sprintf(fname, "/home/lumsdent/scratch/%d-candidates-%d_%d", ORDER, 0, procnum);
     FILE * outa = fopen(fname, "w");
     
-    sprintf(fname, "results/%d/%d-candidates-%d_%d", ORDER, ORDER, 1, procnum);
+    sprintf(fname, "/home/lumsdent/scratch/%d-candidates-%d_%d", ORDER, 1, procnum);
     FILE * outb = fopen(fname, "w");
     
     //shift original sequence such that the element with the largest number of permutations is in the front
+    set<int> seta;
+    for(int element : origa) {
+        seta.insert(element);
+    }
+
+    set<int> setb;
+    for(int element : origb) {
+        setb.insert(element);
+    }
+    
+
+    int max = 0;
+    int best;
+    for(int element : seta) {
+        if(partitions.at(element).size() > max) {
+            max = partitions.at(element).size();
+            best = element;
+        }
+    }
+    for(int i = 0; i < origa.size(); i++) {
+        if(origa[i] == best) {
+            rotate(origa.begin(), origa.begin() + i, origa.end());
+        }
+    }
+
+    max = 0;
+    for(int element : setb) {
+        if(partitions.at(element).size() > max) {
+            max = partitions.at(element).size();
+            best = element;
+        }
+    }
+    for(int i = 0; i < origb.size(); i++) {
+        if(origb[i] == best) {
+            rotate(origb.begin(), origb.begin() + i, origb.end());
+        }
+    }
+
+    set<vector<int>> perma;
+    for(vector<int> perm : partitions.at(origa[0])) {
+        set<vector<int>> equiv = generateUncompress(perm);
+        perma.insert(*equiv.begin());
+    }
+
+    vector<vector<int>> newfirsta;
+    for(vector<int> perm : perma) {
+        newfirsta.push_back(perm);
+    }
+
+    set<vector<int>> permb;
+    for(vector<int> perm : partitions.at(origb[0])) {
+        set<vector<int>> equiv = generateUncompress(perm);
+        permb.insert(*equiv.begin());
+    }
+
+    vector<vector<int>> newfirstb;
+    for(vector<int> perm : permb) {
+        newfirstb.push_back(perm);
+    }
+
+    //partitions = partitionsA;
 
     unsigned long long int count = 0;
     int curr = 0;
     vector<int> stack(LEN, 0);
-
     
+    printf("Uncompressing A\n");
+
     while(curr != -1) {
 
         while(curr != LEN - 1) {
 
             std::vector<int> permutation = partitions.at(origa[curr])[stack[curr]];
+
+            if(curr == 0) {
+                permutation = newfirsta[stack[curr]];
+            }
 
             for(int i = 0; i < COMPRESS / NEWCOMPRESS; i++) {
                 seq[curr + (LEN * i)] = permutation[i];
@@ -188,7 +255,7 @@ int main(int argc, char ** argv) {
             
             curr--;
 
-            while((unsigned int)stack[curr] == partitions.at(origa[curr]).size()) {
+            while((unsigned int)stack[curr] == partitions.at(origa[curr]).size() || (curr == 0 && stack[curr] == newfirsta.size())) {
                 stack[curr] = 0;
                 curr--;
                 if(curr == -1) {
@@ -196,6 +263,7 @@ int main(int argc, char ** argv) {
                     break;
                 }
             }
+            //printf("curr: %d, stack: %d\n", curr, stack[curr]);
         }
     }
 
@@ -208,11 +276,16 @@ int main(int argc, char ** argv) {
 
     //partitions = partitionsB;
 
+
     
     while(curr != -1) {
 
         while(curr != LEN - 1) {
             std::vector<int> permutation = partitions.at(origb[curr])[stack[curr]];
+
+            if(curr == 0) {
+                permutation = newfirstb[stack[curr]];
+            }
 
             for(int i = 0; i < COMPRESS / NEWCOMPRESS; i++) {
                 seq[curr + (LEN * i)] = permutation[i];
@@ -252,7 +325,7 @@ int main(int argc, char ** argv) {
             
             curr--;
 
-            while((unsigned int)stack[curr] == partitions.at(origb[curr]).size()) {
+            while((unsigned int)stack[curr] == partitions.at(origb[curr]).size() || (curr == 0 && stack[curr] == newfirstb.size())) {
                 stack[curr] = 0;
                 curr--;
                 if(curr == -1) {

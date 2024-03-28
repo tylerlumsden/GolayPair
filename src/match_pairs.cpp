@@ -14,11 +14,8 @@ int main(int argc, char ** argv) {
     int ORDER = stoi(argv[1]);
     int LEN = stoi(argv[2]);
     int procnum = stoi(argv[3]);
-<<<<<<< HEAD
 
     printf("Matching\n");
-=======
->>>>>>> 9e74f94e75d9464949a78554e178c43b165663af
     
 
         char fname[100];
@@ -32,9 +29,9 @@ int main(int argc, char ** argv) {
         std::string arrayB;
         std::string temp;
 
-        sprintf(fname, "results/%d/%d-candidates-a.sorted_%d", ORDER, ORDER, procnum);
+        sprintf(fname, "/home/lumsdent/scratch/%d-candidates-a.sorted_%d", ORDER, procnum);
         std::ifstream filea(fname);
-        sprintf(fname, "results/%d/%d-candidates-b.sorted_%d", ORDER, ORDER, procnum);
+        sprintf(fname, "/home/lumsdent/scratch/%d-candidates-b.sorted_%d", ORDER, procnum);
         std::ifstream fileb(fname);
 
         vector<int> seqa;

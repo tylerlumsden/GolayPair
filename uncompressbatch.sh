@@ -3,21 +3,13 @@
 #SBATCH --time=07-00:00
 #SBATCH --mem-per-cpu=4G
 #SBATCH --cpus-per-task=1
-#SBATCH -o ./Report/output.%a.out # STDOUT
-#SBATCH --array=1-14
+#SBATCH -o ./Report90/output.%a.out # STDOUT
+#SBATCH --array=1-1000
 
-<<<<<<< HEAD
 order=$1
 compress=$2
 newcompress=$3
 cores=$4
-=======
-cores=14
-
-order=90
-compress=6
-newcompress=2
->>>>>>> 9e74f94e75d9464949a78554e178c43b165663af
 
 ############################################### INPUT ABOVE
 make
@@ -34,7 +26,3 @@ wait
 
 
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 9e74f94e75d9464949a78554e178c43b165663af
