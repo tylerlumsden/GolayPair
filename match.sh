@@ -13,8 +13,8 @@ echo Sorting $order of length $len, file $proc
 
 start=`date +%s`
 
-sort -u -S 1G -T /home/lumsdent/scratch /home/lumsdent/scratch/$order-candidates-0_$proc | uniq > /home/lumsdent/scratch/$order-candidates-a.sorted_$proc
-sort -u -S 1G -T /home/lumsdent/scratch /home/lumsdent/scratch/$order-candidates-1_$proc | uniq > /home/lumsdent/scratch/$order-candidates-b.sorted_$proc
+sort -u -S 1G -T results results/$order/$order-candidates-0_$proc | uniq > results/$order/$order-candidates-a.sorted_$proc
+sort -u -S 1G -T results results/$order/$order-candidates-1_$proc | uniq > results/$order/$order-candidates-b.sorted_$proc
 
 #echo Sorting complete
 #echo Matching

@@ -29,9 +29,9 @@ int main(int argc, char ** argv) {
         std::string arrayB;
         std::string temp;
 
-        sprintf(fname, "/home/lumsdent/scratch/%d-candidates-a.sorted_%d", ORDER, procnum);
+        sprintf(fname, "results/%d/%d-candidates-a.sorted_%d", ORDER, ORDER, procnum);
         std::ifstream filea(fname);
-        sprintf(fname, "/home/lumsdent/scratch/%d-candidates-b.sorted_%d", ORDER, procnum);
+        sprintf(fname, "results/%d/%d-candidates-b.sorted_%d", ORDER, ORDER, procnum);
         std::ifstream fileb(fname);
 
         vector<int> seqa;

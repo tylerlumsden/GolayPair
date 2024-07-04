@@ -6,7 +6,7 @@
 #include<set>
 #include<array>
 #include<time.h>
-#include"../lib/fftw-3.3.10/api/fftw3.h"
+#include"fftw3.h"
 #include"../lib/array.h"
 #include"../lib/decomps.h"
 #include"../lib/fourier.h"
