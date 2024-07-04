@@ -41,7 +41,13 @@ int main(int argc, char ** argv) {
     int procnum = stoi(argv[2]);
 
     char fname[100];
-    sprintf(fname, "results/%d-pairs-found-%d", ORDER, procnum);
+
+    if(procnum == 0) {
+        sprintf(fname, "results/%d-pairs-found", ORDER);
+    } else {
+        sprintf(fname, "results/%d-pairs-found-%d", ORDER, procnum);
+    }
+
     std::ifstream file(fname);
     std::string line;
     std::string letter;
@@ -131,10 +137,10 @@ int main(int argc, char ** argv) {
         partitions.insert(make_pair(letter, partition));
     }
     
-    sprintf(fname, "/home/lumsdent/scratch/%d-candidates-%d_%d", ORDER, 0, procnum);
+    sprintf(fname, "results/%d/%d-candidates-%d_%d", ORDER, ORDER, 0, procnum);
     FILE * outa = fopen(fname, "w");
     
-    sprintf(fname, "/home/lumsdent/scratch/%d-candidates-%d_%d", ORDER, 1, procnum);
+    sprintf(fname, "results/%d/%d-candidates-%d_%d", ORDER, ORDER, 1, procnum);
     FILE * outb = fopen(fname, "w");
     
     //shift original sequence such that the element with the largest number of permutations is in the front

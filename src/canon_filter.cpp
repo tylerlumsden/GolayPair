@@ -19,25 +19,33 @@ int main(int argc, char ** argv) {
     int LEN = stoi(argv[2]);
     int proc = stoi(argv[3]);
 
-    printf("Filtering Equivalent Pairs...\n");
-
+    FILE * out;
     char fname[100];
-    sprintf(fname, "results/%d-unique-pairs-found-%d", ORDER, proc);
-    FILE * out = fopen(fname, "w");
+    if(proc == 0) {
+        sprintf(fname, "results/%d-unique-pairs-found", ORDER);
+        out = fopen(fname, "w");
+        sprintf(fname, "results/%d-pairs-found", ORDER);
+    } else {
+        printf(fname, "results/%d-unique-pairs-found-%d", ORDER, proc);
+        out = fopen(fname, "w");
+        sprintf(fname, "results/%d-pairs-found-%d", ORDER, proc);
+    }
 
-    //match every seq a with seq b, generate an equivalence class for this sequence 
-    
-    set<GolayPair> classes;
-    set<GolayPair> sequences;
-    set<GolayPair> newset;
-
-    sprintf(fname, "results/%d-pairs-found-%d", ORDER, proc);
     std::ifstream pairs(fname);
 
     if(!pairs.good()) {
         printf("Bad File.\n");
         return 0;
     }
+
+    printf("Filtering Equivalent Pairs...\n");
+
+
+    //match every seq a with seq b, generate an equivalence class for this sequence 
+    
+    set<GolayPair> classes;
+    set<GolayPair> sequences;
+    set<GolayPair> newset;
 
     std::string a;
     std::string b;

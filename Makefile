@@ -5,7 +5,7 @@ BIN = bin/
 SRC = src/
 CC = g++
 FFTW = -I/usr/local/include -L/usr/local/lib -lfftw3 -lm
-all: bin/golay.o bin/fourier.o bin/orderly_equivalence.o bin/equivalence.o bin/array.o bin/generate_orderly bin/filter_equivalent bin/match_pairs bin/uncompression bin/compress
+all: bin/golay.o bin/fourier.o bin/orderly_equivalence.o bin/equivalence.o bin/array.o bin/generate_hybrid bin/cache_filter bin/canon_filter bin/match_pairs bin/uncompression bin/compress
 
 $(BIN)orderly_equivalence.o: $(DIR)orderly_equivalence.cpp $(DIR)golay.h $(DIR)coprimes.h
 	$(CC) -Wall -g -c -O3 $(DIR)orderly_equivalence.cpp -o $(BIN)orderly_equivalence.o 
@@ -22,11 +22,14 @@ $(BIN)golay.o: $(DIR)golay.h
 $(BIN)match_pairs: $(SRC)match_pairs.cpp $(DIR)golay.h $(BIN)golay.o
 	$(CC) -Wall -g -O3 $(SRC)match_pairs.cpp $(BIN)golay.o -o $(BIN)match_pairs 
 
-$(BIN)generate_orderly: $(SRC)generate_orderly.cpp $(DIR)golay.h $(BIN)array.o $(BIN)fourier.o $(BIN)orderly_equivalence.o
-	$(CC) -Wall -g -O3 $(SRC)generate_orderly.cpp $(BIN)orderly_equivalence.o $(BIN)array.o $(BIN)fourier.o -o $(BIN)generate_orderly $(FFTW)
+$(BIN)generate_hybrid: $(SRC)generate_hybrid.cpp $(DIR)golay.h $(BIN)array.o $(BIN)fourier.o $(BIN)orderly_equivalence.o
+	$(CC) -Wall -g -O3 $(SRC)generate_hybrid.cpp $(BIN)orderly_equivalence.o $(BIN)array.o $(BIN)fourier.o -o $(BIN)generate_hybrid $(FFTW)
 
-$(BIN)filter_equivalent: $(SRC)filter_equivalent.cpp $(DIR)golay.h $(BIN)equivalence.o
-	$(CC) -Wall -g -O3 $(SRC)filter_equivalent.cpp $(BIN)equivalence.o -o $(BIN)filter_equivalent 
+$(BIN)cache_filter: $(SRC)cache_filter.cpp $(DIR)golay.h $(BIN)equivalence.o
+	$(CC) -Wall -g -O3 $(SRC)cache_filter.cpp $(BIN)equivalence.o -o $(BIN)cache_filter
+
+$(BIN)canon_filter: $(SRC)canon_filter.cpp $(DIR)golay.h $(BIN)equivalence.o
+	$(CC) -Wall -g -O3 $(SRC)canon_filter.cpp $(BIN)equivalence.o -o $(BIN)canon_filter
 
 $(BIN)equivalence.o: $(DIR)equivalence.cpp $(DIR)golay.h $(DIR)coprimes.h
 	$(CC) -Wall -g -O3 -c $(DIR)equivalence.cpp -o $(BIN)equivalence.o 

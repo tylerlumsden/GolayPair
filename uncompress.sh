@@ -5,18 +5,23 @@
 #SBATCH --cpus-per-task=1
 #SBATCH -o ./Report/output.%a.out # STDOUT 
     
-    make
-    
     order=$1
     compress=$2
     newcompress=$3
-    proc=$SLURM_ARRAY_TASK_ID
-    
+    proc=$4
+
     start=`date +%s`
 
     echo Uncompressing
 
-    linecount=$(wc -l < results/$order-pairs-found-$proc)
+    if [[ $proc -eq 0 ]]
+    then
+        linecount=$(wc -l < results/$order-pairs-found)
+    
+    else 
+        linecount=$(wc -l < results/$order-pairs-found-$proc)
+    fi    
+
 
     for ((i = 1; i<=$linecount; i++))
     do

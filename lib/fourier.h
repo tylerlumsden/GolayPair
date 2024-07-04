@@ -1,4 +1,4 @@
-#include"fftw-3.3.10/api/fftw3.h"
+#include"fftw3.h"
 #include"golay.h"
 #include<array>
 

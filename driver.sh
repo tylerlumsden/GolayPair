@@ -1,14 +1,7 @@
-#!/bin/bash
-#SBATCH --account=def-cbright
-#SBATCH --time=03-00:00
-#SBATCH --mem-per-cpu=4G
-#SBATCH --cpus-per-task=1
-
-#TO USE: ./driver.sh [ORDER] [Compression Factor] [Number of parallel divisions]
+#TO USE: ./driver.sh [ORDER] [Compression Factor]
 
 order=$1
 compress=$2
-numproc=$3
 
 len=$(($order / $compress))
 
@@ -18,26 +11,16 @@ len=$(($order / $compress))
 mkdir results
 mkdir results/$order
 
-make
-
-echo Number of processes: $numproc
+echo Generating Candidates...
 
 start=`date +%s`
-
-for ((i = 0; i<$numproc; i++))
-do  
-    echo i: $i
-    ./bin/generate_orderly $order $compress
-done
-
-wait
-
+./bin/generate_hybrid $order $compress
 end=`date +%s`
 
 runtime1=$((end-start))
-echo $runtime1 seconds
+echo $runtime1 seconds elapsed
 
-echo Matching Candidates
+echo Matching Candidates...
 
 start=`date +%s`
 
@@ -48,36 +31,42 @@ sort results/$order/$order-unique-filtered-b_1 | uniq > results/$order/$order-ca
 end=`date +%s`
 
 runtime2=$((end-start))
-echo $runtime2 seconds
+echo $runtime2 seconds elapsed
 
-candidatesA=$(wc -l < results/$order/$order-candidates-a.sorted)
-candidatesB=$(wc -l < results/$order/$order-candidates-b.sorted)
-pairs=$(wc -l < results/$order/$order-pairs-found)
+mv results/$order/$order-pairs-found_1 results/$order/$order-pairs-found-1
 
 total=$((runtime1 + runtime2))
 
+echo $total seconds total
 
-#start=`date +%s`
-#./bin/filter_equivalent
-#end=`date +%s`
+epochtime=$(date +%s)
+datetime=$(date +"%Y-%m-%d")
 
-#runtime3=$((end-start))
+cp results/$order/$order-pairs-found-1 results/history/$order-$compress-$datetime-$epochtime
+cp results/$order/$order-pairs-found-1 results/$order-pairs-found
 
-#echo $runtime3 seconds
+if [ $compress -gt 1 ]
+then
 
-#runtime3=0
-#uncompressedpairs=0
+echo Uncompressing Pairs...
 
-#./bin/filter_equivalent $order $(($order / $compress))
+./uncompress.sh $order $compress 1 0
 
-#python3 -u "src/print_timings_table.py" $order $compress $candidatesA $candidatesB $pairs $runtime1 $uncompressedpairs $runtime3 $total > results.table
+cp results/$order/$order-pairs-found-0 results/history/$order-1-$datetime-$epochtime
+cp results/$order/$order-pairs-found-0 results/$order-pairs-found
+fi
 
-#start=`date +%s`
+echo Filtering Equivalences...
 
+start=`date +%s`
+./bin/cache_filter $order $(($order / $compress))
+end=`date +%s`
 
-#./bin/filter_equivalent
+runtime3=$((end-start))
 
-#end=`date +%s`
+echo $runtime3 seconds elapsed
 
-#runtime3=$((end-start))
-#echo $runtime3 seconds
+epochtime=$(date +%s)
+datetime=$(date +"%Y-%m-%d")
+
+cp results/$order-unique-pairs-found results/history/$order-1-$datetime-$epochtime
