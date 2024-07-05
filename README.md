@@ -30,7 +30,13 @@ Valid length values for searching with our code include: 2, 4, 8, 10, 16, 18, 20
 
 Valid compression factor values include any number which divides the length value. To search without compression, use a compression factor of 1.
 
+The output of our procedures will be located in the ```results``` directory, stored in the file [Length]-pairs-found
+
 ## Procedures
+
+The ```src``` directory contains all source files containing runnable procedures which compile to a ```main``` function.
+
+The ```lib``` directory contains all source files containing helper functions for our main procedures.
 
 
 
