@@ -22,8 +22,8 @@ $(BIN)golay.o: $(DIR)golay.h
 $(BIN)match_pairs: $(SRC)match_pairs.cpp $(DIR)golay.h $(BIN)golay.o
 	$(CC) -Wall -g -O3 $(SRC)match_pairs.cpp $(BIN)golay.o -o $(BIN)match_pairs 
 
-$(BIN)generate_hybrid: $(SRC)generate_hybrid.cpp $(DIR)golay.h $(BIN)array.o $(BIN)fourier.o $(BIN)orderly_equivalence.o
-	$(CC) -Wall -g -O3 $(SRC)generate_hybrid.cpp $(BIN)orderly_equivalence.o $(BIN)array.o $(BIN)fourier.o -o $(BIN)generate_hybrid $(FFTW)
+$(BIN)generate_hybrid: $(SRC)generate_hybrid.cpp $(BIN)golay.o $(BIN)array.o $(BIN)fourier.o $(BIN)orderly_equivalence.o
+	$(CC) -Wall -g -O3 $(SRC)generate_hybrid.cpp $(BIN)orderly_equivalence.o $(BIN)array.o $(BIN)fourier.o $(BIN)golay.o  -o $(BIN)generate_hybrid $(FFTW)
 
 $(BIN)cache_filter: $(SRC)cache_filter.cpp $(DIR)golay.h $(BIN)equivalence.o
 	$(CC) -Wall -g -O3 $(SRC)cache_filter.cpp $(BIN)equivalence.o -o $(BIN)cache_filter
@@ -37,8 +37,8 @@ $(BIN)equivalence.o: $(DIR)equivalence.cpp $(DIR)golay.h $(DIR)coprimes.h
 $(BIN)uncompression: $(SRC)uncompression.cpp $(BIN)array.o $(BIN)equivalence.o 
 	$(CC) -Wall -g -O3 $(SRC)uncompression.cpp $(BIN)equivalence.o $(BIN)fourier.o $(BIN)array.o -o $(BIN)uncompression $(FFTW)
 
-$(BIN)compress: $(SRC)compress.cpp
-	$(CC) -Wall -g -O3 $(SRC)compress.cpp -o $(BIN)compress
+$(BIN)compress: $(SRC)compress.cpp $(BIN)fourier.o
+	$(CC) -Wall -g -O3 $(SRC)compress.cpp $(BIN)fourier.o -o $(BIN)compress $(FFTW)
 clean:
 	@echo "Cleaning up..."
 	rm -f bin/*

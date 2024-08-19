@@ -12,6 +12,7 @@
 #include"../lib/fourier.h"
 #include<tgmath.h>
 #include<algorithm>
+#include<fstream>
 
 using namespace std;
 
@@ -46,14 +47,10 @@ int main(int argc, char ** argv) {
 
     int ORDER = stoi(argv[1]);
     int COMPRESS = stoi(argv[2]);
+    int PAF_BOUND = stoi(argv[3]);
     int LEN = ORDER / COMPRESS;
 
-    fftw_complex *in, *out;
-    fftw_plan plan;
-
-    in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * LEN);
-    out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * LEN);
-    plan = fftw_plan_dft_1d(LEN, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+    Runtime Runtime(PAF_BOUND, ORDER, LEN);
 
     //write classes to file
     char fname[100];
@@ -84,8 +81,6 @@ int main(int argc, char ** argv) {
     set<vector<int>> generatorsA = constructGenerators(0, LEN);
     set<vector<int>> generatorsB = constructGenerators(1, LEN);
 
-    vector<int> test = {1};
-
     while(nextBranch(seq, LEN / 2, alphabet)) {
 
         if(!partialCanonical(seq)) {
@@ -102,7 +97,7 @@ int main(int argc, char ** argv) {
 
             for(std::vector<int> combo : combinations) {
                 int sum = rowsum(combo);
-                if(sum == decomps[ORDER][0][0] - rowsum(seq) || sum == decomps[ORDER][0][1] - rowsum(seq)) {
+                if(Runtime.a_is_solution(sum + rowsum(seq)) || Runtime.b_is_solution(sum + rowsum(seq))) {
                     rowcombo.push_back(combo);
                 }
             }  
@@ -122,33 +117,25 @@ int main(int argc, char ** argv) {
                         continue;
                     }
 
-                    if(rowsum(newseq) == decomps[ORDER][0][0]) {
-                        out = dft(newseq, in, out, plan);
-                        if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsA)) {
+                    if(Runtime.a_is_solution(rowsum(newseq))) {
+                        std::vector<double> psd = Runtime.PSD(newseq);
+                        if(Runtime.PSD_filter(psd) && isCanonical(newseq, generatorsA)) {
                             count++;
                             for(int i = 0; i < LEN / 2; i++) {
-                                fprintf(outa, "%d",    (int)rint(norm(out[i])));
+                                fprintf(outa, "%d",    (int)rint(psd[i]));
                             }
                             fprintf(outa, " ");
                             writeSeq(outa, newseq);
                             fprintf(outa, "\n");
-                                                if(newseq == test) {
-                            printf("REPEAT!\n");
-                            for(int i = 0; i < newseq.size(); i++) {
-                                printf("%d ", newseq[i]);
-                            }
-                            printf("\n");
-                        }
-                        test = newseq;
                         }
                     }
 
-                    if(rowsum(newseq) == decomps[ORDER][0][1]) {
-                        out = dft(newseq, in, out, plan);
-                        if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsB)) {
+                    if(Runtime.b_is_solution(rowsum(newseq))) {
+                        std::vector<double> psd = Runtime.PSD(newseq);
+                        if(Runtime.PSD_filter(psd) && isCanonical(newseq, generatorsB)) {
                             count++;
                             for(int i = 0; i < LEN / 2; i++) {
-                                fprintf(outb, "%d",   ORDER * 2 - (int)rint(norm(out[i])));
+                                fprintf(outb, "%d",   Runtime.psd_bound - (int)rint(psd[i]));
                             }
                             fprintf(outb, " ");
                             writeSeq(outb, newseq);
@@ -164,13 +151,10 @@ int main(int argc, char ** argv) {
 
     printf("%llu\n", count);
 
-    fftw_free(in);
-    fftw_free(out);
-    fftw_destroy_plan(plan);
-
     fclose(outa);
     
 }
+
 template<class BidirIt>
 bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet) {
     int min = *std::min_element(alphabet.begin(), alphabet.end());
@@ -235,6 +219,39 @@ bool nextBranch(vector<int>& seq, unsigned int len, set<int> alphabet) {
 
 }
 
+int getIndex(int element, std::set<int> alphabet) {
+    int i = 0;
+    for(int num : alphabet) {
+        if(num == element) {
+            return i;
+        }
+        i++;
+    }
+
+    return -1;
+}
+
+void binaryWriteSeq(std::ofstream out, vector<int> seq, std::set<int> alphabet) {
+
+    int alphabetsize = alphabet.size();
+
+    int bytes;
+
+    if(alphabetsize > 8) {
+        bytes = (alphabetsize / 8) + 1;
+
+        for(unsigned int i = 0; i < seq.size(); i++) {
+            for(int j = 0; j < bytes; j++) {
+                int index = getIndex(seq[i], alphabet);
+
+                out << index;
+            }
+        }
+    } else {
+
+    }
+
+}
 
 void writeSeq(FILE * out, vector<int> seq) {
     for(unsigned int i = 0; i < seq.size(); i++) {

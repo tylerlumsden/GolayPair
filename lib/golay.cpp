@@ -11,7 +11,17 @@ using namespace std;
 
 #define BOUND 0
 
-
+std::set<std::pair<int, int>> sumoftwosquares(int constant) {
+    std::set<std::pair<int, int>> solutions;
+    for(int a = 0; a < constant; a++) {
+        for(int b = a; b < constant; b++) {
+            if(a * a + b * b == constant) {
+                solutions.insert(make_pair(a, b));
+            }
+        }
+    }
+    return solutions;
+}
 
 int PAF(vector<int> seq, int s) { 
     int result = 0;
@@ -30,6 +40,13 @@ int check_if_pair(vector<int> a, vector<int> b) {
     }
 
     return 1;
+}
+
+bool double_equal(double a, int b) {
+    if(abs(a - b) < 0.001) {
+        return true;
+    }
+    return false;
 }
 
 
