@@ -123,11 +123,6 @@ fftw_complex * dft(vector<int> seq, fftw_complex * in, fftw_complex * out, fftw_
 
     fftw_execute(p);
     
-    for(size_t i = 0; i < seq.size(); i++) {
-        printf("%f ", out[seq.size() / 3][0] * out[seq.size() / 3][0] + out[seq.size() / 3][1] * out[seq.size() / 3][1]);
-    }
-    printf("\n");
-    
     return out;
 } 
 

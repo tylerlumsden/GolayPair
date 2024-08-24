@@ -18,6 +18,19 @@ int getIndex(int element, std::set<int> alphabet) {
     return -1;
 }
 
+std::vector<int> binaryReadPSD(std::ifstream& in, int bytes) {
+    std::vector<int> psd;
+    char byte;
+
+    for(int i = 0; i < bytes; i++) {
+        in.get(byte);
+
+        psd.push_back((int)byte);
+    }
+   
+   return psd;
+}
+
 std::vector<int> binaryReadSeq(std::ifstream& in, int len, std::set<int> alphabet) {
     std::vector<int> seq;
 
@@ -102,17 +115,29 @@ void binaryWriteSeq(std::ofstream& out, std::vector<int> seq, std::set<int> alph
 
 int main() {
 
-    std::vector<int> seq = {1, -1, 1, 1, -1, 1, -1, 1, -1};
-
     std::set<int> alphabet = {-1, 1};
 
-    std::ofstream output("tester", std::ios::binary);
+    std::ifstream input("results/8/8-unique-filtered-b_1", std::ios::binary);
 
-    binaryWriteSeq(output, seq, alphabet);
 
-    output.close();
+    while(input.good()) {
 
-    std::ifstream input("tester", std::ios::binary);
+        std::vector<int> psd = binaryReadPSD(input, 4);
+
+        std::vector<int> seq = binaryReadSeq(input, 8, alphabet);
+
+        for(int i = 0; i < psd.size(); i++) {
+            printf("%d", psd[i]);
+        }
+        printf(" ");
+
+        for(int i = 0; i < seq.size(); i++) {
+            printf("%d ", seq[i]);
+        }
+        printf("\n");
+
+    }
+
 
     std::vector<int> newseq = binaryReadSeq(input, 9, alphabet);
 

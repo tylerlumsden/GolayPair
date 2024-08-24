@@ -12,7 +12,6 @@
 #include"../lib/fourier.h"
 #include<tgmath.h>
 #include<algorithm>
-#include<fstream>
 #include"../lib/binary.h"
 
 using namespace std;
@@ -48,18 +47,22 @@ int main(int argc, char ** argv) {
 
     int ORDER = stoi(argv[1]);
     int COMPRESS = stoi(argv[2]);
-    int PAF_BOUND = stoi(argv[3]);
     int LEN = ORDER / COMPRESS;
 
-    Runtime Runtime(PAF_BOUND, ORDER, LEN);
+    fftw_complex *in, *out;
+    fftw_plan plan;
+
+    in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * LEN);
+    out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * LEN);
+    plan = fftw_plan_dft_1d(LEN, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
     //write classes to file
     char fname[100];
     sprintf(fname, "results/%d/%d-unique-filtered-a_%d", ORDER, ORDER, 1);
-    std::ofstream outa(fname, std::ios::binary);
+    std::ofstream outa(fname);
 
     sprintf(fname, "results/%d/%d-unique-filtered-b_%d", ORDER, ORDER, 1);
-    std::ofstream outb(fname, std::ios::binary);
+    std::ofstream outb(fname);
 
     unsigned long long int count = 0;
 
@@ -82,6 +85,8 @@ int main(int argc, char ** argv) {
     set<vector<int>> generatorsA = constructGenerators(0, LEN);
     set<vector<int>> generatorsB = constructGenerators(1, LEN);
 
+    vector<int> test = {1};
+
     while(nextBranch(seq, LEN / 2, alphabet)) {
 
         if(!partialCanonical(seq)) {
@@ -98,7 +103,7 @@ int main(int argc, char ** argv) {
 
             for(std::vector<int> combo : combinations) {
                 int sum = rowsum(combo);
-                if(Runtime.a_is_solution(sum + rowsum(seq)) || Runtime.b_is_solution(sum + rowsum(seq))) {
+                if(sum == decomps[ORDER][0][0] - rowsum(seq) || sum == decomps[ORDER][0][1] - rowsum(seq)) {
                     rowcombo.push_back(combo);
                 }
             }  
@@ -118,18 +123,34 @@ int main(int argc, char ** argv) {
                         continue;
                     }
 
-                    if(Runtime.a_is_solution(rowsum(newseq))) {
-                        std::vector<double> psd = Runtime.PSD(newseq);
-                        if(Runtime.PSD_filter(psd) && isCanonical(newseq, generatorsA)) {
+                    if(rowsum(newseq) == decomps[ORDER][0][0]) {
+                        out = dft(newseq, in, out, plan);
+                        if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsA)) {
                             count++;
+
+                            std::vector<double> psd;
+                            psd.reserve(newseq.size());
+                            for(size_t i = 0; i < newseq.size(); i++) {
+                                psd.push_back(norm(out[i]));
+                            }
+
+                            binaryWritePSD(outa, psd, 2 * ORDER);
                             binaryWriteSeq(outa, newseq, alphabet);
                         }
                     }
 
-                    if(Runtime.b_is_solution(rowsum(newseq))) {
-                        std::vector<double> psd = Runtime.PSD(newseq);
-                        if(Runtime.PSD_filter(psd) && isCanonical(newseq, generatorsB)) {
+                    if(rowsum(newseq) == decomps[ORDER][0][1]) {
+                        out = dft(newseq, in, out, plan);
+                        if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsB)) {
                             count++;
+
+                            std::vector<double> psd;
+                            psd.reserve(newseq.size());
+                            for(size_t i = 0; i < newseq.size(); i++) {
+                                psd.push_back(ORDER * 2 - norm(out[i]));
+                            }
+
+                            binaryWritePSD(outb, psd, 2 * ORDER);
                             binaryWriteSeq(outb, newseq, alphabet);
                         }
                     }
@@ -141,9 +162,11 @@ int main(int argc, char ** argv) {
     }
 
     printf("%llu\n", count);
-    
-}
 
+    fftw_free(in);
+    fftw_free(out);
+    fftw_destroy_plan(plan);
+}
 template<class BidirIt>
 bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet) {
     int min = *std::min_element(alphabet.begin(), alphabet.end());
@@ -207,6 +230,7 @@ bool nextBranch(vector<int>& seq, unsigned int len, set<int> alphabet) {
     return true;
 
 }
+
 
 void writeSeq(FILE * out, vector<int> seq) {
     for(unsigned int i = 0; i < seq.size(); i++) {

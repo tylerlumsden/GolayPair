@@ -9,15 +9,10 @@ order=$1
 len=$2
 proc=$3
 
+
 echo Sorting $order of length $len, file $proc
 
 start=`date +%s`
-
-sort -u -S 1G -T results results/$order/$order-candidates-0_$proc | uniq > results/$order/$order-candidates-a.sorted_$proc
-sort -u -S 1G -T results results/$order/$order-candidates-1_$proc | uniq > results/$order/$order-candidates-b.sorted_$proc
-
-#echo Sorting complete
-#echo Matching
 
 ./bin/match_pairs $order $len $proc
 end=`date +%s`

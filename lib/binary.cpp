@@ -7,7 +7,9 @@
 int getIndex(int element, std::set<int> alphabet);
 std::vector<int> binaryReadSeq(std::ifstream& in, int len, std::set<int> alphabet);
 void binaryWritePSD(std::ofstream& out, std::vector<double> psd, int bound);
+std::vector<int> binaryReadPSD(std::ifstream& in, int bytes);
 void binaryWriteSeq(std::ofstream& out, std::vector<int> seq, std::set<int> alphabet);
+
 
 int getIndex(int element, std::set<int> alphabet) {
     int i = 0;
@@ -44,7 +46,7 @@ std::vector<int> binaryReadSeq(std::ifstream& in, int len, std::set<int> alphabe
 
             int decimal = (int)byte;
 
-            for(int j = 0; j < elements_per_byte && seq.size() < len; j++) {
+            for(int j = 0; j < elements_per_byte && (int)seq.size() < len; j++) {
                 int index = decimal % alphabet.size(); 
 
                 decimal = decimal / alphabet.size();
@@ -56,13 +58,26 @@ std::vector<int> binaryReadSeq(std::ifstream& in, int len, std::set<int> alphabe
     return seq;
 }
 
+std::vector<int> binaryReadPSD(std::ifstream& in, int bytes) {
+    std::vector<int> psd;
+    char byte;
+
+    for(int i = 0; i < bytes; i++) {
+        in.get(byte);
+
+        psd.push_back((int)byte);
+    }
+   
+   return psd;
+}
+
 void binaryWritePSD(std::ofstream& out, std::vector<double> psd, int bound) {
     const int bits_per_psd = (int)ceil(log(bound));
 
     if(bits_per_psd > 8) {
         //TODO: write the case for bound > 256 (only possible for order v >= 128)
     } else {
-        for(size_t i = 0; i < psd.size(); i++) {
+        for(size_t i = 0; i < psd.size() / 2; i++) {
             out << (char)rint(psd[i]);
         }
     }
@@ -87,7 +102,7 @@ void binaryWriteSeq(std::ofstream& out, std::vector<int> seq, std::set<int> alph
         for(size_t i = 0; i < seq.size(); i++) {
             subseq.push_back(seq[i]);
 
-            if(subseq.size() == elements_per_byte) {
+            if((int)subseq.size() == elements_per_byte) {
                 int byte = 0;
 
                 for(size_t j = 0; j < subseq.size(); j++) {

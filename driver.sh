@@ -28,11 +28,7 @@ echo $runtime1 seconds elapsed
 echo Matching Candidates...
 
 start=`date +%s`
-
-sort results/$order/$order-unique-filtered-a_1 | uniq > results/$order/$order-candidates-a.sorted_1
-sort results/$order/$order-unique-filtered-b_1 | uniq > results/$order/$order-candidates-b.sorted_1
-
-./bin/match_pairs $order $len 1
+./match.sh $order $len 1
 end=`date +%s`
 
 runtime2=$((end-start))

@@ -20,10 +20,10 @@ $(BIN)fourier.o: $(DIR)fourier.cpp $(DIR)golay.h
 	$(CC) -Wall -Wextra -O3 -g -c $(DIR)fourier.cpp -o $(BIN)fourier.o $(FFTW)
 
 $(BIN)golay.o: $(DIR)golay.h
-	$(CC) -Wall -g -c $(DIR)golay.cpp -o $(BIN)golay.o
+	$(CC) -Wall -g -O3 -c $(DIR)golay.cpp -o $(BIN)golay.o
 
-$(BIN)match_pairs: $(SRC)match_pairs.cpp $(DIR)golay.h $(BIN)golay.o
-	$(CC) -Wall -g -O3 $(SRC)match_pairs.cpp $(BIN)golay.o -o $(BIN)match_pairs 
+$(BIN)match_pairs: $(SRC)match_pairs.cpp $(DIR)golay.h $(BIN)golay.o $(BIN)binary.o
+	$(CC) -Wall -g -O3 $(SRC)match_pairs.cpp $(BIN)golay.o $(BIN)binary.o -o $(BIN)match_pairs 
 
 $(BIN)generate_hybrid: $(SRC)generate_hybrid.cpp $(BIN)golay.o $(BIN)array.o $(BIN)fourier.o $(BIN)orderly_equivalence.o $(BIN)binary.o
 	$(CC) -Wall -g -O3 $(SRC)generate_hybrid.cpp $(BIN)orderly_equivalence.o $(BIN)array.o $(BIN)fourier.o $(BIN)golay.o $(BIN)binary.o -o $(BIN)generate_hybrid $(FFTW)
