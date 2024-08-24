@@ -28,7 +28,7 @@
         echo line $i
         ./bin/uncompression $i $proc $order $compress $newcompress
 
-        ./match.sh $order $(($order / $newcompress)) $proc $i
+        ./match.sh $order $(($order / $newcompress)) $proc
 
         cat results/$order/$order-pairs-found_$proc >> results/$order/$order-pairs-found-$proc
 

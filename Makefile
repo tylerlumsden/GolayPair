@@ -37,8 +37,8 @@ $(BIN)canon_filter: $(SRC)canon_filter.cpp $(DIR)golay.h $(BIN)equivalence.o
 $(BIN)equivalence.o: $(DIR)equivalence.cpp $(DIR)golay.h $(DIR)coprimes.h
 	$(CC) -Wall -g -O3 -c $(DIR)equivalence.cpp -o $(BIN)equivalence.o 
 
-$(BIN)uncompression: $(SRC)uncompression.cpp $(BIN)array.o $(BIN)equivalence.o 
-	$(CC) -Wall -g -O3 $(SRC)uncompression.cpp $(BIN)equivalence.o $(BIN)fourier.o $(BIN)array.o -o $(BIN)uncompression $(FFTW)
+$(BIN)uncompression: $(SRC)uncompression.cpp $(BIN)array.o $(BIN)equivalence.o $(BIN)binary.o
+	$(CC) -Wall -g -O3 $(SRC)uncompression.cpp $(BIN)equivalence.o $(BIN)fourier.o $(BIN)array.o $(BIN)binary.o -o $(BIN)uncompression $(FFTW)
 
 $(BIN)compress: $(SRC)compress.cpp $(BIN)fourier.o
 	$(CC) -Wall -g -O3 $(SRC)compress.cpp $(BIN)fourier.o -o $(BIN)compress $(FFTW)
