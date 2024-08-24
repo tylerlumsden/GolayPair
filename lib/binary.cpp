@@ -1,10 +1,13 @@
-#include<fstream>
-#include<stdio.h>
-#include"lib/fourier.h"
 #include<set>
-#include"lib/decomps.h"
-#include"lib/golay.h"
+#include<vector>
 #include<math.h>
+#include<stdio.h>
+#include<fstream>
+
+int getIndex(int element, std::set<int> alphabet);
+std::vector<int> binaryReadSeq(std::ifstream& in, int len, std::set<int> alphabet);
+void binaryWritePSD(std::ofstream& out, std::vector<double> psd, int bound);
+void binaryWriteSeq(std::ofstream& out, std::vector<int> seq, std::set<int> alphabet);
 
 int getIndex(int element, std::set<int> alphabet) {
     int i = 0;
@@ -89,7 +92,6 @@ void binaryWriteSeq(std::ofstream& out, std::vector<int> seq, std::set<int> alph
 
                 for(size_t j = 0; j < subseq.size(); j++) {
                     byte += getIndex(subseq[j], alphabet) * (int)pow(alphabet.size(), j);
-                    printf("%d\n", byte);
                 }
                 out << (char)byte;
 
@@ -98,28 +100,4 @@ void binaryWriteSeq(std::ofstream& out, std::vector<int> seq, std::set<int> alph
         }
     }
 
-}
-
-int main() {
-
-    std::vector<int> seq = {1, -1, 1, 1, -1, 1, -1, 1, -1};
-
-    std::set<int> alphabet = {-1, 1};
-
-    std::ofstream output("tester", std::ios::binary);
-
-    binaryWriteSeq(output, seq, alphabet);
-
-    output.close();
-
-    std::ifstream input("tester", std::ios::binary);
-
-    std::vector<int> newseq = binaryReadSeq(input, 9, alphabet);
-
-    printf("size: %d\n", newseq.size());
-    
-    for(int element : newseq) {
-        printf("%d ", element);
-    }
-    printf("\n");
 }

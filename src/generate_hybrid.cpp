@@ -13,6 +13,7 @@
 #include<tgmath.h>
 #include<algorithm>
 #include<fstream>
+#include"../lib/binary.h"
 
 using namespace std;
 
@@ -55,10 +56,10 @@ int main(int argc, char ** argv) {
     //write classes to file
     char fname[100];
     sprintf(fname, "results/%d/%d-unique-filtered-a_%d", ORDER, ORDER, 1);
-    FILE * outa = fopen(fname, "w");
+    std::ofstream outa(fname, std::ios::binary);
 
     sprintf(fname, "results/%d/%d-unique-filtered-b_%d", ORDER, ORDER, 1);
-    FILE * outb = fopen(fname, "w");
+    std::ofstream outb(fname, std::ios::binary);
 
     unsigned long long int count = 0;
 
@@ -121,12 +122,7 @@ int main(int argc, char ** argv) {
                         std::vector<double> psd = Runtime.PSD(newseq);
                         if(Runtime.PSD_filter(psd) && isCanonical(newseq, generatorsA)) {
                             count++;
-                            for(int i = 0; i < LEN / 2; i++) {
-                                fprintf(outa, "%d",    (int)rint(psd[i]));
-                            }
-                            fprintf(outa, " ");
-                            writeSeq(outa, newseq);
-                            fprintf(outa, "\n");
+                            binaryWriteSeq(outa, newseq, alphabet);
                         }
                     }
 
@@ -134,12 +130,7 @@ int main(int argc, char ** argv) {
                         std::vector<double> psd = Runtime.PSD(newseq);
                         if(Runtime.PSD_filter(psd) && isCanonical(newseq, generatorsB)) {
                             count++;
-                            for(int i = 0; i < LEN / 2; i++) {
-                                fprintf(outb, "%d",   Runtime.psd_bound - (int)rint(psd[i]));
-                            }
-                            fprintf(outb, " ");
-                            writeSeq(outb, newseq);
-                            fprintf(outb, "\n");
+                            binaryWriteSeq(outb, newseq, alphabet);
                         }
                     }
 
@@ -150,8 +141,6 @@ int main(int argc, char ** argv) {
     }
 
     printf("%llu\n", count);
-
-    fclose(outa);
     
 }
 
@@ -216,40 +205,6 @@ bool nextBranch(vector<int>& seq, unsigned int len, set<int> alphabet) {
         }
     
     return true;
-
-}
-
-int getIndex(int element, std::set<int> alphabet) {
-    int i = 0;
-    for(int num : alphabet) {
-        if(num == element) {
-            return i;
-        }
-        i++;
-    }
-
-    return -1;
-}
-
-void binaryWriteSeq(std::ofstream out, vector<int> seq, std::set<int> alphabet) {
-
-    int alphabetsize = alphabet.size();
-
-    int bytes;
-
-    if(alphabetsize > 8) {
-        bytes = (alphabetsize / 8) + 1;
-
-        for(unsigned int i = 0; i < seq.size(); i++) {
-            for(int j = 0; j < bytes; j++) {
-                int index = getIndex(seq[i], alphabet);
-
-                out << index;
-            }
-        }
-    } else {
-
-    }
 
 }
 
