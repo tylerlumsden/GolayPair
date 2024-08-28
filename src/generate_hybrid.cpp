@@ -12,7 +12,6 @@
 #include"../lib/fourier.h"
 #include<tgmath.h>
 #include<algorithm>
-#include"../lib/binary.h"
 
 using namespace std;
 
@@ -59,10 +58,10 @@ int main(int argc, char ** argv) {
     //write classes to file
     char fname[100];
     sprintf(fname, "results/%d/%d-unique-filtered-a_%d", ORDER, ORDER, 1);
-    std::ofstream outa(fname);
+    FILE * outa = fopen(fname, "w");
 
     sprintf(fname, "results/%d/%d-unique-filtered-b_%d", ORDER, ORDER, 1);
-    std::ofstream outb(fname);
+    FILE * outb = fopen(fname, "w");
 
     unsigned long long int count = 0;
 
@@ -84,6 +83,8 @@ int main(int argc, char ** argv) {
     vector<int> seq;
     set<vector<int>> generatorsA = constructGenerators(0, LEN);
     set<vector<int>> generatorsB = constructGenerators(1, LEN);
+
+    vector<int> test = {1};
 
     while(nextBranch(seq, LEN / 2, alphabet)) {
 
@@ -125,15 +126,20 @@ int main(int argc, char ** argv) {
                         out = dft(newseq, in, out, plan);
                         if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsA)) {
                             count++;
-
-                            std::vector<double> psd;
-                            psd.reserve(newseq.size());
-                            for(size_t i = 0; i < newseq.size(); i++) {
-                                psd.push_back(norm(out[i]));
+                            for(int i = 0; i < LEN / 2; i++) {
+                                fprintf(outa, "%d",    (int)rint(norm(out[i])));
                             }
-
-                            binaryWritePSD(outa, psd, 2 * ORDER);
-                            binaryWriteSeq(outa, newseq, alphabet);
+                            fprintf(outa, " ");
+                            writeSeq(outa, newseq);
+                            fprintf(outa, "\n");
+                                                if(newseq == test) {
+                            printf("REPEAT!\n");
+                            for(int i = 0; i < newseq.size(); i++) {
+                                printf("%d ", newseq[i]);
+                            }
+                            printf("\n");
+                        }
+                        test = newseq;
                         }
                     }
 
@@ -141,15 +147,12 @@ int main(int argc, char ** argv) {
                         out = dft(newseq, in, out, plan);
                         if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsB)) {
                             count++;
-
-                            std::vector<double> psd;
-                            psd.reserve(newseq.size());
-                            for(size_t i = 0; i < newseq.size(); i++) {
-                                psd.push_back(ORDER * 2 - norm(out[i]));
+                            for(int i = 0; i < LEN / 2; i++) {
+                                fprintf(outb, "%d",   ORDER * 2 - (int)rint(norm(out[i])));
                             }
-
-                            binaryWritePSD(outb, psd, 2 * ORDER);
-                            binaryWriteSeq(outb, newseq, alphabet);
+                            fprintf(outb, " ");
+                            writeSeq(outb, newseq);
+                            fprintf(outb, "\n");
                         }
                     }
 
@@ -164,6 +167,9 @@ int main(int argc, char ** argv) {
     fftw_free(in);
     fftw_free(out);
     fftw_destroy_plan(plan);
+
+    fclose(outa);
+    
 }
 template<class BidirIt>
 bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet) {

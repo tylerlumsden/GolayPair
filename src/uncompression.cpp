@@ -14,7 +14,6 @@
 #include<tgmath.h>
 #include<algorithm>
 #include<fstream>
-#include"../lib/binary.h"
 
 double norm(fftw_complex dft) {
     return dft[0] * dft[0] + dft[1] * dft[1];
@@ -138,11 +137,11 @@ int main(int argc, char ** argv) {
         partitions.insert(make_pair(letter, partition));
     }
     
-    sprintf(fname, "results/%d/%d-unique-filtered-a_%d", ORDER, ORDER, procnum);
-    std::ofstream outa(fname);
+    sprintf(fname, "results/%d/%d-candidates-%d_%d", ORDER, ORDER, 0, procnum);
+    FILE * outa = fopen(fname, "w");
     
-    sprintf(fname, "results/%d/%d-unique-filtered-b_%d", ORDER, ORDER, procnum);
-    std::ofstream outb(fname);
+    sprintf(fname, "results/%d/%d-candidates-%d_%d", ORDER, ORDER, 1, procnum);
+    FILE * outb = fopen(fname, "w");
     
     //shift original sequence such that the element with the largest number of permutations is in the front
     set<int> seta;
@@ -248,16 +247,15 @@ int main(int argc, char ** argv) {
 
                 fftw_execute(p);
 
-                if(dftfilter(out, seq.size(), ORDER)) {
-
-                    std::vector<double> psd;
-                    psd.reserve(seq.size());
-                    for(size_t i = 0; i < seq.size(); i++) {
-                         psd.push_back(norm(out[i]));
+                if(dftfilter(out, seq.size(), ORDER)) { 
+                    for(unsigned int i = 0; i < seq.size() / 2; i++) {
+                        fprintf(outa, "%d",    (int)rint(norm(out[i])));
                     }
-
-                    binaryWritePSD(outa, psd, 2 * ORDER);
-                    binaryWriteSeq(outa, seq, newalphabet);
+                    fprintf(outa, " ");
+                    for(int num : seq) {
+                            fprintf(outa, "%d ", num);
+                    }
+                    fprintf(outa, "\n");
                 }
             }
             
@@ -320,14 +318,14 @@ int main(int argc, char ** argv) {
                 fftw_execute(p);
 
                 if(dftfilter(out, seq.size(), ORDER)) { 
-                    std::vector<double> psd;
-                    psd.reserve(seq.size());
-                    for(size_t i = 0; i < seq.size(); i++) {
-                         psd.push_back(ORDER * 2 - norm(out[i]));
+                    for(unsigned int i = 0; i < seq.size() / 2; i++) {
+                        fprintf(outb, "%d",    ORDER * 2 - (int)rint(norm(out[i])));
                     }
-
-                    binaryWritePSD(outb, psd, 2 * ORDER);
-                    binaryWriteSeq(outb, seq, newalphabet);
+                    fprintf(outb, " ");
+                    for(int num : seq) {
+                            fprintf(outb, "%d ", num);
+                    }
+                    fprintf(outb, "\n");
                 }
             }
             
@@ -350,4 +348,7 @@ int main(int argc, char ** argv) {
     fftw_free(in);
     fftw_free(out);
     fftw_destroy_plan(p);
+
+    fclose(outa);
+    fclose(outb);
 }
