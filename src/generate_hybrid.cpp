@@ -85,8 +85,6 @@ int main(int argc, char ** argv) {
     set<vector<int>> generatorsA = constructGenerators(0, LEN);
     set<vector<int>> generatorsB = constructGenerators(1, LEN);
 
-    vector<int> test = {1};
-
     while(nextBranch(seq, LEN / 2, alphabet)) {
 
         if(!partialCanonical(seq)) {
