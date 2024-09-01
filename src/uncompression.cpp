@@ -137,10 +137,10 @@ int main(int argc, char ** argv) {
         partitions.insert(make_pair(letter, partition));
     }
     
-    sprintf(fname, "results/%d/%d-candidates-%d_%d", ORDER, ORDER, 0, procnum);
+    sprintf(fname, "results/%d/%d-unique-filtered-a_%d", ORDER, ORDER, procnum);
     FILE * outa = fopen(fname, "w");
     
-    sprintf(fname, "results/%d/%d-candidates-%d_%d", ORDER, ORDER, 1, procnum);
+    sprintf(fname, "results/%d/%d-unique-filtered-b_%d", ORDER, ORDER, procnum);
     FILE * outb = fopen(fname, "w");
     
     //shift original sequence such that the element with the largest number of permutations is in the front

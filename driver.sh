@@ -54,6 +54,8 @@ echo Uncompressing Pairs...
 
 cp results/$order/$order-pairs-found-0 results/history/$order-1-$datetime-$epochtime
 cp results/$order/$order-pairs-found-0 results/$order-pairs-found
+
+rm results/$order/$order-pairs-found-0
 fi
 
 echo Filtering Equivalences...

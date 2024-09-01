@@ -14,6 +14,9 @@ echo Sorting $order of length $len, file $proc
 
 start=`date +%s`
 
+sort results/$order/$order-unique-filtered-a_$proc | uniq > results/$order/$order-candidates-a.sorted_$proc
+sort results/$order/$order-unique-filtered-b_$proc | uniq > results/$order/$order-candidates-b.sorted_$proc
+
 ./bin/match_pairs $order $len $proc
 end=`date +%s`
 
