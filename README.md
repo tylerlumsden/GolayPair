@@ -1,14 +1,10 @@
-<font color="yellow">
-Yellow texts are from @yc518suray. White texts are from the original README.
+The first section of texts is from @yc518suray. The second section of texts is from the original README.
 
-This repository is forked from @tylerlumsden. The codes are used to search for periodic Golay pairs (PGPs or PCPs) with lengths up to 130.
-</font>
+This repository is forked from @tylerlumsden. The codes are used to search for periodic Golay pairs (PGPs or PCPs) with lengths up to 130, as an midterm project in the class **Sequence Design for Communications** in NCKU, 2025 fall.
 
-## <font color="yellow">Modifications</font>
+## Modifications
 
-<font color="yellow">
 No modifications yet.
-</font>
 
 ---
 
