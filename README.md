@@ -1,3 +1,17 @@
+<font color="yellow">
+Yellow texts are from @yc518suray. White texts are from the original README.
+
+This repository is forked from @tylerlumsden. The codes are used to search for periodic Golay pairs (PGPs or PCPs) with lengths up to 130.
+</font>
+
+## <font color="yellow">Modifications</font>
+
+<font color="yellow">
+No modifications yet.
+</font>
+
+---
+
 This repository contains a set of procedures for the generation and post-processing of Periodic Golay Pairs.
 
 ## Prerequisites
