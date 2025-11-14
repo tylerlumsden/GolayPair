@@ -9,16 +9,22 @@ This repository is forked from @tylerlumsden. The codes are used to search for p
 The script argument list is modified:
 
 ```bash
-./driver.sh [Length] [Compression Factor] --stop [Stage]
+./driver.sh [Length] [Compression Factor] --start [Stage1] --stop [Stage2]
 ```
 
-The `--stop` option is used to stop the program at some specific stage. `[Stage]`is the stage after which the program stops.
+The `--start` option is used to start the program from some specific stage. `[Stage1]`is the stage from which the program starts. If this option is not provided, the program starts from the beginning.
+
+- `M` or `m` $\rightarrow$ matching
+- `U` or `u` $\rightarrow$ uncompression
+- `E` or `e` $\rightarrow$ equivalence filtering
+
+The `--stop` option is used to stop the program after some specific stage. `[Stage2]`is the stage after which the program stops. If this option is not provided, the program finishes as usual.
 
 - `G` or `g` $\rightarrow$ candidate generation
 - `M` or `m` $\rightarrow$ matching
 - `U` or `u` $\rightarrow$ uncompression
 
-If the `--stop` option (along with the `Stage` parameter) is ignored, the script runs as usual.
+If both options (along with the `Stage` parameters) are ignored, the script runs as usual.
 
 ---
 

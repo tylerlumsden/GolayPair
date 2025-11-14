@@ -1,19 +1,44 @@
-#TO USE: ./driver.sh [ORDER] [Compression Factor] --[OPT]
+#TO USE: ./driver.sh [ORDER] [Compression Factor] --[OPT1] [para1] --[OPT2] [para2]
 
 order=$1
 compress=$2
 
-option=$3
-letter=$4
+# added options & parameters
+
+option1=$3
+letter1=$4
+option2=$5
+letter2=$6
 
 CYAN_COLOR='\033[1;36m'
 NO_COLOR='\033[0m'
 
-if [[ -z "$option" || -z "$letter" ]]; then
-	option="none"
+# input options
+
+if [[ -z "$option1" || -z "$letter1" ]]; then
+	option1=""
 else
-	option="${option#--}"
-	letter="${letter^^}"
+	option1="${option1#--}"
+	letter1="${letter1^^}"
+
+	if [[ -z "$option2" || -z "$letter2" ]]; then
+		option2=""
+	else
+		option2="${option2#--}"
+		letter2="${letter2^^}"
+	fi
+fi
+
+# option1 tells start or not, option2 tells stop or not
+
+if [ "$option1" = "stop" ]; then
+	temp=$option1
+	option1=$option2
+	option2=$temp
+
+	temp=$letter1
+	letter1=$letter2
+	letter2=$temp
 fi
 
 len=$(($order / $compress))
@@ -21,8 +46,13 @@ len=$(($order / $compress))
 [ $order -eq $order 2>/dev/null ] || exit 1
 [ $numproc -eq $numproc 2>/dev/null ] || exit 1
 
-mkdir results
-mkdir results/$order
+# ---------- Generation ---------- #
+if [ -z "$option1" ]; then #start Generation (default)
+
+option1=""
+
+mkdir results 2> /dev/null
+mkdir results/$order 2> /dev/null
 
 echo Generating Candidates...
 
@@ -33,10 +63,17 @@ end=`date +%s`
 runtime1=$((end-start))
 echo $runtime1 seconds elapsed
 
-if [ "$option" = "stop" ] && [ "$letter" = "G" ];then
+fi #finish Generation
+
+if [ "$option2" = "stop" ] && [ "$letter2" = "G" ];then
 	echo -e "exit after finishing ${CYAN_COLOR}generation${NO_COLOR} ... GOODBYE!"
 	exit 0
 fi
+
+# ---------- Matching ---------- #
+if [[ -z "$option1" || ( "$option1" = "start" &&  "$letter1" = "M" ) ]];then #start Matching
+
+option1=""
 
 echo Matching Candidates...
 
@@ -60,13 +97,20 @@ echo $total seconds total
 epochtime=$(date +%s)
 datetime=$(date +"%Y-%m-%d")
 
-cp results/$order/$order-pairs-found-1 results/history/$order-$compress-$datetime-$epochtime
-cp results/$order/$order-pairs-found-1 results/$order-pairs-found
+cp results/$order/$order-pairs-found-1 results/history/$order-$compress-$datetime-$epochtime 2> /dev/null
+cp results/$order/$order-pairs-found-1 results/$order-pairs-found 2> /dev/null
 
-if [ "$option" = "stop" ] && [ "$letter" = "M" ];then
+fi #finish Matching
+
+if [ "$option2" = "stop" ] && [ "$letter2" = "M" ];then
 	echo -e "exit after finishing ${CYAN_COLOR}matching${NO_COLOR} ... GOODBYE!"
 	exit 0
 fi
+
+# ---------- Uncompression ---------- #
+if [[ -z "$option1" || ( "$option1" = "start" &&  "$letter1" = "U" ) ]];then #start Uncompression
+
+option1=""
 
 if [ $compress -gt 1 ]
 then
@@ -75,16 +119,24 @@ echo Uncompressing Pairs...
 
 ./uncompress.sh $order $compress 1 0
 
-cp results/$order/$order-pairs-found-0 results/history/$order-1-$datetime-$epochtime
-cp results/$order/$order-pairs-found-0 results/$order-pairs-found
+cp results/$order/$order-pairs-found-0 results/history/$order-1-$datetime-$epochtime 2> /dev/null
+cp results/$order/$order-pairs-found-0 results/$order-pairs-found 2> /dev/null
 
 rm results/$order/$order-pairs-found-0
-fi
 
-if [ "$option" = "stop" ] && [ "$letter" = "U" ];then
+else
+	echo "compression factor = 1, no need to uncompress"
+
+fi
+fi #finish Matching
+
+if [ "$option2" = "stop" ] && [ "$letter2" = "U" ];then
 	echo -e "exit after finishing ${CYAN_COLOR}uncompression${NO_COLOR} ... GOODBYE!"
 	exit 0
 fi
+
+# ---------- Equivalence Filtering ---------- #
+if [[ -z "$option1" || ( "$option1" = "start" &&  "$letter1" = "E" ) ]];then #start Equivalence Filtering
 
 echo Filtering Equivalences...
 
@@ -99,4 +151,7 @@ echo $runtime3 seconds elapsed
 epochtime=$(date +%s)
 datetime=$(date +"%Y-%m-%d")
 
-cp results/$order-unique-pairs-found results/history/$order-1-$datetime-$epochtime
+cp results/$order-unique-pairs-found results/history/$order-1-$datetime-$epochtime 2> /dev/null
+
+echo "Filtering Equivalences done, go see the results!"
+fi #finish Equivalence Filtering
