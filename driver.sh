@@ -1,7 +1,20 @@
-#TO USE: ./driver.sh [ORDER] [Compression Factor]
+#TO USE: ./driver.sh [ORDER] [Compression Factor] --[OPT]
 
 order=$1
 compress=$2
+
+option=$3
+letter=$4
+
+CYAN_COLOR='\033[1;36m'
+NO_COLOR='\033[0m'
+
+if [[ -z "$option" || -z "$letter" ]]; then
+	option="none"
+else
+	option="${option#--}"
+	letter="${letter^^}"
+fi
 
 len=$(($order / $compress))
 
@@ -19,6 +32,11 @@ end=`date +%s`
 
 runtime1=$((end-start))
 echo $runtime1 seconds elapsed
+
+if [ "$option" = "stop" ] && [ "$letter" = "G" ];then
+	echo -e "exit after finishing ${CYAN_COLOR}generation${NO_COLOR} ... GOODBYE!"
+	exit 0
+fi
 
 echo Matching Candidates...
 
@@ -45,6 +63,11 @@ datetime=$(date +"%Y-%m-%d")
 cp results/$order/$order-pairs-found-1 results/history/$order-$compress-$datetime-$epochtime
 cp results/$order/$order-pairs-found-1 results/$order-pairs-found
 
+if [ "$option" = "stop" ] && [ "$letter" = "M" ];then
+	echo -e "exit after finishing ${CYAN_COLOR}matching${NO_COLOR} ... GOODBYE!"
+	exit 0
+fi
+
 if [ $compress -gt 1 ]
 then
 
@@ -56,6 +79,11 @@ cp results/$order/$order-pairs-found-0 results/history/$order-1-$datetime-$epoch
 cp results/$order/$order-pairs-found-0 results/$order-pairs-found
 
 rm results/$order/$order-pairs-found-0
+fi
+
+if [ "$option" = "stop" ] && [ "$letter" = "U" ];then
+	echo -e "exit after finishing ${CYAN_COLOR}uncompression${NO_COLOR} ... GOODBYE!"
+	exit 0
 fi
 
 echo Filtering Equivalences...

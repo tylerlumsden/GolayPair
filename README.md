@@ -4,7 +4,21 @@ This repository is forked from @tylerlumsden. The codes are used to search for p
 
 ## Modifications
 
-No modifications yet.
+### Script
+
+The script argument list is modified:
+
+```bash
+./driver.sh [Length] [Compression Factor] --stop [Stage]
+```
+
+The `--stop` option is used to stop the program at some specific stage. `[Stage]`is the stage after which the program stops.
+
+- `G` or `g` $\rightarrow$ candidate generation
+- `M` or `m` $\rightarrow$ matching
+- `U` or `u` $\rightarrow$ uncompression
+
+If the `--stop` option (along with the `Stage` parameter) is ignored, the script runs as usual.
 
 ---
 
