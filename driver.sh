@@ -49,8 +49,6 @@ len=$(($order / $compress))
 # ---------- Generation ---------- #
 if [ -z "$option1" ]; then #start Generation (default)
 
-option1=""
-
 mkdir results 2> /dev/null
 mkdir results/$order 2> /dev/null
 

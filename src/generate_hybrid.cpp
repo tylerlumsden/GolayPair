@@ -55,6 +55,10 @@ int main(int argc, char ** argv) {
     out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * LEN);
     plan = fftw_plan_dft_1d(LEN, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
+    //Su: maybe FFTW_ESTIMATE can be replaced with FFT_MEASURE?
+    //Su: FFTW_MEASURE -> measure time for different methods and find optimum
+    //Su: FFTW_ESTIMATE -> find a sub-optimal method to the plan
+
     //write classes to file
     char fname[100];
     sprintf(fname, "results/%d/%d-unique-filtered-a_%d", ORDER, ORDER, 1);
@@ -83,6 +87,9 @@ int main(int argc, char ** argv) {
     vector<int> seq;
     set<vector<int>> generatorsA = constructGenerators(0, LEN);
     set<vector<int>> generatorsB = constructGenerators(1, LEN);
+
+	//Su: flag = 0 --> decimation equivalents are generated
+	//Su: flag = 1 --> decimation equivalents NOT generated
 
     vector<int> test = {1};
 

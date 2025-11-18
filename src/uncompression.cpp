@@ -29,6 +29,11 @@ int main(int argc, char ** argv) {
 
     printf("Uncompressing sequence of length %d\n", LEN);
 
+	//Su: FFTW multi-thread init
+	//fftw_init_threads();
+	//int num_threads = omp_get_max_threads();
+	//fftw_plan_with_nthreads(num_threads);
+
     fftw_complex *in, *out;
     fftw_plan p;
 

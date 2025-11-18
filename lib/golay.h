@@ -53,7 +53,7 @@ namespace std
             size_t size = in.a.size();
             size_t seed = 0;
             for (size_t i = 0; i < size; i++)
-                //Combine the hash of the current vector with the hashes of the previous ones
+     	    //Combine the hash of the current vector with the hashes of the previous ones
                 hash_combine(seed, in.a[i]);
 
             for (size_t i = 0; i < size; i++)
