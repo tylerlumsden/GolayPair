@@ -14,9 +14,7 @@ Due to the FFTW library, our code can only be compiled in a unix environment.
 
 ## Usage
 
-Compilation of our code is handled by a Makefile, so to compile our procedures you should enter the directory where the Makefile is located, and enter the bash command ```make```, ensuring no errors are produced.
-
-To run our code, we have a driver script that handles the interactions between our different procedures.
+Compilation of our code is handled by a CMake, so to compile our procedures you should enter the root directory and run the command ```cmake --preset=release ``` or ```cmake --preset=debug ``` for development. Then, to build the project run the ``` cmake --build build/release ``` or ```cmake --build build/debug ``` commands respectively. 
 
 ## Driver Script
 
