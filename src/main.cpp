@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
+#include "generate_hybrid.h"
 
 struct Options {
     int order;
@@ -74,7 +75,9 @@ int main(int argc, char* argv[]) {
     }
 
     // Application logic goes here
-    std::cout << "test!";
+    std::cout << "Generating Candidates\n";
+    generate_hybrid(opts.order, opts.compress);
+    std::cout << "Generated Candidates\n";
 
     return 0;
 }

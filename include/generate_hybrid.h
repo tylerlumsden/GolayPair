@@ -1,0 +1,1 @@
+int generate_hybrid(const int ORDER, const int COMPRESS);

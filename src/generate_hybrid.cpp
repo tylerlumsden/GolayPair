@@ -5,13 +5,14 @@
 #include<set>
 #include<array>
 #include<time.h>
-#include"../lib/orderly_equivalence.h"
+#include"orderly_equivalence.h"
 #include"fftw3.h"
-#include"../lib/array.h"
-#include"../lib/decomps.h"
-#include"../lib/fourier.h"
+#include"array.h"
+#include"decomps.h"
+#include"fourier.h"
 #include<tgmath.h>
 #include<algorithm>
+#include<iostream>
 
 using namespace std;
 
@@ -42,11 +43,9 @@ bool nextBranch(vector<int>& seq, unsigned int len, set<int> alphabet);
 template<class BidirIt>
 bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet);
 
-int main(int argc, char ** argv) {
+int generate_hybrid(const int ORDER, const int COMPRESS) {
 
-    int ORDER = stoi(argv[1]);
-    int COMPRESS = stoi(argv[2]);
-    int LEN = ORDER / COMPRESS;
+    const int LEN = ORDER / COMPRESS;
 
     fftw_complex *in, *out;
     fftw_plan plan;
@@ -56,12 +55,22 @@ int main(int argc, char ** argv) {
     plan = fftw_plan_dft_1d(LEN, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
     //write classes to file
-    char fname[100];
+    char fname[100000];
     sprintf(fname, "results/%d/%d-unique-filtered-a_%d", ORDER, ORDER, 1);
     FILE * outa = fopen(fname, "w");
 
+    if(outa == NULL) {
+        std::cerr << "File a is null\n";
+        return 1;
+    }
+
     sprintf(fname, "results/%d/%d-unique-filtered-b_%d", ORDER, ORDER, 1);
     FILE * outb = fopen(fname, "w");
+
+    if(outb == NULL) {
+        std::cerr << "File b is null\n";
+        return 1;
+    }
 
     unsigned long long int count = 0;
 
@@ -134,7 +143,7 @@ int main(int argc, char ** argv) {
                             fprintf(outa, "\n");
                                                 if(newseq == test) {
                             printf("REPEAT!\n");
-                            for(int i = 0; i < newseq.size(); i++) {
+                            for(size_t i = 0; i < newseq.size(); i++) {
                                 printf("%d ", newseq[i]);
                             }
                             printf("\n");
@@ -169,7 +178,8 @@ int main(int argc, char ** argv) {
     fftw_destroy_plan(plan);
 
     fclose(outa);
-    
+
+    return 0;
 }
 template<class BidirIt>
 bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet) {
