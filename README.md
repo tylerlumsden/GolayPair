@@ -14,7 +14,7 @@ Due to the FFTW library, our code can only be compiled in a unix environment.
 
 ## Usage
 
-Compilation of our code is handled by a CMake, so to compile our procedures you should enter the root directory and run the command ```cmake --preset=release ``` or ```cmake --preset=debug ``` for development. Then, to build the project run the ``` cmake --build build/release ``` or ```cmake --build build/debug ``` commands respectively. 
+Compilation of our code is handled by a CMake, so to compile our procedures you should enter the root directory and run the command ```cmake --preset=release``` or ```cmake --preset=debug``` for development. Then, to build the project run the ``` cmake --build build/release``` or ```cmake --build build/debug``` commands respectively. 
 
 ## Driver Script
 
