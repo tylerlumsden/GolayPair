@@ -137,7 +137,7 @@ int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS,
     }
 
     size_t max = 0;
-    int best;
+    int best = orig[0];
     for(int element : seta) {
         if(partitions.at(element).size() > max) {
             max = partitions.at(element).size();
