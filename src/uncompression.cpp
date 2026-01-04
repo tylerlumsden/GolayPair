@@ -60,8 +60,13 @@ int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOM
         }
 
         uncompress(seqa, 2, 1, outa, 1);
+        outa.flush();
         uncompress(seqb, 2, 1, outb, 0);
+        outb.flush();
     }
+    
+    outa.close();
+    outb.close();
     
     return 0;
 }
@@ -160,6 +165,7 @@ int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS,
     seq.resize(ORDER / NEWCOMPRESS);
 
     unsigned long long int count = 0;
+    unsigned long long int written = 0;
     int curr = 0;
     vector<int> stack(LEN, 0);
 
@@ -199,7 +205,8 @@ int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS,
                 fftw_execute(p);
 
                 if(dftfilter(out, seq.size(), ORDER)) { 
-                    for(int i = 0; i < LEN / 2; i++) {
+                    written++;
+                    for(size_t i = 0; i < seq.size() / 2; i++) {
                         if(seqflag) {
                             outfile << (int)rint(norm(out[i]));
                         } else {
@@ -231,5 +238,6 @@ int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS,
     fftw_free(in);
     fftw_free(out);
     fftw_destroy_plan(p);
+
     return 0;
 }

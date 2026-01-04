@@ -62,7 +62,6 @@ int match_pairs(const int ORDER, const int COMPRESS, const std::string& TEMP_DIR
 
 
     while(filea.good() && fileb.good()) {
-        std::cout << a + " " + b << "\n";
 
         //if a == b
         //get all sequences of a and b of those psd's in separate vectors
@@ -97,7 +96,6 @@ int match_pairs(const int ORDER, const int COMPRESS, const std::string& TEMP_DIR
                 for(vector<int> sequenceA : matchA) {
                     for(vector<int> sequenceB : matchB) {
                         if(check_if_pair(sequenceA, sequenceB)) {
-                            std::cout << "Match!\n";
                             write_seq(out, sequenceA);
                             fprintf(out, " ");
                             write_seq(out, sequenceB);

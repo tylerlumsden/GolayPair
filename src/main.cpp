@@ -105,7 +105,7 @@ int main(int argc, char* argv[]) {
         GNU_sort(file_a, file_a + ".sorted");
         GNU_sort(file_b, file_b + ".sorted");
 
-        match_pairs(opts.order, opts.compress, opts.temp_dir);
+        match_pairs(opts.order, 1, opts.temp_dir);
     }
 
     return 0;
