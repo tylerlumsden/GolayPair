@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
     std::string filepath_b = std::format("{}/order-{}/{}-filtered-b_1", opts.temp_dir, opts.order, opts.order);
     generate_hybrid(opts.order, opts.compress, filepath_a, filepath_b); // OUT: a, OUT: b
 
-    GNU_sort(filepath_a, filepath_b + ".sorted");
+    GNU_sort(filepath_a, filepath_a + ".sorted");
     GNU_sort(filepath_b, filepath_b + ".sorted");
 
     std::string pairs_path = std::format("{}/order-{}/{}-pairs-found", opts.temp_dir, opts.order, opts.order);
