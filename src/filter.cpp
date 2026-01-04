@@ -8,15 +8,13 @@
 #include<string>
 #include<fstream>
 #include<iostream>
-#include"../lib/golay.h"
-#include"../lib/equivalence.h"
+#include"golay.h"
+#include"equivalence.h"
 
 using namespace std;
 
-int main(int argc, char ** argv) {
-
-    int ORDER = stoi(argv[1]);
-    int LEN = stoi(argv[2]);
+int cache_filter(const int ORDER, const int COMPRESS) {
+    const int LEN = ORDER / COMPRESS;
 
     printf("Filtering Equivalent Pairs...\n");
 
@@ -30,7 +28,7 @@ int main(int argc, char ** argv) {
     set<GolayPair> sequences;
     set<GolayPair> newset;
 
-    sprintf(fname, "results/%d-pairs-found", ORDER);
+    sprintf(fname, "results/order-%d/%d-pairs-found_1", ORDER, ORDER);
     std::ifstream pairs(fname);
 
     if(!pairs.good()) {
@@ -142,5 +140,6 @@ int main(int argc, char ** argv) {
 
         fprintf(out, "\n");
     }
-
+    
+    return 1;
 }

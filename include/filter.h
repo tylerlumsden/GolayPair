@@ -1,0 +1,1 @@
+int cache_filter(const int ORDER, const int COMPRESS);

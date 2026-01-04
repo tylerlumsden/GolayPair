@@ -10,6 +10,7 @@
 #include "sort.h"
 #include "match_pairs.h"
 #include "uncompression.h"
+#include "filter.h"
 
 struct Options {
     int order;
@@ -107,6 +108,8 @@ int main(int argc, char* argv[]) {
 
         match_pairs(opts.order, 1, opts.temp_dir);
     }
+
+    cache_filter(opts.order, 1);
 
     return 0;
 }
