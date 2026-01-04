@@ -47,7 +47,7 @@ bool nextBranch(vector<int>& seq, unsigned int len, set<int> alphabet);
 template<class BidirIt>
 bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet);
 
-int generate_hybrid(const int ORDER, const int COMPRESS, const std::string& TEMP_DIR) {
+int generate_hybrid(const int ORDER, const int COMPRESS, const std::string& PATH_A, const std::string& PATH_B) {
 
     const int LEN = ORDER / COMPRESS;
 
@@ -58,17 +58,15 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const std::string& TEMP
     out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * LEN);
     plan = fftw_plan_dft_1d(LEN, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
-    std::string file_a = Constants::get_file_path_a(ORDER, TEMP_DIR);
-    std::ofstream out_a(file_a);
+    std::ofstream out_a(PATH_A);
     if(!out_a.is_open()) {
-        std::cerr << "Failed to open file: " << file_a << "\n";
+        std::cerr << "Failed to open file: " << PATH_A << "\n";
         return 1;
     }
 
-    std::string file_b = Constants::get_file_path_b(ORDER, TEMP_DIR);
-    std::ofstream out_b(file_b);
+    std::ofstream out_b(PATH_B);
     if(!out_b.is_open()) {
-        std::cerr << "Failed to open file: " << file_b << "\n";
+        std::cerr << "Failed to open file: " << PATH_B << "\n";
         return 1;
     }
 

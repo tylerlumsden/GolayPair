@@ -11,23 +11,19 @@
 
 #include "constants.h"
 
-int match_pairs(const int ORDER, const int COMPRESS, const std::string& TEMP_DIR) {
+int match_pairs(const int ORDER, const int COMPRESS, const std::string& PATH_A, const std::string& PATH_B, const std::string& OUT_PATH) {
 
     const int LEN = ORDER / COMPRESS;
-    
-    char fname[100];
-    sprintf(fname, "results/order-%d/%d-pairs-found_%d", ORDER, ORDER, 1);
-    FILE * out = fopen(fname, "w");
 
-    std::ifstream res(fname);
     std::string a;
     std::string b;
     std::string arrayA;
     std::string arrayB;
     std::string temp;
 
-    std::ifstream filea(Constants::get_file_path_a(ORDER, TEMP_DIR) + ".sorted");
-    std::ifstream fileb(Constants::get_file_path_b(ORDER, TEMP_DIR) + ".sorted");
+    std::ofstream out(OUT_PATH);
+    std::ifstream filea(PATH_A);
+    std::ifstream fileb(PATH_B);
 
     vector<int> seqa;
     seqa.resize(LEN);
@@ -97,9 +93,9 @@ int match_pairs(const int ORDER, const int COMPRESS, const std::string& TEMP_DIR
                     for(vector<int> sequenceB : matchB) {
                         if(check_if_pair(sequenceA, sequenceB)) {
                             write_seq(out, sequenceA);
-                            fprintf(out, " ");
+                            out << " ";
                             write_seq(out, sequenceB);
-                            fprintf(out, "\n");
+                            out << " ";
                         }
                     }
                 }
@@ -129,6 +125,5 @@ int match_pairs(const int ORDER, const int COMPRESS, const std::string& TEMP_DIR
         }
     }
 
-    fclose(out);
     return 0;
 }

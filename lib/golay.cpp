@@ -7,6 +7,8 @@
 #include<time.h>
 #include"golay.h"
 
+#include <fstream>
+
 using namespace std;
 
 #define BOUND 0
@@ -50,8 +52,8 @@ bool double_equal(double a, int b) {
 }
 
 
-void write_seq(FILE * out, vector<int> seq) {
+void write_seq(std::ofstream& out, vector<int> seq) {
     for(size_t i = 0; i < seq.size(); i++) {
-        fprintf(out, "%d ", seq[i]);
+        out << seq[i] << " ";
     }
 }

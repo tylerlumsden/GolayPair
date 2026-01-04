@@ -93,14 +93,12 @@ int canon_filter(const int ORDER, const int COMPRESS) {
     return 0;
 }
 
-int cache_filter(const int ORDER, const int COMPRESS) {
+int cache_filter(const int ORDER, const int COMPRESS, const std::string& PATH_IN, const std::string& PATH_OUT) {
     const int LEN = ORDER / COMPRESS;
 
     printf("Filtering Equivalent Pairs...\n");
 
-    char fname[100];
-    sprintf(fname, "results/%d-unique-pairs-found", ORDER);
-    FILE * out = fopen(fname, "w");
+    FILE * out = fopen(PATH_OUT.c_str(), "w");
 
     //match every seq a with seq b, generate an equivalence class for this sequence 
     
@@ -108,9 +106,7 @@ int cache_filter(const int ORDER, const int COMPRESS) {
     set<GolayPair> sequences;
     set<GolayPair> newset;
 
-    sprintf(fname, "results/order-%d/%d-pairs-found_1", ORDER, ORDER);
-    std::ifstream pairs(fname);
-
+    std::ifstream pairs(PATH_IN);
     if(!pairs.good()) {
         printf("Bad File.\n");
         return 0;

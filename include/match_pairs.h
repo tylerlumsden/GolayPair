@@ -1,1 +1,1 @@
-int match_pairs(const int ORDER, const int COMPRESS, const std::string& TEMP_dir);
+int match_pairs(const int ORDER, const int COMPRESS, const std::string& PATH_A, const std::string& PATH_B, const std::string& OUT_PATH);
