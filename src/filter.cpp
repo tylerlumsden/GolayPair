@@ -13,6 +13,86 @@
 
 using namespace std;
 
+int canon_filter(const int ORDER, const int COMPRESS) {
+    const int LEN = ORDER / COMPRESS;
+
+    FILE * out;
+    char fname[100];
+
+    sprintf(fname, "results/%d-unique-pairs-found", ORDER);
+    out = fopen(fname, "w");
+
+    sprintf(fname, "results/order-%d/%d-pairs-found_1", ORDER, ORDER);
+    std::ifstream pairs(fname);
+
+    if(!pairs.good()) {
+        printf("Bad File.\n");
+        return 0;
+    }
+
+    printf("Filtering Equivalent Pairs...\n");
+
+
+    //match every seq a with seq b, generate an equivalence class for this sequence 
+    
+    set<GolayPair> classes;
+    set<GolayPair> sequences;
+    set<GolayPair> newset;
+
+    std::string a;
+    std::string b;
+
+    GolayPair seq;
+    seq.a.resize(LEN);
+    seq.b.resize(LEN);
+
+    set<GolayPair> generators = constructGenerators(LEN);
+
+    printf("Generating Equivalences\n");
+
+    unsigned long long count = 0;
+
+    while(pairs.good()) {
+        for(int i = 0; i < LEN; i++) {
+            pairs >> a;
+            seq.a[i] = stoi(a);
+        }
+
+        for(int i = 0; i < LEN; i++) {
+            pairs >> b;
+            seq.b[i] = stoi(b);
+        }
+
+        if(!pairs.good()) {
+            break;
+        }
+
+        set<GolayPair> classes = generateClassPairs(generators, seq);
+        count++;
+
+        seq = *classes.begin();
+
+        if(count % 1 == 0) {
+            printf("%llu classes generated\n", count);
+        }
+
+        for(int i = 0; i < LEN; i++) {
+            fprintf(out, "%d ", seq.a[i]);
+        }
+
+        fprintf(out, " ");
+
+        for(int i = 0; i < LEN; i++) {
+            fprintf(out, "%d ", seq.b[i]);
+        }
+
+        fprintf(out, "\n");
+
+    }
+
+    return 0;
+}
+
 int cache_filter(const int ORDER, const int COMPRESS) {
     const int LEN = ORDER / COMPRESS;
 
@@ -140,6 +220,6 @@ int cache_filter(const int ORDER, const int COMPRESS) {
 
         fprintf(out, "\n");
     }
-    
-    return 1;
+
+    return 0;
 }
