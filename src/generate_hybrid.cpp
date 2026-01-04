@@ -23,7 +23,7 @@ using namespace std;
 void writeSeq(FILE * out, vector<int> seq);
 
 
-double norm(fftw_complex dft) {
+double norm_squared(fftw_complex dft) {
     return dft[0] * dft[0] + dft[1] * dft[1];
 }
 
@@ -135,7 +135,7 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const std::string& TEMP
                         if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsA)) {
                             count++;
                             for(int i = 0; i < LEN / 2; i++) {
-                                out_a << (int)rint(norm(out[i]));
+                                out_a << (int)rint(norm_squared(out[i]));
                             }
                             out_a << " ";
                             for(int val : newseq) {
@@ -150,7 +150,7 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const std::string& TEMP
                         if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsB)) {
                             count++;
                             for(int i = 0; i < LEN / 2; i++) {
-                                out_b << ORDER * 2 - (int)rint(norm(out[i]));
+                                out_b << ORDER * 2 - (int)rint(norm_squared(out[i]));
                             }
                             out_b << " ";
                             for(int val : newseq) {

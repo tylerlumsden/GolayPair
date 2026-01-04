@@ -9,6 +9,7 @@
 #include "generate_hybrid.h"
 #include "sort.h"
 #include "match_pairs.h"
+#include "uncompression.h"
 
 struct Options {
     int order;
@@ -97,6 +98,15 @@ int main(int argc, char* argv[]) {
     GNU_sort(file_b, file_b + ".sorted");
 
     match_pairs(opts.order, opts.compress, opts.temp_dir);
+
+    if(opts.compress > 1) {
+        uncompression_pipeline(opts.order, opts.compress, 1, opts.temp_dir);
+
+        GNU_sort(file_a, file_a + ".sorted");
+        GNU_sort(file_b, file_b + ".sorted");
+
+        match_pairs(opts.order, opts.compress, opts.temp_dir);
+    }
 
     return 0;
 }

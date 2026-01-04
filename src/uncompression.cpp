@@ -15,47 +15,60 @@
 #include<algorithm>
 #include<fstream>
 #include<iostream>
+#include<format>
+
+#include"constants.h"
+#include"match_pairs.h"
+#include"sort.h"
+#include <thread>
+
 
 double norm(fftw_complex dft) {
     return dft[0] * dft[0] + dft[1] * dft[1];
 }
 
-
 int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS, std::ofstream& outfile, bool seqflag);
 
-int main() {
-    std::cout << "Test\n";
+int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOMPRESS, const std::string& TEMP_DIR) {
+    std::string inputfile = std::format("{}/order-{}/{}-pairs-found_{}", TEMP_DIR, ORDER, ORDER, 1);
 
-    std::ifstream input("example");
+    std::ifstream input(inputfile);
     std::string line;
 
-    std::vector<int> seq;
+    std::string file_a = Constants::get_file_path_a(ORDER, TEMP_DIR);
+    std::string file_b = Constants::get_file_path_b(ORDER, TEMP_DIR);
+    std::ofstream outa(file_a);
+    std::ofstream outb(file_b);
 
     while(std::getline(input, line)) {
+        std::vector<int> seq;
         std::istringstream iss(line);
-        std::string word;
+        std::string val;
         
-        while(iss >> word) {
-            seq.push_back(std::stoi(word));
+        while(iss >> val) {
+            seq.push_back(std::stoi(val));
         }
+
+        std::vector<int> seqa;
+        for(size_t i = 0; i < seq.size() / 2; i++) {
+            seqa.push_back(seq[i]);
+        }
+
+        std::vector<int> seqb;
+        for(size_t i = seq.size() / 2; i < seq.size(); i++) {
+            seqb.push_back(seq[i]);
+        }
+
+        uncompress(seqa, 2, 1, outa, 1);
+        uncompress(seqb, 2, 1, outb, 0);
     }
-
-    std::vector<int> seqa;
-    for(size_t i = 0; i < seq.size() / 2; i++) {
-        seqa.push_back(seq[i]);
-    }
-
-    std::ofstream out("exampleout");
-
-    std::cout << "Running test uncompress\n";
-
-    uncompress(seqa, 2, 1, out, 1);
+    
+    return 0;
 }
 
 int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS, std::ofstream& outfile, bool seqflag) {
     const int ORDER = orig.size() * COMPRESS; 
     const int LEN = ORDER / COMPRESS;
-    printf("Uncompressing sequence of length %d\n", LEN);
 
     fftw_complex *in, *out;
     fftw_plan p;
@@ -149,8 +162,6 @@ int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS,
     unsigned long long int count = 0;
     int curr = 0;
     vector<int> stack(LEN, 0);
-    
-    printf("Uncompressing A\n");
 
     while(curr != -1) {
 
@@ -216,13 +227,6 @@ int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS,
             //printf("curr: %d, stack: %d\n", curr, stack[curr]);
         }
     }
-
-    printf("%llu A sequences checked\n", count);
-    count = 0;
-    
-    curr = 0;
-    vector<int> stackb(LEN, 0);
-    stack = stackb;
 
     fftw_free(in);
     fftw_free(out);
