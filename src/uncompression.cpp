@@ -7,26 +7,54 @@
 #include<array>
 #include<time.h>
 #include"fftw3.h"
-#include"../lib/array.h"
-#include"../lib/decomps.h"
-#include"../lib/fourier.h"
-#include"../lib/equivalence.h"
+#include"array.h"
+#include"decomps.h"
+#include"fourier.h"
+#include"equivalence.h"
 #include<tgmath.h>
 #include<algorithm>
 #include<fstream>
+#include<iostream>
 
 double norm(fftw_complex dft) {
     return dft[0] * dft[0] + dft[1] * dft[1];
 }
 
-int main(int argc, char ** argv) {
 
-    int ORDER = stoi(argv[3]);
-    int COMPRESS = stoi(argv[4]);
-    int NEWCOMPRESS = stoi(argv[5]);
+int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS, std::ofstream& outfile, bool seqflag);
 
-    int LEN = ORDER / COMPRESS;
+int main() {
+    std::cout << "Test\n";
 
+    std::ifstream input("example");
+    std::string line;
+
+    std::vector<int> seq;
+
+    while(std::getline(input, line)) {
+        std::istringstream iss(line);
+        std::string word;
+        
+        while(iss >> word) {
+            seq.push_back(std::stoi(word));
+        }
+    }
+
+    std::vector<int> seqa;
+    for(size_t i = 0; i < seq.size() / 2; i++) {
+        seqa.push_back(seq[i]);
+    }
+
+    std::ofstream out("exampleout");
+
+    std::cout << "Running test uncompress\n";
+
+    uncompress(seqa, 2, 1, out, 1);
+}
+
+int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS, std::ofstream& outfile, bool seqflag) {
+    const int ORDER = orig.size() * COMPRESS; 
+    const int LEN = ORDER / COMPRESS;
     printf("Uncompressing sequence of length %d\n", LEN);
 
     fftw_complex *in, *out;
@@ -36,58 +64,7 @@ int main(int argc, char ** argv) {
     out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * (ORDER / NEWCOMPRESS));
     p = fftw_plan_dft_1d((ORDER) / NEWCOMPRESS, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
-    int linenumber = stoi(argv[1]);
-
-    int procnum = stoi(argv[2]);
-
-    char fname[100];
-
-    if(procnum == 0) {
-        sprintf(fname, "results/%d-pairs-found", ORDER);
-    } else {
-        sprintf(fname, "results/%d-pairs-found-%d", ORDER, procnum);
-    }
-
-    std::ifstream file(fname);
-    std::string line;
-    std::string letter;
-
-    if(!file) {
-        printf("Bad file\n");
-        return -1;
-    }
-
-    vector<int> origa;
-    origa.resize(LEN);
-    vector<int> origb;
-    origb.resize(LEN);
-    
-
-    int i = 1;
-    while(i < linenumber && getline(file, line)) {
-        i++;
-    }
-
-    i = 0;
-    while(file.good() && i < LEN) {
-        file >> letter;
-        origa[i] = stoi(letter);
-        i++;
-    }
-
-    i = 0;
-    while(file.good() && i < LEN) {
-        file >> letter;
-        origb[i] = stoi(letter);
-        i++;
-    }
-    
-    vector<int> seq;
-    seq.resize(ORDER / NEWCOMPRESS);
-
     std::set<int> alphabet;
-    
-
     if(COMPRESS % 2 == 0) {
         for(int i = 0; i <= COMPRESS; i += 2) {
             alphabet.insert(i);
@@ -101,7 +78,6 @@ int main(int argc, char ** argv) {
     }
 
     std::set<int> newalphabet;
-
     if(NEWCOMPRESS % 2 == 0) {
         for(int i = 0; i <= NEWCOMPRESS; i += 2) {
             newalphabet.insert(i);
@@ -113,7 +89,6 @@ int main(int argc, char ** argv) {
             newalphabet.insert(-i);
         }
     }
-
 
     std::vector<std::vector<int>> parts = getCombinations(COMPRESS / NEWCOMPRESS, newalphabet);
     std::vector<std::vector<int>> partition;
@@ -137,25 +112,13 @@ int main(int argc, char ** argv) {
         partitions.insert(make_pair(letter, partition));
     }
     
-    sprintf(fname, "results/%d/%d-unique-filtered-a_%d", ORDER, ORDER, procnum);
-    FILE * outa = fopen(fname, "w");
-    
-    sprintf(fname, "results/%d/%d-unique-filtered-b_%d", ORDER, ORDER, procnum);
-    FILE * outb = fopen(fname, "w");
-    
     //shift original sequence such that the element with the largest number of permutations is in the front
     set<int> seta;
-    for(int element : origa) {
+    for(int element : orig) {
         seta.insert(element);
     }
 
-    set<int> setb;
-    for(int element : origb) {
-        setb.insert(element);
-    }
-    
-
-    int max = 0;
+    size_t max = 0;
     int best;
     for(int element : seta) {
         if(partitions.at(element).size() > max) {
@@ -163,27 +126,14 @@ int main(int argc, char ** argv) {
             best = element;
         }
     }
-    for(int i = 0; i < origa.size(); i++) {
-        if(origa[i] == best) {
-            rotate(origa.begin(), origa.begin() + i, origa.end());
-        }
-    }
-
-    max = 0;
-    for(int element : setb) {
-        if(partitions.at(element).size() > max) {
-            max = partitions.at(element).size();
-            best = element;
-        }
-    }
-    for(int i = 0; i < origb.size(); i++) {
-        if(origb[i] == best) {
-            rotate(origb.begin(), origb.begin() + i, origb.end());
+    for(size_t i = 0; i < orig.size(); i++) {
+        if(orig[i] == best) {
+            rotate(orig.begin(), orig.begin() + i, orig.end());
         }
     }
 
     set<vector<int>> perma;
-    for(vector<int> perm : partitions.at(origa[0])) {
+    for(vector<int> perm : partitions.at(orig[0])) {
         set<vector<int>> equiv = generateUncompress(perm);
         perma.insert(*equiv.begin());
     }
@@ -193,18 +143,8 @@ int main(int argc, char ** argv) {
         newfirsta.push_back(perm);
     }
 
-    set<vector<int>> permb;
-    for(vector<int> perm : partitions.at(origb[0])) {
-        set<vector<int>> equiv = generateUncompress(perm);
-        permb.insert(*equiv.begin());
-    }
-
-    vector<vector<int>> newfirstb;
-    for(vector<int> perm : permb) {
-        newfirstb.push_back(perm);
-    }
-
-    //partitions = partitionsA;
+    vector<int> seq;
+    seq.resize(ORDER / NEWCOMPRESS);
 
     unsigned long long int count = 0;
     int curr = 0;
@@ -216,7 +156,7 @@ int main(int argc, char ** argv) {
 
         while(curr != LEN - 1) {
 
-            std::vector<int> permutation = partitions.at(origa[curr])[stack[curr]];
+            std::vector<int> permutation = partitions.at(orig[curr])[stack[curr]];
 
             if(curr == 0) {
                 permutation = newfirsta[stack[curr]];
@@ -232,7 +172,7 @@ int main(int argc, char ** argv) {
         //if curr is final element of original sequence, base case
         if(curr == LEN - 1) {
 
-            for(std::vector<int> permutation : partitions.at(origa[curr])) {
+            for(std::vector<int> permutation : partitions.at(orig[curr])) {
 
                 count++;
 
@@ -248,20 +188,24 @@ int main(int argc, char ** argv) {
                 fftw_execute(p);
 
                 if(dftfilter(out, seq.size(), ORDER)) { 
-                    for(unsigned int i = 0; i < seq.size() / 2; i++) {
-                        fprintf(outa, "%d",    (int)rint(norm(out[i])));
+                    for(int i = 0; i < LEN / 2; i++) {
+                        if(seqflag) {
+                            outfile << (int)rint(norm(out[i]));
+                        } else {
+                            outfile << ORDER * 2 - (int)rint(norm(out[i]));
+                        }
                     }
-                    fprintf(outa, " ");
-                    for(int num : seq) {
-                            fprintf(outa, "%d ", num);
+                    outfile << " ";
+                    for(int val : seq) {
+                        outfile << val << " ";
                     }
-                    fprintf(outa, "\n");
+                    outfile << "\n";
                 }
             }
             
             curr--;
 
-            while((unsigned int)stack[curr] == partitions.at(origa[curr]).size() || (curr == 0 && stack[curr] == newfirsta.size())) {
+            while((unsigned int)stack[curr] == partitions.at(orig[curr]).size() || (curr == 0 && (size_t)stack[curr] == newfirsta.size())) {
                 stack[curr] = 0;
                 curr--;
                 if(curr == -1) {
@@ -280,75 +224,8 @@ int main(int argc, char ** argv) {
     vector<int> stackb(LEN, 0);
     stack = stackb;
 
-    //partitions = partitionsB;
-
-
-    
-    while(curr != -1) {
-
-        while(curr != LEN - 1) {
-            std::vector<int> permutation = partitions.at(origb[curr])[stack[curr]];
-
-            if(curr == 0) {
-                permutation = newfirstb[stack[curr]];
-            }
-
-            for(int i = 0; i < COMPRESS / NEWCOMPRESS; i++) {
-                seq[curr + (LEN * i)] = permutation[i];
-            }
-            stack[curr]++;
-            curr++;
-        }
-
-        if(curr == LEN - 1) {
-
-            for(std::vector<int> permutation : partitions.at(origb[curr])) {
-
-                count++;
-
-                for(int i = 0; i < COMPRESS / NEWCOMPRESS; i++) {
-                    seq[curr + (LEN * i)] = permutation[i];
-                }
-
-                for(unsigned int i = 0; i < seq.size(); i++) {
-                    in[i][0] = (double)seq[i];
-                    in[i][1] = 0;
-                } 
-
-                fftw_execute(p);
-
-                if(dftfilter(out, seq.size(), ORDER)) { 
-                    for(unsigned int i = 0; i < seq.size() / 2; i++) {
-                        fprintf(outb, "%d",    ORDER * 2 - (int)rint(norm(out[i])));
-                    }
-                    fprintf(outb, " ");
-                    for(int num : seq) {
-                            fprintf(outb, "%d ", num);
-                    }
-                    fprintf(outb, "\n");
-                }
-            }
-            
-            curr--;
-
-            while((unsigned int)stack[curr] == partitions.at(origb[curr]).size() || (curr == 0 && stack[curr] == newfirstb.size())) {
-                stack[curr] = 0;
-                curr--;
-                if(curr == -1) {
-                    curr = -1;
-                    break;
-                }
-            }
-        }
-    }
-
-    printf("%llu B sequences checked\n", count);
-    count = 0;
-    
     fftw_free(in);
     fftw_free(out);
     fftw_destroy_plan(p);
-
-    fclose(outa);
-    fclose(outb);
+    return 0;
 }

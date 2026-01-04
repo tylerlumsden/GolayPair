@@ -89,20 +89,14 @@ int main(int argc, char* argv[]) {
     }
 
     // Application logic goes here
-    std::cout << "Generating Candidates\n";
     generate_hybrid(opts.order, opts.compress, opts.temp_dir);
-    std::cout << "Generated Candidates\n";
 
-    std::cout << "Sorting files\n";
     std::string file_a = Constants::get_file_path_a(opts.order, opts.temp_dir);
     std::string file_b = Constants::get_file_path_b(opts.order, opts.temp_dir);
     GNU_sort(file_a, file_a + ".sorted");
     GNU_sort(file_b, file_b + ".sorted");
-    std::cout << "Sorted files\n";
 
-    std::cout << "Matching pairs\n";
     match_pairs(opts.order, opts.compress, opts.temp_dir);
-    std::cout << "Matched pairs\n";
 
     return 0;
 }
