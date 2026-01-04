@@ -1,1 +1,1 @@
-int generate_hybrid(const int ORDER, const int COMPRESS);
+int generate_hybrid(const int ORDER, const int COMPRESS, const std::string& TEMP_PATH);

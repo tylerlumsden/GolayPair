@@ -34,5 +34,5 @@ add_library(golay_lib STATIC ${LIB_SOURCES})
 target_link_libraries(golay_lib ${FFTW3_LIB} m)
 
 # Main executable
-add_executable(main src/main.cpp src/generate_hybrid.cpp)
+add_executable(main src/main.cpp src/generate_hybrid.cpp src/match_pairs.cpp src/sort.cpp)
 target_link_libraries(main golay_lib)

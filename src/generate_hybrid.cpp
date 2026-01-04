@@ -13,6 +13,10 @@
 #include<tgmath.h>
 #include<algorithm>
 #include<iostream>
+#include<fstream>
+#include<format>
+
+#include "constants.h"
 
 using namespace std;
 
@@ -43,7 +47,7 @@ bool nextBranch(vector<int>& seq, unsigned int len, set<int> alphabet);
 template<class BidirIt>
 bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet);
 
-int generate_hybrid(const int ORDER, const int COMPRESS) {
+int generate_hybrid(const int ORDER, const int COMPRESS, const std::string& TEMP_DIR) {
 
     const int LEN = ORDER / COMPRESS;
 
@@ -54,26 +58,21 @@ int generate_hybrid(const int ORDER, const int COMPRESS) {
     out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * LEN);
     plan = fftw_plan_dft_1d(LEN, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
-    //write classes to file
-    char fname[100000];
-    sprintf(fname, "results/%d/%d-unique-filtered-a_%d", ORDER, ORDER, 1);
-    FILE * outa = fopen(fname, "w");
-
-    if(outa == NULL) {
-        std::cerr << "File a is null\n";
+    std::string file_a = Constants::get_file_path_a(ORDER, TEMP_DIR);
+    std::ofstream out_a(file_a);
+    if(!out_a.is_open()) {
+        std::cerr << "Failed to open file: " << file_a << "\n";
         return 1;
     }
 
-    sprintf(fname, "results/%d/%d-unique-filtered-b_%d", ORDER, ORDER, 1);
-    FILE * outb = fopen(fname, "w");
-
-    if(outb == NULL) {
-        std::cerr << "File b is null\n";
+    std::string file_b = Constants::get_file_path_b(ORDER, TEMP_DIR);
+    std::ofstream out_b(file_b);
+    if(!out_b.is_open()) {
+        std::cerr << "Failed to open file: " << file_b << "\n";
         return 1;
     }
 
     unsigned long long int count = 0;
-
     std::set<int> alphabet;
  
     if(COMPRESS % 2 == 0) {
@@ -136,19 +135,13 @@ int generate_hybrid(const int ORDER, const int COMPRESS) {
                         if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsA)) {
                             count++;
                             for(int i = 0; i < LEN / 2; i++) {
-                                fprintf(outa, "%d",    (int)rint(norm(out[i])));
+                                out_a << (int)rint(norm(out[i]));
                             }
-                            fprintf(outa, " ");
-                            writeSeq(outa, newseq);
-                            fprintf(outa, "\n");
-                                                if(newseq == test) {
-                            printf("REPEAT!\n");
-                            for(size_t i = 0; i < newseq.size(); i++) {
-                                printf("%d ", newseq[i]);
+                            out_a << " ";
+                            for(int val : newseq) {
+                                out_a << val << " ";
                             }
-                            printf("\n");
-                        }
-                        test = newseq;
+                            out_a << "\n";
                         }
                     }
 
@@ -157,11 +150,13 @@ int generate_hybrid(const int ORDER, const int COMPRESS) {
                         if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsB)) {
                             count++;
                             for(int i = 0; i < LEN / 2; i++) {
-                                fprintf(outb, "%d",   ORDER * 2 - (int)rint(norm(out[i])));
+                                out_b << ORDER * 2 - (int)rint(norm(out[i]));
                             }
-                            fprintf(outb, " ");
-                            writeSeq(outb, newseq);
-                            fprintf(outb, "\n");
+                            out_b << " ";
+                            for(int val : newseq) {
+                                out_b << val << " ";
+                            }
+                            out_b << "\n";
                         }
                     }
 
@@ -176,8 +171,6 @@ int generate_hybrid(const int ORDER, const int COMPRESS) {
     fftw_free(in);
     fftw_free(out);
     fftw_destroy_plan(plan);
-
-    fclose(outa);
 
     return 0;
 }

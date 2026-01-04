@@ -2,19 +2,25 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
+#include <filesystem>
+#include <format>
+
+#include "constants.h"
 #include "generate_hybrid.h"
+#include "sort.h"
+#include "match_pairs.h"
 
 struct Options {
     int order;
     int compress;
-    std::string output_dir;
+    std::string temp_dir;
 };
 
 void print_usage(const char* func) {
     std::cerr << "Usage: " << func << " [options] <order>\n"
               << "Options:\n"
               << "  -c, --compress (int)    Set compression level (default: 1)\n"
-              << "  -d, --dir (string)      Set output directory path (default: results)\n"
+              << "  -d, --dir (string)      Set temp directory path (default: results)\n"
               << "  order (int)             Required order value (integer)\n";
 }
 
@@ -23,7 +29,7 @@ Options parse_args(int argc, char* argv[]) {
 
     // Assign default values for Options
     opts.compress = 1;
-    opts.output_dir = "results";
+    opts.temp_dir = "results";
 
     std::vector<std::string> args;
     for(int i = 0; i < argc; i++) {
@@ -41,7 +47,7 @@ Options parse_args(int argc, char* argv[]) {
             i++;
         }
         else if(arg == "-d" || arg == "--dir") {
-            opts.output_dir = args.at(i + 1);
+            opts.temp_dir = args.at(i + 1);
             i++;
         } else {
             positional.push_back(arg);
@@ -74,10 +80,29 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    // Make sure temporary directories are created beforehand
+    std::string temp_path = std::format("{}/order-{}", opts.temp_dir, opts.order);
+    std::error_code ec;
+    std::filesystem::create_directories(temp_path, ec);
+    if(ec) {
+        std::cerr << "Failed to create temp directories: " << ec.message() << "\n";
+    }
+
     // Application logic goes here
     std::cout << "Generating Candidates\n";
-    generate_hybrid(opts.order, opts.compress);
+    generate_hybrid(opts.order, opts.compress, opts.temp_dir);
     std::cout << "Generated Candidates\n";
+
+    std::cout << "Sorting files\n";
+    std::string file_a = Constants::get_file_path_a(opts.order, opts.temp_dir);
+    std::string file_b = Constants::get_file_path_b(opts.order, opts.temp_dir);
+    GNU_sort(file_a, file_a + ".sorted");
+    GNU_sort(file_b, file_b + ".sorted");
+    std::cout << "Sorted files\n";
+
+    std::cout << "Matching pairs\n";
+    match_pairs(opts.order, opts.compress, opts.temp_dir);
+    std::cout << "Matched pairs\n";
 
     return 0;
 }
