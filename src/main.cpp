@@ -12,11 +12,12 @@
 #include "match_pairs.h"
 #include "uncompression.h"
 #include "filter.h"
+#include "CLI11.hpp"
 
 struct Options {
     int order;
-    int compress;
-    std::string temp_dir;
+    int compress = 1;
+    std::string temp_dir = "results";
 };
 
 void print_usage(const char* func) {
@@ -75,13 +76,12 @@ Options parse_args(int argc, char* argv[]) {
 
 int main(int argc, char* argv[]) {
     Options opts;
-    try {
-        opts = parse_args(argc, argv);
-    } catch(const std::exception& ex) {
-        std::cerr << "Error: " << ex.what() << "\n";
-        print_usage(argv[0]);
-        return 1;
-    }
+
+    CLI::App app{"Complementary Pairs Pipeline"};
+
+    app.add_option("order", opts.order, "Order");
+    app.add_option("-c,--compress", opts.compress, "Compression value (default=1)");
+    CLI11_PARSE(app, argc, argv);
 
     const std::string WORK_DIR = std::format("{}/order-{}", opts.temp_dir, opts.order);
     const std::string FILE_A = std::format("{}/{}-filtered-a", WORK_DIR, opts.order);
