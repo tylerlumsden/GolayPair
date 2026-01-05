@@ -11,19 +11,12 @@
 
 #include "constants.h"
 
-int match_pairs(const int ORDER, const int COMPRESS, const std::string& PATH_A, const std::string& PATH_B, const std::string& OUT_PATH) {
-
-    const int LEN = ORDER / COMPRESS;
-
+int match(const int LEN, std::ifstream& filea, std::ifstream& fileb, std::ofstream& out) {
     std::string a;
     std::string b;
     std::string arrayA;
     std::string arrayB;
     std::string temp;
-
-    std::ofstream out(OUT_PATH);
-    std::ifstream filea(PATH_A);
-    std::ifstream fileb(PATH_B);
 
     vector<int> seqa;
     seqa.resize(LEN);
@@ -95,7 +88,7 @@ int match_pairs(const int ORDER, const int COMPRESS, const std::string& PATH_A, 
                             write_seq(out, sequenceA);
                             out << " ";
                             write_seq(out, sequenceB);
-                            out << " ";
+                            out << "\n";
                         }
                     }
                 }
@@ -126,4 +119,12 @@ int match_pairs(const int ORDER, const int COMPRESS, const std::string& PATH_A, 
     }
 
     return 0;
+}
+
+int match_pairs(const int ORDER, const int COMPRESS, const std::string& PATH_A, const std::string& PATH_B, const std::string& PATH_OUT) {
+    std::ifstream file_a(PATH_A);
+    std::ifstream file_b(PATH_B);
+    std::ofstream out(PATH_OUT);
+
+    return match(ORDER / COMPRESS, file_a, file_b, out);
 }

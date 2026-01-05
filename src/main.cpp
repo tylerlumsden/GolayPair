@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Make sure temporary directories are created beforehand
-    std::string temp_path = std::format("{}/order-{}", opts.temp_dir, opts.order);
+    std::string temp_path = std::format("{}/generate/order-{}", opts.temp_dir, opts.order);
     std::error_code ec;
     std::filesystem::create_directories(temp_path, ec);
     if(ec) {
@@ -93,26 +93,20 @@ int main(int argc, char* argv[]) {
 
     // Application logic goes here
 
-    std::string filepath_a = std::format("{}/order-{}/{}-filtered-a_1", opts.temp_dir, opts.order, opts.order);
-    std::string filepath_b = std::format("{}/order-{}/{}-filtered-b_1", opts.temp_dir, opts.order, opts.order);
+    std::string filepath_a = std::format("{}/generate/order-{}/{}-filtered-a_1", opts.temp_dir, opts.order, opts.order);
+    std::string filepath_b = std::format("{}/generate/order-{}/{}-filtered-b_1", opts.temp_dir, opts.order, opts.order);
     generate_hybrid(opts.order, opts.compress, filepath_a, filepath_b); // OUT: a, OUT: b
 
     GNU_sort(filepath_a, filepath_a + ".sorted");
     GNU_sort(filepath_b, filepath_b + ".sorted");
 
-    std::string pairs_path = std::format("{}/order-{}/{}-pairs-found", opts.temp_dir, opts.order, opts.order);
+    std::string pairs_path = std::format("{}/generate/order-{}/{}-pairs-found", opts.temp_dir, opts.order, opts.order);
     match_pairs(opts.order, opts.compress, filepath_a + ".sorted", filepath_b + ".sorted", pairs_path); // IN: a, IN: b, OUT: pairs
-
-    /*
+    
     if(opts.compress > 1) {
-        uncompression_pipeline(opts.order, opts.compress, 1, opts.temp_dir); // IN: pairs, OUT: pairs
-
-        GNU_sort(file_a, file_a + ".sorted");
-        GNU_sort(file_b, file_b + ".sorted");
-
-        match_pairs(opts.order, 1, opts.temp_dir);
+        std::cout << "Uncompressing\n";
+        uncompression_pipeline(opts.order, opts.compress, 1, pairs_path, pairs_path + ".uncompress", opts.temp_dir); // IN: pairs, OUT: pairs
     }
-    */
 
     cache_filter(opts.order, 1, pairs_path, pairs_path + ".unique"); // IN: pairs, OUT: pairs
 

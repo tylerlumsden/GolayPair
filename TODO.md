@@ -4,3 +4,4 @@
 - separate uncompression / candidate generation temp files
 - fix canon_filter so that it removes repeat sequences afterwards
 - implement configurable pipeline so that you an exclude certain steps
+- perhaps reimplement function definitions so they accept streams instead of paths
