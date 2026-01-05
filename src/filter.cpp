@@ -96,6 +96,8 @@ int canon_filter(const int ORDER, const int COMPRESS) {
 int cache_filter(const int ORDER, const int COMPRESS, const std::string& PATH_IN, const std::string& PATH_OUT) {
     const int LEN = ORDER / COMPRESS;
 
+    std::cout << PATH_IN << "\n";
+
     printf("Filtering Equivalent Pairs...\n");
 
     FILE * out = fopen(PATH_OUT.c_str(), "w");

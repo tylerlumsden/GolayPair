@@ -27,12 +27,10 @@ int match_pairs(const int LEN, std::ifstream& filea, std::ifstream& fileb, std::
     vector<vector<int>> matchB;
 
     if(filea.peek() == EOF) {
-        printf("A file is empty.\n");
         return 1;
     }
 
     if(fileb.peek() == EOF) {
-        printf("B file is empty.\n");
         return 1;
     }
 
