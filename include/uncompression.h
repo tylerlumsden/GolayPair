@@ -1,1 +1,1 @@
-int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOMPRESS, const std::string& PATH_IN, const std::string& PATH_OUT, const std::string& TEMP_DIR);
+int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOMPRESS, std::ifstream& IN_PAIRS, std::ofstream& OUT_PAIRS, const std::string& TEMP_PATH);

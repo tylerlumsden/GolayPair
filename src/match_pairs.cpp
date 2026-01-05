@@ -11,7 +11,7 @@
 
 #include "constants.h"
 
-int match(const int LEN, std::ifstream& filea, std::ifstream& fileb, std::ofstream& out) {
+int match_pairs(const int LEN, std::ifstream& filea, std::ifstream& fileb, std::ofstream& out) {
     std::string a;
     std::string b;
     std::string arrayA;
@@ -119,12 +119,4 @@ int match(const int LEN, std::ifstream& filea, std::ifstream& fileb, std::ofstre
     }
 
     return 0;
-}
-
-int match_pairs(const int ORDER, const int COMPRESS, const std::string& PATH_A, const std::string& PATH_B, const std::string& PATH_OUT) {
-    std::ifstream file_a(PATH_A);
-    std::ifstream file_b(PATH_B);
-    std::ofstream out(PATH_OUT);
-
-    return match(ORDER / COMPRESS, file_a, file_b, out);
 }

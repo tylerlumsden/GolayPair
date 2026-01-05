@@ -30,28 +30,17 @@ double norm(fftw_complex dft) {
 
 int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS, std::ofstream& outfile, bool seqflag);
 
-int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOMPRESS, const std::string& PATH_IN, const std::string& PATH_OUT, const std::string& TEMP_DIR) {
-    std::ifstream input(PATH_IN);
-    std::ofstream output(PATH_OUT);
-
-    // Make sure temporary directories are created beforehand
-    std::string temp_path = std::format("{}/uncompress/order-{}", TEMP_DIR, ORDER);
-    std::error_code ec;
-    std::filesystem::create_directories(temp_path, ec);
-    if(ec) {
-        std::cerr << "Failed to create temp directories: " << ec.message() << "\n";
-    }
-
-    std::string file_a = std::format("{}/{}-uncompressed-a", temp_path, ORDER);
-    std::string file_b = std::format("{}/{}-uncompressed-b", temp_path, ORDER);
+int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOMPRESS, std::ifstream& IN_PAIRS, std::ofstream& OUT_PAIRS, const std::string& WORK_DIR) {
+    const std::string FILE_A = std::format("{}/{}-uncompressed-a", WORK_DIR, ORDER);
+    const std::string FILE_B = std::format("{}/{}-uncompressed-b", WORK_DIR, ORDER);
+    const std::string FILE_A_SORTED = FILE_A + ".sorted";
+    const std::string FILE_B_SORTED = FILE_B + ".sorted";
 
     std::string line;
 
-    while(std::getline(input, line)) {
-        std::string file_a = std::format("{}/{}-uncompressed-a", temp_path, ORDER);
-        std::string file_b = std::format("{}/{}-uncompressed-b", temp_path, ORDER);
-        std::ofstream outa(file_a);
-        std::ofstream outb(file_b);
+    while(std::getline(IN_PAIRS, line)) {
+        std::ofstream outa(FILE_A);
+        std::ofstream outb(FILE_B);
 
         std::vector<int> seq;
         std::istringstream iss(line);
@@ -71,16 +60,16 @@ int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOM
             seqb.push_back(seq[i]);
         }
 
-        uncompress(seqa, 2, 1, outa, 1);
-        uncompress(seqb, 2, 1, outb, 0);
+        uncompress(seqa, COMPRESS, NEWCOMPRESS, outa, 1);
+        uncompress(seqb, COMPRESS, NEWCOMPRESS, outb, 0);
         outa.close();
         outb.close();
 
-        GNU_sort(file_a, file_a + ".sorted");
-        GNU_sort(file_b, file_b + ".sorted");
-        std::ifstream ina(file_a + ".sorted");
-        std::ifstream inb(file_b + ".sorted");
-        match(ORDER / NEWCOMPRESS, ina, inb, output);
+        GNU_sort(FILE_A, FILE_A_SORTED);
+        GNU_sort(FILE_B, FILE_B_SORTED);
+        std::ifstream ina(FILE_A_SORTED);
+        std::ifstream inb(FILE_B_SORTED);
+        match_pairs(ORDER / NEWCOMPRESS, ina, inb, OUT_PAIRS);
     }
 
     return 0;

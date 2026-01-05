@@ -12,6 +12,7 @@
 #include "match_pairs.h"
 #include "uncompression.h"
 #include "filter.h"
+#include "CLI11.hpp"
 
 struct Options {
     int order;
@@ -83,32 +84,50 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    const std::string WORK_DIR = std::format("{}/order-{}", opts.temp_dir, opts.order);
+    const std::string FILE_A = std::format("{}/{}-filtered-a", WORK_DIR, opts.order);
+    const std::string FILE_B = std::format("{}/{}-filtered-b", WORK_DIR, opts.order);
+    const std::string FILE_A_SORTED = FILE_A + ".sorted";
+    const std::string FILE_B_SORTED = FILE_B + ".sorted";
+    const std::string FILE_PAIRS = std::format("{}/{}-pairs", WORK_DIR, opts.order);
+    const std::string FILE_PAIRS_UNCOMPRESSED = FILE_PAIRS + ".uncompress";
+
     // Make sure temporary directories are created beforehand
-    std::string temp_path = std::format("{}/generate/order-{}", opts.temp_dir, opts.order);
     std::error_code ec;
-    std::filesystem::create_directories(temp_path, ec);
+    std::filesystem::create_directories(WORK_DIR, ec);
     if(ec) {
         std::cerr << "Failed to create temp directories: " << ec.message() << "\n";
     }
 
     // Application logic goes here
+    {
+        std::ofstream file_a(FILE_A);
+        std::ofstream file_b(FILE_B);
+        generate_hybrid(opts.order, opts.compress, file_a, file_b); // OUT: a, OUT: b
+    }
 
-    std::string filepath_a = std::format("{}/generate/order-{}/{}-filtered-a_1", opts.temp_dir, opts.order, opts.order);
-    std::string filepath_b = std::format("{}/generate/order-{}/{}-filtered-b_1", opts.temp_dir, opts.order, opts.order);
-    generate_hybrid(opts.order, opts.compress, filepath_a, filepath_b); // OUT: a, OUT: b
+    GNU_sort(FILE_A, FILE_A_SORTED);
+    GNU_sort(FILE_B, FILE_B_SORTED);
 
-    GNU_sort(filepath_a, filepath_a + ".sorted");
-    GNU_sort(filepath_b, filepath_b + ".sorted");
-
-    std::string pairs_path = std::format("{}/generate/order-{}/{}-pairs-found", opts.temp_dir, opts.order, opts.order);
-    match_pairs(opts.order, opts.compress, filepath_a + ".sorted", filepath_b + ".sorted", pairs_path); // IN: a, IN: b, OUT: pairs
+    {
+        std::ofstream pairs(FILE_PAIRS);
+        std::ifstream file_a_sorted(FILE_A_SORTED);
+        std::ifstream file_b_sorted(FILE_B_SORTED);
+        match_pairs(opts.order / opts.compress, file_a_sorted, file_b_sorted, pairs); // IN: a, IN: b, OUT: pairs
+    }
     
     if(opts.compress > 1) {
         std::cout << "Uncompressing\n";
-        uncompression_pipeline(opts.order, opts.compress, 1, pairs_path, pairs_path + ".uncompress", opts.temp_dir); // IN: pairs, OUT: pairs
-    }
+        {
+            std::ifstream in_pairs(FILE_PAIRS);
+            std::ofstream out_pairs(FILE_PAIRS_UNCOMPRESSED);
+            uncompression_pipeline(opts.order, opts.compress, 1, in_pairs, out_pairs, WORK_DIR); // IN: pairs, OUT: pairs
+        }
 
-    cache_filter(opts.order, 1, pairs_path, pairs_path + ".unique"); // IN: pairs, OUT: pairs
+        cache_filter(opts.order, 1, FILE_PAIRS_UNCOMPRESSED, FILE_PAIRS + ".unique");
+    } else {
+        cache_filter(opts.order, 1, FILE_PAIRS, FILE_PAIRS + ".unique");
+    }
 
     return 0;
 }

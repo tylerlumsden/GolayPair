@@ -1,1 +1,1 @@
-int generate_hybrid(const int ORDER, const int COMPRESS, const std::string& PATH_A, const std::string& PATH_B);
+int generate_hybrid(const int ORDER, const int COMPRESS, std::ofstream& out_a, std::ofstream& out_b);

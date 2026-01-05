@@ -1,2 +1,1 @@
-int match_pairs(const int ORDER, const int COMPRESS, const std::string& PATH_A, const std::string& PATH_B, const std::string& PATH_OUT);
-int match(const int LEN, std::ifstream& filea, std::ifstream& fileb, std::ofstream& out);
+int match_pairs(const int LEN, std::ifstream& filea, std::ifstream& fileb, std::ofstream& out);
