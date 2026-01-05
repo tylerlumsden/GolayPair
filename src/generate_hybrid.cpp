@@ -51,6 +51,12 @@ int generate_hybrid(const int ORDER, const int COMPRESS, std::ofstream& out_a, s
 
     const std::vector<std::pair<int, int>> decompslist = getdecomps(ORDER * 2);
 
+    if(decompslist.size() == 0) {
+        std::cerr << "Order " << ORDER << " cannot be decomposed into a sum of squares s.t. x^2 + y^2 == " << ORDER << "*2\n";
+        std::cerr << "Hence there are no solutions.\n";
+        return 1;
+    }
+
     const int LEN = ORDER / COMPRESS;
 
     fftw_complex *in, *out;

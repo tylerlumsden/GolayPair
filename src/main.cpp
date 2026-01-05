@@ -43,25 +43,26 @@ int main(int argc, char* argv[]) {
     std::filesystem::create_directories(WORK_DIR, ec);
     if(ec) {
         std::cerr << "Failed to create temp directories: " << ec.message() << "\n";
+        return 1;
     }
 
     // Candidate generation step
     {
         std::ofstream file_a(FILE_A);
         std::ofstream file_b(FILE_B);
-        generate_hybrid(opts.order, opts.compress[0], file_a, file_b); // OUT: a, OUT: b
+        if(generate_hybrid(opts.order, opts.compress[0], file_a, file_b) > 0) return 1;
     }
 
     // Sort results of the candidate generation step
-    GNU_sort(FILE_A, FILE_A_SORTED);
-    GNU_sort(FILE_B, FILE_B_SORTED);
+    if(GNU_sort(FILE_A, FILE_A_SORTED) > 0) return 1;
+    if(GNU_sort(FILE_B, FILE_B_SORTED) > 0) return 1;
 
     // Matching step
     {
         std::ofstream pairs(FILE_PAIRS);
         std::ifstream file_a_sorted(FILE_A_SORTED);
         std::ifstream file_b_sorted(FILE_B_SORTED);
-        match_pairs(opts.order / opts.compress[0], file_a_sorted, file_b_sorted, pairs); // IN: a, IN: b, OUT: pairs
+        if(match_pairs(opts.order / opts.compress[0], file_a_sorted, file_b_sorted, pairs) > 0) return 1; // IN: a, IN: b, OUT: pairs
     }
 
     // Uncompression steps
@@ -70,14 +71,14 @@ int main(int argc, char* argv[]) {
             std::cout << "Uncompressing to new compression ratio " << opts.compress[i + 1] << "\n";
             std::ifstream in_pairs(FILE_PAIRS);
             std::ofstream out_pairs(FILE_PAIRS_UNCOMPRESSED);
-            uncompression_pipeline(opts.order, opts.compress[i], opts.compress[i + 1], in_pairs, out_pairs, WORK_DIR); // IN: pairs, OUT: pairs
+            if(uncompression_pipeline(opts.order, opts.compress[i], opts.compress[i + 1], in_pairs, out_pairs, WORK_DIR) > 0) return 1; // IN: pairs, OUT: pairs
 
             std::filesystem::rename(FILE_PAIRS_UNCOMPRESSED, FILE_PAIRS);
         }
     } 
 
     std::cout << "Filtering pairs of compression size " << opts.compress.back() << "\n";
-    cache_filter(opts.order, opts.compress.back(), FILE_PAIRS, FILE_PAIRS + ".unique");
+    if(cache_filter(opts.order, opts.compress.back(), FILE_PAIRS, FILE_PAIRS + ".unique") > 0) return 1;
 
     return 0;
 }
