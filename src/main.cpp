@@ -12,7 +12,6 @@
 #include "match_pairs.h"
 #include "uncompression.h"
 #include "filter.h"
-#include "CLI11.hpp"
 
 struct Options {
     int order;
