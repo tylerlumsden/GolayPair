@@ -13,7 +13,6 @@
 #include "uncompression.h"
 #include "filter.h"
 #include "CLI11.hpp"
-#include "coprimes.h"
 
 struct Options {
     int order;

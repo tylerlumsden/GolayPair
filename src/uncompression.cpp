@@ -31,6 +31,8 @@ double norm(fftw_complex dft) {
 int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS, std::ofstream& outfile, bool seqflag);
 
 int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOMPRESS, std::ifstream& IN_PAIRS, std::ofstream& OUT_PAIRS, const std::string& WORK_DIR) {
+    unsigned long long count = 1;
+
     const std::string FILE_A = std::format("{}/{}-uncompressed-a", WORK_DIR, ORDER);
     const std::string FILE_B = std::format("{}/{}-uncompressed-b", WORK_DIR, ORDER);
     const std::string FILE_A_SORTED = FILE_A + ".sorted";
@@ -39,6 +41,8 @@ int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOM
     std::string line;
 
     while(std::getline(IN_PAIRS, line)) {
+        std::cout << "Uncompressing line: " << count << "\n";
+
         std::ofstream outa(FILE_A);
         std::ofstream outb(FILE_B);
 
@@ -70,6 +74,8 @@ int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOM
         std::ifstream ina(FILE_A_SORTED);
         std::ifstream inb(FILE_B_SORTED);
         match_pairs(ORDER / NEWCOMPRESS, ina, inb, OUT_PAIRS);
+
+        count++;
     }
 
     return 0;

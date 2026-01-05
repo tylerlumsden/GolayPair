@@ -49,6 +49,8 @@ bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet);
 
 int generate_hybrid(const int ORDER, const int COMPRESS, std::ofstream& out_a, std::ofstream& out_b) {
 
+    const std::vector<std::pair<int, int>> decompslist = getdecomps(ORDER * 2);
+
     const int LEN = ORDER / COMPRESS;
 
     fftw_complex *in, *out;
@@ -96,8 +98,10 @@ int generate_hybrid(const int ORDER, const int COMPRESS, std::ofstream& out_a, s
 
             for(std::vector<int> combo : combinations) {
                 int sum = rowsum(combo);
-                if(sum == decomps[ORDER][0][0] - rowsum(seq) || sum == decomps[ORDER][0][1] - rowsum(seq)) {
-                    rowcombo.push_back(combo);
+                for(std::pair<int, int> decomp : decompslist) {
+                    if(sum == decomp.first - rowsum(seq) || sum == decomp.second - rowsum(seq)) {
+                        rowcombo.push_back(combo);
+                    }
                 }
             }  
 
@@ -116,33 +120,35 @@ int generate_hybrid(const int ORDER, const int COMPRESS, std::ofstream& out_a, s
                         continue;
                     }
 
-                    if(rowsum(newseq) == decomps[ORDER][0][0]) {
-                        out = dft(newseq, in, out, plan);
-                        if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsA)) {
-                            count++;
-                            for(int i = 0; i < LEN / 2; i++) {
-                                out_a << (int)rint(norm_squared(out[i]));
+                    for(std::pair<int, int> decomp : decompslist) {
+                        if(rowsum(newseq) == decomp.first) {
+                            out = dft(newseq, in, out, plan);
+                            if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsA)) {
+                                count++;
+                                for(int i = 0; i < LEN / 2; i++) {
+                                    out_a << (int)rint(norm_squared(out[i]));
+                                }
+                                out_a << " ";
+                                for(int val : newseq) {
+                                    out_a << val << " ";
+                                }
+                                out_a << "\n";
                             }
-                            out_a << " ";
-                            for(int val : newseq) {
-                                out_a << val << " ";
-                            }
-                            out_a << "\n";
                         }
-                    }
 
-                    if(rowsum(newseq) == decomps[ORDER][0][1]) {
-                        out = dft(newseq, in, out, plan);
-                        if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsB)) {
-                            count++;
-                            for(int i = 0; i < LEN / 2; i++) {
-                                out_b << ORDER * 2 - (int)rint(norm_squared(out[i]));
+                        if(rowsum(newseq) == decomp.second) {
+                            out = dft(newseq, in, out, plan);
+                            if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsB)) {
+                                count++;
+                                for(int i = 0; i < LEN / 2; i++) {
+                                    out_b << ORDER * 2 - (int)rint(norm_squared(out[i]));
+                                }
+                                out_b << " ";
+                                for(int val : newseq) {
+                                    out_b << val << " ";
+                                }
+                                out_b << "\n";
                             }
-                            out_b << " ";
-                            for(int val : newseq) {
-                                out_b << val << " ";
-                            }
-                            out_b << "\n";
                         }
                     }
 

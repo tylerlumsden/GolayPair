@@ -28,6 +28,7 @@ set(LIB_SOURCES
     lib/equivalence.cpp
     lib/array.cpp
     lib/coprimes.cpp
+    lib/decomps.cpp
 )
 
 # Create a static library
