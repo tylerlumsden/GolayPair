@@ -6,6 +6,7 @@
 #include"coprimes.h"
 #include<algorithm>
 #include<iostream>
+#include<functional>
 
 using namespace std;
 
@@ -13,10 +14,10 @@ void shift_equivalence(set<vector<int>>& map);
 void negative_equivalence(set<vector<int>>& map);
 void altnegative_equivalence(set<vector<int>>& map);
 void unishift_equivalence(set<vector<int>>& map, vector<int> seq);
-void decimation_equivalence(set<vector<int>>& map);
+void decimation_equivalence(set<vector<int>>& map, const std::vector<int>& coprimes);
 void reverse_equivalence(set<vector<int>>& map);
 set<GolayPair> shift_pair(set<GolayPair>& map);
-set<GolayPair> decimate_pair(set<GolayPair>& map);
+set<GolayPair> decimate_pair(set<GolayPair>& map, const std::vector<int>& coprimes);
 set<GolayPair> reverse_pair(set<GolayPair>& map);
 set<GolayPair> altnegative_pair(set<GolayPair>& map);
 set<GolayPair> negate_pair(set<GolayPair>& map);
@@ -42,7 +43,7 @@ set<vector<int>> generateUncompress(vector<int> seq) {
     return map;
 }  
 
-set<GolayPair> generateExhaust(GolayPair seq) {
+set<GolayPair> generateExhaust(GolayPair seq, const std::vector<std::function<set<GolayPair>(set<GolayPair>&)>>& equivalences) {
     set<GolayPair> map;
     set<GolayPair> newmap;
 
@@ -59,27 +60,11 @@ set<GolayPair> generateExhaust(GolayPair seq) {
 
         set<GolayPair> temp;
 
-        
-        temp = shift_pair(newmap);
-        iter.insert(temp.begin(), temp.end());
-        newmap.insert(iter.begin(), iter.end());
-
-        temp = altnegative_pair(newmap);
-        iter.insert(temp.begin(), temp.end());
-        newmap.insert(iter.begin(), iter.end());
-
-        temp = reverse_pair(newmap);
-        iter.insert(temp.begin(), temp.end());
-        newmap.insert(iter.begin(), iter.end());
-
-        temp = swap_pair(newmap);
-        iter.insert(temp.begin(), temp.end());
-        newmap.insert(iter.begin(), iter.end());
-        
-        
-        temp = decimate_pair(newmap);
-        iter.insert(temp.begin(), temp.end());
-        newmap.insert(iter.begin(), iter.end());
+        for(const auto& func : equivalences) {
+            temp = func(newmap);
+            iter.insert(temp.begin(), temp.end());
+            newmap.insert(iter.begin(), iter.end());
+        }
 
         for(GolayPair seq : map) {
             if(iter.count(seq)) {
@@ -96,7 +81,7 @@ set<GolayPair> generateExhaust(GolayPair seq) {
     return map;
 }
 
-set<GolayPair> constructGenerators(int LEN) {
+set<GolayPair> constructGenerators(int LEN, const std::vector<std::function<set<GolayPair>(set<GolayPair>&)>>& equivalences) {
     GolayPair seq;
     seq.a.resize(LEN);
     seq.b.resize(LEN);
@@ -106,7 +91,7 @@ set<GolayPair> constructGenerators(int LEN) {
         seq.b[i - 1] = (LEN) + i;
     }
 
-    return generateExhaust(seq);
+    return generateExhaust(seq, equivalences);
 } 
 
 set<GolayPair> generateClassPairs(set<GolayPair> generators, GolayPair seq) {
@@ -266,15 +251,14 @@ vector<int> permute(vector<int>& seq, int coprime) {
     return newseq;
 }
 
-set<GolayPair> decimate_pair(set<GolayPair>& map) {
+set<GolayPair> decimate_pair(set<GolayPair>& map, const std::vector<int>& coprimes) {
     set<GolayPair> newmap;
     for(GolayPair seq : map) {
-        int LEN = seq.a.size();
-        for(int i = 0; i < coprimelength[LEN]; i++) {
+        for(int coprime : coprimes) {
             GolayPair newseq;
             
-            newseq.a = permute(seq.a, coprimelist[LEN][i]);
-            newseq.b = permute(seq.b, coprimelist[LEN][i]);
+            newseq.a = permute(seq.a, coprime);
+            newseq.b = permute(seq.b, coprime);
 
             newmap.insert(newseq);
         }
@@ -282,11 +266,10 @@ set<GolayPair> decimate_pair(set<GolayPair>& map) {
     return newmap;
 }
 
-void decimation_equivalence(set<vector<int>>& map) {
+void decimation_equivalence(set<vector<int>>& map, const std::vector<int>& coprimes) {
     for(vector<int> seq : map) {
-        int LEN = seq.size();
-        for(int i = 0; i < coprimelength[LEN]; i++) {
-            vector<int> newseq = permute(seq, coprimelist[LEN][i]);
+        for(int coprime : coprimes) {
+            vector<int> newseq = permute(seq, coprime);
 
             map.insert(newseq);
         }

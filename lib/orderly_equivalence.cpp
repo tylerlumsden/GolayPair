@@ -10,7 +10,7 @@
 using namespace std;
  
 int shift_equivalence(set<vector<int>>& map, vector<int> base);
-int decimation_equivalence(set<vector<int>>& map, vector<int> base);
+int decimation_equivalence(set<vector<int>>& map, vector<int> base, const std::vector<int>& coprimes);
 int reverse_equivalence(set<vector<int>>& map, vector<int> base);
 set<vector<int>> generateExhaust(vector<int> base, int flag);
 
@@ -22,13 +22,13 @@ set<vector<int>> constructGenerators(int flag, int LEN) {
         seq[i - 1] = i;
     }
 
-
     return generateExhaust(seq, flag);
 } 
 
 set<vector<int>> generateExhaust(vector<int> base, int flag) {
-    set<vector<int>> map;
+    const std::vector<int>& coprimelist = getcoprimes(base.size());
 
+    set<vector<int>> map;
 
     unsigned int size = 0;
 
@@ -38,7 +38,7 @@ set<vector<int>> generateExhaust(vector<int> base, int flag) {
         size = map.size();
     
         if(flag == 0) {
-            decimation_equivalence(map, base);
+            decimation_equivalence(map, base, coprimelist);
         }
         
         shift_equivalence(map, base);
@@ -119,13 +119,11 @@ vector<int> permute(vector<int> seq, int coprime) {
     return newseq;
 }
 
-int decimation_equivalence(set<vector<int>>& map, vector<int> base) {
-    int LEN = base.size();
-
+int decimation_equivalence(set<vector<int>>& map, vector<int> base, const std::vector<int>& coprimes) {
     for(vector<int> seq : map) {
-        for(int i = 0; i < coprimelength[LEN]; i++) {
+        for(int coprime : coprimes) {
 
-            vector<int> newseq = permute(seq, coprimelist[LEN][i]);
+            vector<int> newseq = permute(seq, coprime);
 
             if(newseq < base) {
                 return 0;

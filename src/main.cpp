@@ -13,6 +13,7 @@
 #include "uncompression.h"
 #include "filter.h"
 #include "CLI11.hpp"
+#include "coprimes.h"
 
 struct Options {
     int order;
@@ -76,6 +77,7 @@ int main(int argc, char* argv[]) {
         }
     } 
 
+    std::cout << "Filtering pairs of compression size " << opts.compress.back() << "\n";
     cache_filter(opts.order, opts.compress.back(), FILE_PAIRS, FILE_PAIRS + ".unique");
 
     return 0;

@@ -27,6 +27,7 @@ set(LIB_SOURCES
     lib/orderly_equivalence.cpp
     lib/equivalence.cpp
     lib/array.cpp
+    lib/coprimes.cpp
 )
 
 # Create a static library
