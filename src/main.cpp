@@ -16,6 +16,7 @@
 
 struct Options {
     int order;
+    int paf_constant = 0;
     std::vector<int> compress = {1};
     std::string temp_dir = "results";
 };
@@ -27,8 +28,14 @@ int main(int argc, char* argv[]) {
 
     app.add_option("order", opts.order, "Order");
     app.add_option("-c,--compress", opts.compress, "Set compression level (default=1)");
+    app.add_option("-p,--paf", opts.paf_constant, "Set PAF constant (default=0)");
     app.add_option("-d,--dir", opts.temp_dir, "Set directory for populating temporary files (default=result)");
     CLI11_PARSE(app, argc, argv);
+
+    std::cout << "Searching for complementary sequences of order " << opts.order << "\n";
+    std::cout << "With paf-constant " << opts.paf_constant << "\n";
+    std::cout << "And compression factor " << opts.compress[0] << "\n";
+    std::cout << "Using directory " << opts.temp_dir << " To store temporary files\n";
 
     const std::string WORK_DIR = std::format("{}/order-{}", opts.temp_dir, opts.order);
     const std::string FILE_A = std::format("{}/{}-filtered-a", WORK_DIR, opts.order);
@@ -50,7 +57,7 @@ int main(int argc, char* argv[]) {
     {
         std::ofstream file_a(FILE_A);
         std::ofstream file_b(FILE_B);
-        if(generate_hybrid(opts.order, opts.compress[0], file_a, file_b) > 0) return 1;
+        if(generate_hybrid(opts.order, opts.compress[0], opts.paf_constant, file_a, file_b) > 0) return 1;
     }
 
     // Sort results of the candidate generation step
@@ -71,7 +78,7 @@ int main(int argc, char* argv[]) {
             std::cout << "Uncompressing to new compression ratio " << opts.compress[i + 1] << "\n";
             std::ifstream in_pairs(FILE_PAIRS);
             std::ofstream out_pairs(FILE_PAIRS_UNCOMPRESSED);
-            if(uncompression_pipeline(opts.order, opts.compress[i], opts.compress[i + 1], in_pairs, out_pairs, WORK_DIR) > 0) return 1; // IN: pairs, OUT: pairs
+            if(uncompression_pipeline(opts.order, opts.compress[i], opts.compress[i + 1], opts.paf_constant, in_pairs, out_pairs, WORK_DIR) > 0) return 1; // IN: pairs, OUT: pairs
 
             std::filesystem::rename(FILE_PAIRS_UNCOMPRESSED, FILE_PAIRS);
         }

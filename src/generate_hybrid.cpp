@@ -47,12 +47,16 @@ bool nextBranch(vector<int>& seq, unsigned int len, set<int> alphabet);
 template<class BidirIt>
 bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet);
 
-int generate_hybrid(const int ORDER, const int COMPRESS, std::ofstream& out_a, std::ofstream& out_b) {
+int sum_constant(int order, int paf) {
+    return order * 2 + (order - 1) * paf;
+}
 
-    const std::vector<std::pair<int, int>> decompslist = getdecomps(ORDER * 2);
+int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT, std::ofstream& out_a, std::ofstream& out_b) {
+
+    const std::vector<std::pair<int, int>> decompslist = getdecomps(sum_constant(ORDER, PAF_CONSTANT));
 
     if(decompslist.size() == 0) {
-        std::cerr << "Order " << ORDER << " cannot be decomposed into a sum of squares s.t. x^2 + y^2 == " << ORDER << "*2\n";
+        std::cerr << "Order " << ORDER << " cannot be decomposed into a sum of squares\n" << ORDER << "*2\n";
         std::cerr << "Hence there are no solutions.\n";
         return 1;
     }
@@ -129,7 +133,7 @@ int generate_hybrid(const int ORDER, const int COMPRESS, std::ofstream& out_a, s
                     for(std::pair<int, int> decomp : decompslist) {
                         if(rowsum(newseq) == decomp.first) {
                             out = dft(newseq, in, out, plan);
-                            if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsA)) {
+                            if(dftfilter(out, LEN, ORDER, PAF_CONSTANT) && isCanonical(newseq, generatorsA)) {
                                 count++;
                                 for(int i = 0; i < LEN / 2; i++) {
                                     out_a << (int)rint(norm_squared(out[i]));
@@ -144,7 +148,7 @@ int generate_hybrid(const int ORDER, const int COMPRESS, std::ofstream& out_a, s
 
                         if(rowsum(newseq) == decomp.second) {
                             out = dft(newseq, in, out, plan);
-                            if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsB)) {
+                            if(dftfilter(out, LEN, ORDER, PAF_CONSTANT) && isCanonical(newseq, generatorsB)) {
                                 count++;
                                 for(int i = 0; i < LEN / 2; i++) {
                                     out_b << ORDER * 2 - (int)rint(norm_squared(out[i]));

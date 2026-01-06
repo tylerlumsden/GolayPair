@@ -8,7 +8,6 @@
 #include<time.h>
 #include"fftw3.h"
 #include"array.h"
-#include"decomps.h"
 #include"fourier.h"
 #include"equivalence.h"
 #include<tgmath.h>
@@ -28,9 +27,9 @@ double norm(fftw_complex dft) {
     return dft[0] * dft[0] + dft[1] * dft[1];
 }
 
-int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS, std::ofstream& outfile, bool seqflag);
+int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, std::ofstream& outfile, bool seqflag);
 
-int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOMPRESS, std::ifstream& IN_PAIRS, std::ofstream& OUT_PAIRS, const std::string& WORK_DIR) {
+int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, std::ifstream& IN_PAIRS, std::ofstream& OUT_PAIRS, const std::string& WORK_DIR) {
     unsigned long long count = 1;
 
     const std::string FILE_A = std::format("{}/{}-uncompressed-a", WORK_DIR, ORDER);
@@ -64,8 +63,8 @@ int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOM
             seqb.push_back(seq[i]);
         }
 
-        uncompress(seqa, COMPRESS, NEWCOMPRESS, outa, 1);
-        uncompress(seqb, COMPRESS, NEWCOMPRESS, outb, 0);
+        uncompress(seqa, COMPRESS, NEWCOMPRESS, PAF_CONSTANT, outa, 1);
+        uncompress(seqb, COMPRESS, NEWCOMPRESS, PAF_CONSTANT, outb, 0);
         outa.close();
         outb.close();
 
@@ -81,7 +80,7 @@ int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOM
     return 0;
 }
 
-int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS, std::ofstream& outfile, bool seqflag) {
+int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, std::ofstream& outfile, bool seqflag) {
     const int ORDER = orig.size() * COMPRESS; 
     const int LEN = ORDER / COMPRESS;
 
@@ -214,7 +213,7 @@ int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS,
 
                 fftw_execute(p);
 
-                if(dftfilter(out, seq.size(), ORDER)) { 
+                if(dftfilter(out, seq.size(), ORDER, PAF_CONSTANT)) { 
                     written++;
                     for(size_t i = 0; i < seq.size() / 2; i++) {
                         if(seqflag) {

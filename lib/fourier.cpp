@@ -133,7 +133,7 @@ int floatEqual(float a, int b) {
     return 0;
 }
 
-int dftfilter(fftw_complex * seqdft, int len, int ORDER) {
+int dftfilter(fftw_complex * seqdft, int len, int ORDER, int PAF_CONSTANT) {
 
     if(len % 2 == 0) {
         int j = len / 2;
@@ -143,8 +143,8 @@ int dftfilter(fftw_complex * seqdft, int len, int ORDER) {
         }
     }
     
-    for(int i = 0; i < len / 2; i++) {
-        if((seqdft[i][0] * seqdft[i][0] + seqdft[i][1] * seqdft[i][1]) > BOUND + 0.001) {
+    for(int i = 1; i < len / 2; i++) {
+        if((seqdft[i][0] * seqdft[i][0] + seqdft[i][1] * seqdft[i][1]) > 2 * ORDER + PAF_CONSTANT + 0.001) {
             return 0;
         }
     }
