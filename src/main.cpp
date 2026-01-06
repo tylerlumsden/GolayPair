@@ -13,6 +13,7 @@
 #include "uncompression.h"
 #include "filter.h"
 #include "CLI11.hpp"
+#include "generate_orderly.h"
 
 struct Options {
     int order;
@@ -57,7 +58,7 @@ int main(int argc, char* argv[]) {
     {
         std::ofstream file_a(FILE_A);
         std::ofstream file_b(FILE_B);
-        if(generate_hybrid(opts.order, opts.compress[0], opts.paf_constant, file_a, file_b) > 0) return 1;
+        if(generate_orderly(opts.order, opts.compress[0], opts.paf_constant, file_a, file_b) > 0) return 1;
     }
 
     // Sort results of the candidate generation step

@@ -144,7 +144,7 @@ int dftfilter(fftw_complex * seqdft, int len, int ORDER, int PAF_CONSTANT) {
     }
     
     for(int i = 1; i < len / 2; i++) {
-        if((seqdft[i][0] * seqdft[i][0] + seqdft[i][1] * seqdft[i][1]) > 2 * ORDER + PAF_CONSTANT + 0.001) {
+        if((seqdft[i][0] * seqdft[i][0] + seqdft[i][1] * seqdft[i][1]) > 2 * ORDER - PAF_CONSTANT + 0.001) {
             return 0;
         }
     }
