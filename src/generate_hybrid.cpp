@@ -22,11 +22,6 @@ using namespace std;
 
 void writeSeq(FILE * out, vector<int> seq);
 
-
-double norm_squared(fftw_complex dft) {
-    return dft[0] * dft[0] + dft[1] * dft[1];
-}
-
 void printArray(vector<int> seq) {
     for(unsigned int i = 0; i < seq.size(); i++) {
         printf("%d ", seq[i]);
@@ -51,6 +46,28 @@ int sum_constant(int order, int paf) {
     return order * 2 + (order - 1) * paf;
 }
 
+void write_seq_psd(std::vector<int> seq, std::vector<double> psd, std::ofstream& out) {
+    for(std::size_t i = 1; i < psd.size(); i++) {
+        out << (int)rint(psd[i]);
+    }
+    out << " ";
+    for(std::size_t i = 0; i < seq.size(); i++) {
+        out << seq[i] << " ";
+    }
+    out << "\n";
+}
+
+void write_seq_psd_invert(std::vector<int> seq, std::vector<double> psd, std::ofstream& out, const int BOUND) {
+    for(std::size_t i = 1; i < psd.size(); i++) {
+        out << BOUND - (int)rint(psd[i]);
+    }
+    out << " ";
+    for(std::size_t i = 0; i < seq.size(); i++) {
+        out << seq[i] << " ";
+    }
+    out << "\n";
+}
+
 int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT, std::ofstream& out_a, std::ofstream& out_b) {
 
     const std::vector<std::pair<int, int>> decompslist = getdecomps(sum_constant(ORDER, PAF_CONSTANT));
@@ -63,12 +80,7 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
 
     const int LEN = ORDER / COMPRESS;
 
-    fftw_complex *in, *out;
-    fftw_plan plan;
-
-    in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * LEN);
-    out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * LEN);
-    plan = fftw_plan_dft_1d(LEN, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+    Fourier FourierManager = Fourier(LEN);
 
     unsigned long long int count = 0;
     std::set<int> alphabet;
@@ -132,32 +144,18 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
 
                     for(std::pair<int, int> decomp : decompslist) {
                         if(rowsum(newseq) == decomp.first) {
-                            out = dft(newseq, in, out, plan);
-                            if(dftfilter(out, LEN, ORDER, PAF_CONSTANT) && isCanonical(newseq, generatorsA)) {
+                            std::vector<double> psd = FourierManager.calculate_psd(newseq);
+                            if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT) && isCanonical(newseq, generatorsA)) {
                                 count++;
-                                for(int i = 0; i < LEN / 2; i++) {
-                                    out_a << (int)rint(norm_squared(out[i]));
-                                }
-                                out_a << " ";
-                                for(int val : newseq) {
-                                    out_a << val << " ";
-                                }
-                                out_a << "\n";
+                                write_seq_psd(newseq, psd, out_a);
                             }
                         }
 
                         if(rowsum(newseq) == decomp.second) {
-                            out = dft(newseq, in, out, plan);
-                            if(dftfilter(out, LEN, ORDER, PAF_CONSTANT) && isCanonical(newseq, generatorsB)) {
+                            std::vector<double> psd = FourierManager.calculate_psd(newseq);
+                            if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT) && isCanonical(newseq, generatorsB)) {
                                 count++;
-                                for(int i = 0; i < LEN / 2; i++) {
-                                    out_b << ORDER * 2 - (int)rint(norm_squared(out[i]));
-                                }
-                                out_b << " ";
-                                for(int val : newseq) {
-                                    out_b << val << " ";
-                                }
-                                out_b << "\n";
+                                write_seq_psd_invert(newseq, psd, out_b, ORDER * 2 - PAF_CONSTANT);
                             }
                         }
                     }
@@ -169,10 +167,6 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
     }
 
     printf("%llu\n", count);
-
-    fftw_free(in);
-    fftw_free(out);
-    fftw_destroy_plan(plan);
 
     return 0;
 }
