@@ -60,10 +60,6 @@ int generate_orderly(const int ORDER, const int COMPRESS, const int PAF_CONSTANT
 
     const std::vector<std::pair<int, int>> decompslist = getdecomps(sum_constant(ORDER, PAF_CONSTANT));
 
-    for(std::pair<int, int> decomp : decompslist) {
-        std::cout << decomp.first << " " << decomp.second << "\n";
-    }
-
     const size_t LEN = ORDER / COMPRESS;
 
     Fourier FourierManager = Fourier(LEN);

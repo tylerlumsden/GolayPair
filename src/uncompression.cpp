@@ -72,7 +72,7 @@ int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOM
         GNU_sort(FILE_B, FILE_B_SORTED);
         std::ifstream ina(FILE_A_SORTED);
         std::ifstream inb(FILE_B_SORTED);
-        match_pairs(ORDER / NEWCOMPRESS, PAF_CONSTANT, ina, inb, OUT_PAIRS);
+        match_pairs(ORDER, NEWCOMPRESS, PAF_CONSTANT, ina, inb, OUT_PAIRS);
 
         count++;
     }

@@ -101,7 +101,7 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
 
     vector<int> test = {1};
 
-    while(nextBranch(seq, LEN / 2, alphabet)) {
+    while(nextBranch(seq, (LEN / 2) + 1, alphabet)) {
 
         if(!partialCanonical(seq)) {
             if(!nextBranch(seq, seq.size(), alphabet)) {
@@ -109,7 +109,7 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
             }
         }
 
-        if((int)seq.size() == LEN / 2) {
+        if((int)seq.size() == (LEN / 2) + 1) {
 
             //finish the constructions
             vector<vector<int>> combinations = getCombinations(LEN - seq.size(), alphabet);
@@ -157,7 +157,7 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
                         }
                     }
 
-                } while(next_permutation(newseq.begin() + LEN / 2, newseq.end()));
+                } while(next_permutation(newseq.begin() + (LEN / 2) + 1, newseq.end()));
                 
             }
         }

@@ -6,6 +6,7 @@
 #include<vector>
 #include<set>
 #include<format>
+#include<iostream>
 
 Fourier::Fourier(std::size_t length) {
     input = fftw_alloc_complex(length);
@@ -42,7 +43,7 @@ std::vector<double> Fourier::calculate_psd(const std::vector<int>& seq) {
 }
 
 bool Fourier::psd_filter(const std::vector<double>& psd, const int ORDER, const int PAF_CONSTANT) {
-    for(std::size_t i = 1; i < psd.size() / 2; i++) {
+    for(std::size_t i = 1; i <= psd.size() / 2; i++) {
         if(psd[i] > 2 * ORDER - PAF_CONSTANT + 0.001) {
             return false;
         }
