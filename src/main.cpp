@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
         std::ofstream pairs(FILE_PAIRS);
         std::ifstream file_a_sorted(FILE_A_SORTED);
         std::ifstream file_b_sorted(FILE_B_SORTED);
-        if(match_pairs(opts.order / opts.compress[0], file_a_sorted, file_b_sorted, pairs) > 0) return 1; // IN: a, IN: b, OUT: pairs
+        if(match_pairs(opts.order / opts.compress[0], opts.paf_constant, file_a_sorted, file_b_sorted, pairs) > 0) return 1; // IN: a, IN: b, OUT: pairs
     }
 
     // Uncompression steps

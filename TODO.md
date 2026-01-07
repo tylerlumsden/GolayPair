@@ -8,3 +8,4 @@
 - parallelize generation pipeline
 - implement dynamic PAF_CONSTANT so we can generate both periodic Golay pairs and Legendre pairs
 - add descriptive logging
+- rewrite branching in generate_hybrid to use iterators so that we can slot in different strategies more easily

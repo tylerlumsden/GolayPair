@@ -80,7 +80,7 @@ int cache_filter(const int ORDER, const int COMPRESS, const std::string& PATH_IN
     equivalences_uncompressed.push_back(altnegative_pair);
 
     set<GolayPair> generators;
-    if(COMPRESS > 1) {
+    if(COMPRESS > 1 || LEN % 2 == 1) {
         generators = constructGenerators(LEN, equivalences_compressed);
     } else {
         generators = constructGenerators(LEN, equivalences_uncompressed);

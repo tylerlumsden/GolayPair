@@ -1,1 +1,1 @@
-int match_pairs(const int LEN, std::ifstream& filea, std::ifstream& fileb, std::ofstream& out);
+int match_pairs(const int LEN, const int PAF_CONSTANT, std::ifstream& filea, std::ifstream& fileb, std::ofstream& out);

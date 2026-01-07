@@ -35,8 +35,8 @@ int sum_constant(int order, int paf) {
 bool nextBranch(vector<int>& seq, unsigned int len, set<int> alphabet);
 
 void write_seq_psd(std::vector<int> seq, std::vector<double> psd, std::ofstream& out) {
-    for(std::size_t i = 0; i < psd.size(); i++) {
-        out << rint(psd[i]);
+    for(std::size_t i = 1; i < psd.size(); i++) {
+        out << (int)rint(psd[i]);
     }
     out << " ";
     for(std::size_t i = 0; i < seq.size(); i++) {
@@ -46,8 +46,8 @@ void write_seq_psd(std::vector<int> seq, std::vector<double> psd, std::ofstream&
 }
 
 void write_seq_psd_invert(std::vector<int> seq, std::vector<double> psd, std::ofstream& out, const int BOUND) {
-    for(std::size_t i = 0; i < psd.size(); i++) {
-        out << BOUND - rint(psd[i]);
+    for(std::size_t i = 1; i < psd.size(); i++) {
+        out << BOUND - (int)rint(psd[i]);
     }
     out << " ";
     for(std::size_t i = 0; i < seq.size(); i++) {
@@ -59,6 +59,10 @@ void write_seq_psd_invert(std::vector<int> seq, std::vector<double> psd, std::of
 int generate_orderly(const int ORDER, const int COMPRESS, const int PAF_CONSTANT, std::ofstream& out_a, std::ofstream& out_b) {
 
     const std::vector<std::pair<int, int>> decompslist = getdecomps(sum_constant(ORDER, PAF_CONSTANT));
+
+    for(std::pair<int, int> decomp : decompslist) {
+        std::cout << decomp.first << " " << decomp.second << "\n";
+    }
 
     const size_t LEN = ORDER / COMPRESS;
 

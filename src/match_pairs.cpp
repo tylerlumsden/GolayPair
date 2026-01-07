@@ -11,7 +11,7 @@
 
 #include "constants.h"
 
-int match_pairs(const int LEN, std::ifstream& filea, std::ifstream& fileb, std::ofstream& out) {
+int match_pairs(const int LEN, const int PAF_CONSTANT, std::ifstream& filea, std::ifstream& fileb, std::ofstream& out) {
     std::string a;
     std::string b;
     std::string arrayA;
@@ -82,7 +82,7 @@ int match_pairs(const int LEN, std::ifstream& filea, std::ifstream& fileb, std::
 
                 for(vector<int> sequenceA : matchA) {
                     for(vector<int> sequenceB : matchB) {
-                        if(check_if_pair(sequenceA, sequenceB)) {
+                        if(check_if_pair(sequenceA, sequenceB, PAF_CONSTANT)) {
                             write_seq(out, sequenceA);
                             out << " ";
                             write_seq(out, sequenceB);
