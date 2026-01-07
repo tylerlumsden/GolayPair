@@ -5,8 +5,50 @@
 #include<math.h>
 #include<vector>
 #include<set>
+#include<format>
 
-#define BOUND ORDER * 2
+Fourier::Fourier(std::size_t length) {
+    input = fftw_alloc_complex(length);
+    output = fftw_alloc_complex(length);
+    plan = fftw_plan_dft_1d(length, input, output, FFTW_FORWARD, FFTW_ESTIMATE);
+    len = length;
+}
+
+Fourier::~Fourier() {
+    fftw_destroy_plan(plan);
+    fftw_free(input);
+    fftw_free(output);
+}
+
+std::vector<double> Fourier::calculate_psd(const std::vector<int>& seq) {
+    if(seq.size() != len) {
+        throw std::invalid_argument(
+            std::format("FourierManager: Sequence size {} does not match expected length {}\n", seq.size(), len)
+        );
+    }
+    for(std::size_t i = 0; i < seq.size(); i++) {
+        input[i][0] = seq[i];
+        input[i][1] = 0;
+    }
+
+    fftw_execute(plan);
+
+    std::vector<double> psd(len);
+    for(std::size_t i = 0; i < psd.size(); i++) {
+        psd[i] = output[i][0] * output[i][0] + output[i][1] * output[i][1];
+    }
+
+    return psd;
+}
+
+bool Fourier::psd_filter(const std::vector<double>& psd, const int ORDER, const int PAF_CONSTANT) {
+    for(std::size_t i = 1; i < psd.size() / 2; i++) {
+        if(psd[i] > 2 * ORDER - PAF_CONSTANT + 0.001) {
+            return false;
+        }
+    }
+    return true;
+}
 
 
 using namespace std;

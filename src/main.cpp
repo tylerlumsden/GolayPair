@@ -55,6 +55,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Candidate generation step
+    std::cout << "Generating Candidates\n";
     {
         std::ofstream file_a(FILE_A);
         std::ofstream file_b(FILE_B);
@@ -62,10 +63,12 @@ int main(int argc, char* argv[]) {
     }
 
     // Sort results of the candidate generation step
+    std::cout << "Sorting Candidates\n";
     if(GNU_sort(FILE_A, FILE_A_SORTED) > 0) return 1;
     if(GNU_sort(FILE_B, FILE_B_SORTED) > 0) return 1;
 
     // Matching step
+    std::cout << "Matching Candidates\n";
     {
         std::ofstream pairs(FILE_PAIRS);
         std::ifstream file_a_sorted(FILE_A_SORTED);
@@ -75,6 +78,7 @@ int main(int argc, char* argv[]) {
 
     // Uncompression steps
     if(opts.compress[0] > 1) {
+        std::cout << "Running Uncompression Pipeline\n";
         for(size_t i = 0; i < opts.compress.size() - 1; i++) {
             std::cout << "Uncompressing to new compression ratio " << opts.compress[i + 1] << "\n";
             std::ifstream in_pairs(FILE_PAIRS);

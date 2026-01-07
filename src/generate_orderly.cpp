@@ -34,47 +34,61 @@ int sum_constant(int order, int paf) {
 
 bool nextBranch(vector<int>& seq, unsigned int len, set<int> alphabet);
 
-void write_seq_psd(std::vector<int> seq, fftw_complex * dft, std::ofstream& out) {
-    for(int i = 0; i < seq.size(); i++) {
-        out << (int)rint(norm_squared(dft[i]));
+void write_seq_psd(std::vector<int> seq, std::vector<double> psd, std::ofstream& out) {
+    for(std::size_t i = 0; i < psd.size(); i++) {
+        out << rint(psd[i]);
     }
+    out << " ";
+    for(std::size_t i = 0; i < seq.size(); i++) {
+        out << seq[i] << " ";
+    }
+    out << "\n";
+}
+
+void write_seq_psd_invert(std::vector<int> seq, std::vector<double> psd, std::ofstream& out, const int BOUND) {
+    for(std::size_t i = 0; i < psd.size(); i++) {
+        out << BOUND - rint(psd[i]);
+    }
+    out << " ";
+    for(std::size_t i = 0; i < seq.size(); i++) {
+        out << seq[i] << " ";
+    }
+    out << "\n";
 }
 
 int generate_orderly(const int ORDER, const int COMPRESS, const int PAF_CONSTANT, std::ofstream& out_a, std::ofstream& out_b) {
 
     const std::vector<std::pair<int, int>> decompslist = getdecomps(sum_constant(ORDER, PAF_CONSTANT));
 
-    const int LEN = ORDER / COMPRESS;
+    const size_t LEN = ORDER / COMPRESS;
 
-    fftw_complex *in, *out;
-    fftw_plan plan;
-
-    in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * LEN);
-    out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * LEN);
-    plan = fftw_plan_dft_1d(LEN, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+    Fourier FourierManager = Fourier(LEN);
 
     set<int> alphabet = {-1, 1};
     vector<int> seq(LEN, -1);
 
     do {
-        for(std::pair<int, int> decomp : decompslist) {
-            if(decomp.first == rowsum(seq)) {
-                // check PSD
-                out = dft(seq, in, out, plan);
-                if(dftfilter(out, LEN, ORDER, PAF_CONSTANT)) {
-                    write_seq_psd(seq, out, out_a);
+        if(seq.size() == LEN) {
+            for(std::pair<int, int> decomp : decompslist) {
+                if(decomp.first == rowsum(seq)) {
+                    // check PSD
+                    std::vector<double> psd = FourierManager.calculate_psd(seq);
+                    if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT)) {
+                        write_seq_psd(seq, psd, out_a);
+                    }
                 }
-            }
-            if(decomp.second == rowsum(seq)) {
-                // check PSD
-                out = dft(seq, in, out, plan);
-                if(dftfilter(out, LEN, ORDER, PAF_CONSTANT)) {
-                    write_seq_psd(seq, out, out_b);
+                if(decomp.second == rowsum(seq)) {
+                    // check PSD
+                    std::vector<double> psd = FourierManager.calculate_psd(seq);
+                    if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT)) {
+                        write_seq_psd_invert(seq, psd, out_b, ORDER * 2 - PAF_CONSTANT); // need to invert psd here
+                    }
                 }
             }
         }
     } while(nextBranch(seq, LEN, alphabet));
 
+    return 0;
 }
 
 bool nextBranch(vector<int>& seq, unsigned int len, set<int> alphabet) {
