@@ -39,9 +39,6 @@ int rowsum(vector<int> seq) {
 
 bool nextBranch(vector<int>& seq, unsigned int len, set<int> alphabet);
 
-template<class BidirIt>
-bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet);
-
 int sum_constant(int order, int paf) {
     return order * 2 + (order - 1) * paf;
 }
@@ -170,46 +167,6 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
 
     return 0;
 }
-template<class BidirIt>
-bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet) {
-    int min = *std::min_element(alphabet.begin(), alphabet.end());
-    int max = *std::max_element(alphabet.begin(), alphabet.end());
-
-    last = last - 1;
-
-    auto curr = last;
-
-    if(*curr != max) {
-
-        *curr = *curr + 2;
-        return true;
-
-    } else if(*curr == max) {
-
-        while(curr != first - 1) {
-            if(*curr != max) {
-                *curr = *curr + 2;
-                curr++;
-                while(curr != last + 1) {
-                    *curr = min;
-                    curr++;
-                }
-                return true;
-            }
-            curr--;
-        }
-
-        curr++;
-        while(curr != last) {
-            *curr = min;
-        }
-        
-        return false;
-        
-    }
-
-    return false;
-}
 
 bool nextBranch(vector<int>& seq, unsigned int len, set<int> alphabet) {
 
@@ -232,13 +189,6 @@ bool nextBranch(vector<int>& seq, unsigned int len, set<int> alphabet) {
     
     return true;
 
-}
-
-
-void writeSeq(FILE * out, vector<int> seq) {
-    for(unsigned int i = 0; i < seq.size(); i++) {
-        fprintf(out, "%d ", seq[i]);
-    }
 }
 
 int classIsGenerated(vector<set<vector<int>>>& classes, vector<int>& seq) {
