@@ -19,13 +19,9 @@
 #include"constants.h"
 #include"match_pairs.h"
 #include"sort.h"
+#include"output.h"
 #include <thread>
 #include <filesystem>
-
-
-double norm(fftw_complex dft) {
-    return dft[0] * dft[0] + dft[1] * dft[1];
-}
 
 int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, std::ofstream& outfile, bool seqflag);
 
@@ -84,12 +80,7 @@ int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS,
     const int ORDER = orig.size() * COMPRESS; 
     const int LEN = ORDER / COMPRESS;
 
-    fftw_complex *in, *out;
-    fftw_plan p;
-
-    in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * (ORDER / NEWCOMPRESS));
-    out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * (ORDER / NEWCOMPRESS));
-    p = fftw_plan_dft_1d((ORDER) / NEWCOMPRESS, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+    Fourier FourierManager = Fourier(ORDER / NEWCOMPRESS);
 
     std::set<int> alphabet;
     if(COMPRESS % 2 == 0) {
@@ -206,27 +197,15 @@ int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS,
                     seq[curr + (LEN * i)] = permutation[i];
                 }
 
-                for(unsigned int i = 0; i < seq.size(); i++) {
-                    in[i][0] = (double)seq[i];
-                    in[i][1] = 0;
-                } 
+                std::vector<double> psd = FourierManager.calculate_psd(seq);
 
-                fftw_execute(p);
-
-                if(dftfilter(out, seq.size(), ORDER, PAF_CONSTANT)) { 
+                if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT)) { 
                     written++;
-                    for(size_t i = 0; i < seq.size() / 2; i++) {
-                        if(seqflag) {
-                            outfile << (int)rint(norm(out[i]));
-                        } else {
-                            outfile << ORDER * 2 - (int)rint(norm(out[i]));
-                        }
+                    if(seqflag) {
+                        write_seq_psd(seq, psd, outfile);
+                    } else {
+                        write_seq_psd_invert(seq, psd, outfile, ORDER * 2 - PAF_CONSTANT);
                     }
-                    outfile << " ";
-                    for(int val : seq) {
-                        outfile << val << " ";
-                    }
-                    outfile << "\n";
                 }
             }
             
@@ -243,10 +222,6 @@ int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS,
             //printf("curr: %d, stack: %d\n", curr, stack[curr]);
         }
     }
-
-    fftw_free(in);
-    fftw_free(out);
-    fftw_destroy_plan(p);
 
     return 0;
 }

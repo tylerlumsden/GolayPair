@@ -17,6 +17,7 @@
 #include<format>
 
 #include "constants.h"
+#include "output.h"
 
 using namespace std;
 
@@ -41,28 +42,6 @@ bool nextBranch(vector<int>& seq, unsigned int len, set<int> alphabet);
 
 int sum_constant(int order, int paf) {
     return order * 2 + (order - 1) * paf;
-}
-
-void write_seq_psd(std::vector<int> seq, std::vector<double> psd, std::ofstream& out) {
-    for(std::size_t i = 1; i < psd.size(); i++) {
-        out << (int)rint(psd[i]);
-    }
-    out << " ";
-    for(std::size_t i = 0; i < seq.size(); i++) {
-        out << seq[i] << " ";
-    }
-    out << "\n";
-}
-
-void write_seq_psd_invert(std::vector<int> seq, std::vector<double> psd, std::ofstream& out, const int BOUND) {
-    for(std::size_t i = 1; i < psd.size(); i++) {
-        out << BOUND - (int)rint(psd[i]);
-    }
-    out << " ";
-    for(std::size_t i = 0; i < seq.size(); i++) {
-        out << seq[i] << " ";
-    }
-    out << "\n";
 }
 
 int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT, std::ofstream& out_a, std::ofstream& out_b) {
