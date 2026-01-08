@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
     {
         std::ofstream file_a(FILE_A);
         std::ofstream file_b(FILE_B);
-        if(generate_hybrid(opts.order, opts.compress[0], opts.paf_constant, file_a, file_b) > 0) return 1;
+        if(generate_hybrid(opts.order, opts.compress[0], opts.paf_constant, file_a, file_b, 0, 2) > 0) return 1;
     }
 
     // Sort results of the candidate generation step
