@@ -120,8 +120,8 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
             }
         }
     }
-    std::ofstream out("test");
     for(std::vector<int> seq : proc_work) {
+        size_t origlen = seq.size();
         do {
             if(!partialCanonical(seq)) {
                 if(!nextBranch(seq, seq.size(), alphabet)) {
@@ -160,7 +160,7 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
                     
                 }
             }
-        } while(nextBranch(seq, (LEN / 2) + 1, alphabet));
+        } while(nextBranch(seq, (LEN / 2) + 1, alphabet) && seq.size() > origlen);
     }
 
     printf("%llu\n", count);
