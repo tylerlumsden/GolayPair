@@ -101,6 +101,7 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
     set<vector<int>> generatorsA = constructGenerators(0, LEN);
     set<vector<int>> generatorsB = constructGenerators(1, LEN);
     
+    std::cout << "Generating partial solutions\n";
     std::vector<int> seq;
     std::vector<std::vector<int>> proc_work = {{}};
     if(PROC_NUM > 1) {
@@ -120,6 +121,8 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
             }
         }
     }
+
+    std::cout << "Generating complete solutions\n";
     for(std::vector<int> seq : proc_work) {
         size_t origlen = seq.size();
         do {
