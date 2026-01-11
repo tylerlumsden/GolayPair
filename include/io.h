@@ -6,6 +6,7 @@
 #include <iostream>
 
 inline void write_seq_psd(std::vector<int> seq, std::vector<double> psd, std::ofstream& out) {
+    out << "PSD";
     for(std::size_t i = 1; i < psd.size(); i++) {
         out << (int)rint(psd[i]);
     }
@@ -17,6 +18,7 @@ inline void write_seq_psd(std::vector<int> seq, std::vector<double> psd, std::of
 }
 
 inline void write_seq_psd_invert(std::vector<int> seq, std::vector<double> psd, std::ofstream& out, const int BOUND) {
+    out << "PSD";
     for(std::size_t i = 1; i < psd.size(); i++) {
         out << BOUND - (int)rint(psd[i]);
     }
