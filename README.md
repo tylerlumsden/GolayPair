@@ -1,6 +1,6 @@
 This repository contains a set of procedures for the generation and post-processing of binary periodic complementary sequences (primarily periodic Golay pairs).
 
-## Prerequisites
+# Prerequisites
 
 To compile and run our code, you are required to have installed the following:
 
@@ -14,24 +14,24 @@ In Linux, these can all be installed easily with the default package manager usi
 
 It may be possible to compile on Windows, but we have not tried. For ease of use, I recommend using WSL2 (Windows Subsystem for Linux) for building and running on Windows.
 
-## Build
+# Build
 
 Compilation of our code is handled by CMake, so to compile our procedures you should enter the root directory and run the command ```cmake --preset=release``` or ```cmake --preset=debug``` for development. Then, to build the project run the ```cmake --build build/release``` or ```cmake --build build/debug``` commands respectively. 
 
-## Running the pipeline
+# Running the pipeline
 
 The generation pipeline is launched from the executable compiled from main.cpp, which handles the configuration of each run.
 
 The CMake standard directory structure places each executable in the build/${preset} directory, so to run the pipeline from the root directory you can locate the executables through ```build/debug/main``` or ```build/debug/release``` respectively.
 
-# Run the generation pipeline as follows:
+### Run the generation pipeline as follows:
 
 ```bash
 # To see the valid list of OPTIONS, run ./build/debug/main --help
 ./build/debug/main [OPTIONS] [order]
 ```
 
-# Example configuration:
+### Example configuration:
 
 ```bash
 # Generates all periodic Golay pairs of order 16 by generating all 2-compressions
@@ -46,7 +46,7 @@ Valid compression factor values include any number which divides the order value
 
 The temp directory of our procedures by default will be located in the ```results``` directory. This can be changed with the ```--dir [Path]``` flag.
 
-## Procedures
+# Procedures
 
 The ```src``` directory contains all source files containing runnable procedures which compile to a ```main``` function.
 
