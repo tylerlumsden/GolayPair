@@ -9,3 +9,7 @@
 - implement dynamic PAF_CONSTANT so we can generate both periodic Golay pairs and Legendre pairs
 - add descriptive logging
 - rewrite branching in generate_hybrid to use iterators so that we can slot in different strategies more easily
+- explore the potential of using cuFFTW for GPU-based transforms with batching sequences instead of one-by-one
+    ^maybe do this once we have optimized to the point that FFTW dominates runtime > 50% ^^ probably wouldnt work actually
+
+- optimize fftw with real to complex instead of complex to complex?

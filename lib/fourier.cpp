@@ -11,7 +11,7 @@
 Fourier::Fourier(std::size_t length) {
     input = fftw_alloc_complex(length);
     output = fftw_alloc_complex(length);
-    plan = fftw_plan_dft_1d(length, input, output, FFTW_FORWARD, FFTW_ESTIMATE);
+    plan = fftw_plan_dft_1d(length, input, output, FFTW_FORWARD, FFTW_MEASURE);
     len = length;
 }
 
