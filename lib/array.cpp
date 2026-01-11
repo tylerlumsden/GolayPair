@@ -67,39 +67,7 @@ void resetSeq(array<int, 8>& seq, int start, unsigned int rowsum) {
         }
     }
 }
-
-int nextRowSums(array<int, 8>& seq, int start, int rowsum) {
-
-    if(seqIsLargest(seq, start, rowsum)) {
-        //printf("Largest\n");
-        return 0;
-    }
-
-    //find first plus
-    int first;
-    for(unsigned int i = start; i < seq.size(); i++) {
-        if(seq[i] == 1) {
-            first = i;
-            break;
-        }
-    }
-
-    //printf("first: %d\n", first);
-
-    //find next seq of subarray after this plus
-    //probably wont work due to indexxing issues
-    if(!nextRowSums(seq, first + 1, rowsum - 1)) {
-        seq[first] = -1;
-        seq[first - 1] = 1;
-        //reset rest of sequence
-        resetSeq(seq, first + 1, rowsum);
-        return 1;
-    } else {
-        return 1;
-    }
-}
-
-	/**
+/**
 * @brief Calculates the binomial coefficient C(n, k) using dynamic programming.
 *
 * @param n The total number of items.

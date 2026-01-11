@@ -7,13 +7,14 @@
 #include<set>
 #include"fourier.h"
 #include<math.h>
+#include<fstream>
 
 using namespace std;
 
 std::set<std::pair<int, int>> sumoftwosquares(int constant);
-void write_seq(FILE * out, vector<int> seq);
+void write_seq(std::ofstream& out, vector<int> seq);
 void write_unique_seq(FILE * out, int rowsum, int flag);
-int check_if_pair(vector<int> a, vector<int> b);
+int check_if_pair(vector<int> a, vector<int> b, const int PAF_CONSTANT, const int COMPRESS);
 
 class GolayPair {
     public:

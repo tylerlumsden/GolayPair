@@ -8,21 +8,21 @@
 #include<string>
 #include<fstream>
 #include<iostream>
-#include"../lib/golay.h"
-#include"../lib/equivalence.h"
+#include"golay.h"
+#include"equivalence.h"
+#include <functional>
+#include"coprimes.h"
 
 using namespace std;
 
-int main(int argc, char ** argv) {
+int cache_filter(const int ORDER, const int COMPRESS, const std::string& PATH_IN, const std::string& PATH_OUT) {
+    const int LEN = ORDER / COMPRESS;
 
-    int ORDER = stoi(argv[1]);
-    int LEN = stoi(argv[2]);
+    std::cout << PATH_IN << "\n";
 
     printf("Filtering Equivalent Pairs...\n");
 
-    char fname[100];
-    sprintf(fname, "results/%d-unique-pairs-found", ORDER);
-    FILE * out = fopen(fname, "w");
+    FILE * out = fopen(PATH_OUT.c_str(), "w");
 
     //match every seq a with seq b, generate an equivalence class for this sequence 
     
@@ -30,9 +30,7 @@ int main(int argc, char ** argv) {
     set<GolayPair> sequences;
     set<GolayPair> newset;
 
-    sprintf(fname, "results/%d-pairs-found", ORDER);
-    std::ifstream pairs(fname);
-
+    std::ifstream pairs(PATH_IN);
     if(!pairs.good()) {
         printf("Bad File.\n");
         return 0;
@@ -68,7 +66,25 @@ int main(int argc, char ** argv) {
 
     printf("Constructing Generators\n");
 
-    set<GolayPair> generators = constructGenerators(LEN);
+    const std::vector<int> coprimeslist = getcoprimes(LEN);
+    auto equivalences_compressed = std::vector<std::function<set<GolayPair>(set<GolayPair>&)>> {
+        shift_pair,
+        swap_pair,
+        reverse_pair,
+        [coprimeslist](set<GolayPair>& map) { 
+            return decimate_pair(map, coprimeslist);  // Calls with captured myValue
+        }
+    };
+    
+    auto equivalences_uncompressed = equivalences_compressed;
+    equivalences_uncompressed.push_back(altnegative_pair);
+
+    set<GolayPair> generators;
+    if(COMPRESS > 1 || LEN % 2 == 1) {
+        generators = constructGenerators(LEN, equivalences_compressed);
+    } else {
+        generators = constructGenerators(LEN, equivalences_uncompressed);
+    }
 
     printf("Generating Equivalences\n");
 
@@ -143,4 +159,5 @@ int main(int argc, char ** argv) {
         fprintf(out, "\n");
     }
 
+    return 0;
 }

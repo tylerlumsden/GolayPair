@@ -1,0 +1,23 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "generator": "Unix Makefiles",
+      "binaryDir": "build/debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+        "name": "release",
+        "displayName": "Release",
+        "generator": "Unix Makefiles",
+        "binaryDir": "build/release",
+        "cacheVariables": {
+            "CMAKE_BUILD_TYPE": "Release"
+        }
+    }
+  ]
+}
