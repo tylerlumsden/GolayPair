@@ -143,6 +143,21 @@ int run_pipeline(const std::vector<PipelineStage>& pipeline, const Options& opts
     return 0;
 }
 
+int verify_opts(const Options& opts) {
+    if(opts.order % opts.compress[0] != 0) {
+        std::cerr << "Invalid compression value: " << opts.compress[0] << " does not divide " << opts.order << "\n";
+        return 1;
+    }
+    for(size_t i = 0; i < opts.compress.size() - 1; i++) {
+        if(opts.compress[i + 1] % opts.compress[i] != 0) {
+            std::cerr << "Invalid compression value: " << opts.compress[0] << " does not divide " << opts.compress[1] << "\n";
+            return 1;
+        }
+    }
+
+    return 0;
+}
+ 
 int main(int argc, char* argv[]) {
     Options opts;
     bool do_generate = false;
@@ -164,6 +179,8 @@ int main(int argc, char* argv[]) {
     app.add_flag("--uncompress", do_uncompress, "Run uncompression stage");
     app.add_flag("--filter", do_filter, "Run filtering stage");
     CLI11_PARSE(app, argc, argv);
+
+    if(verify_opts(opts) > 0) return 1;
 
     std::cout << "Searching for complementary sequences of order " << opts.order << "\n";
     std::cout << "With paf-constant " << opts.paf_constant << "\n";
