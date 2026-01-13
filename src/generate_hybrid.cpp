@@ -15,6 +15,7 @@
 #include<iostream>
 #include<fstream>
 #include<format>
+#include <functional>
 
 #include "constants.h"
 #include "io.h"
@@ -62,6 +63,44 @@ std::vector<std::vector<int>> finish_with_partitions(std::vector<int> partialseq
             }  
         }
         return rowcombo;
+}
+
+void generate_orderly_prefix(const int LEN, 
+    const std::set<int>& alphabet, 
+    std::vector<int>& seq, 
+    std::function<void()> callback) {
+
+    size_t origlen = seq.size();
+    
+    do {
+        if(!partialCanonical(seq)) {
+            if(!nextBranch(seq, seq.size(), alphabet)) {
+                return;
+            }
+        }
+
+        if(seq.size() == (size_t)LEN) {
+            callback();
+        }
+    } while(nextBranch(seq, LEN, alphabet) && seq.size() > origlen);
+}
+
+void generate_partition_postfix(const int LEN, 
+    const std::set<int>& alphabet, 
+    std::vector<int>& seq, 
+    const std::vector<std::pair<int, int>> decompslist,
+    std::function<void()> callback) {
+
+    size_t curr_length = seq.size();
+    std::vector<std::vector<int>> rowcombo = finish_with_partitions(seq, decompslist, LEN, alphabet);
+    for(vector<int> tail : rowcombo) {
+        seq.insert(seq.end(), tail.begin(), tail.end());
+        
+        do {
+            callback();
+        } while(next_permutation(seq.begin() + curr_length, seq.end()));
+        seq.resize(curr_length);
+    }
 }
 
 int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT, std::ofstream& out_a, std::ofstream& out_b, const int PROC_ID = 0, const int PROC_NUM = 1) {
@@ -124,46 +163,27 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
 
     std::cout << "Generating complete solutions\n";
     for(std::vector<int> seq : proc_work) {
-        size_t origlen = seq.size();
-        do {
-            if(!partialCanonical(seq)) {
-                if(!nextBranch(seq, seq.size(), alphabet)) {
-                    break;
-                }
-            }
-
-            size_t curr_length = seq.size();
-            if((int)curr_length >= (LEN / 2) + 1) {
-                std::vector<std::vector<int>> rowcombo = finish_with_partitions(seq, decompslist, LEN, alphabet);
-                for(vector<int> tail : rowcombo) {
-
-                    vector<int> newseq = seq;
-                    newseq.insert(newseq.end(), tail.begin(), tail.end());
-
-                    do {
-                        for(std::pair<int, int> decomp : decompslist) {
-                            if(rowsum(newseq) == decomp.first) {
-                                std::vector<double> psd = FourierManager.calculate_psd(newseq);
-                                if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT) && isCanonical(newseq, generatorsA)) {
-                                    count++;
-                                    write_seq_psd(newseq, psd, out_a);
-                                }
-                            }
-
-                            if(rowsum(newseq) == decomp.second) {
-                                std::vector<double> psd = FourierManager.calculate_psd(newseq);
-                                if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT) && isCanonical(newseq, generatorsB)) {
-                                    count++;
-                                    write_seq_psd_invert(newseq, psd, out_b, ORDER * 2 - PAF_CONSTANT);
-                                }
-                            }
+        generate_orderly_prefix((LEN / 2) + 1, alphabet, seq, [&]() {
+            generate_partition_postfix(LEN, alphabet, seq, decompslist, [&]() {
+                for(std::pair<int, int> decomp : decompslist) {
+                    if(rowsum(seq) == decomp.first) {
+                        std::vector<double> psd = FourierManager.calculate_psd(seq);
+                        if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT) && isCanonical(seq, generatorsA)) {
+                            count++;
+                            write_seq_psd(seq, psd, out_a);
                         }
+                    }
 
-                    } while(next_permutation(newseq.begin() + curr_length, newseq.end()));
-                    
+                    if(rowsum(seq) == decomp.second) {
+                        std::vector<double> psd = FourierManager.calculate_psd(seq);
+                        if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT) && isCanonical(seq, generatorsB)) {
+                            count++;
+                            write_seq_psd_invert(seq, psd, out_b, ORDER * 2 - PAF_CONSTANT);
+                        }
+                    }
                 }
-            }
-        } while(nextBranch(seq, (LEN / 2) + 1, alphabet) && seq.size() > origlen);
+            });
+        });
     }
 
     printf("%llu\n", count);
