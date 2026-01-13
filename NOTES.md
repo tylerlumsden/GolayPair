@@ -704,6 +704,12 @@ next is 670903
 Uncompressed: 1-100
 
 
+January 5, 2026
+---------------------
+
+- Added CLI11 parsing library, consider removing or adjusting if compile time becomes a problem.
+- Example: Had to move -O3 flag to release build due to compilation time tripling
+
 
  
 

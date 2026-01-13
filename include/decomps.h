@@ -1,3 +1,7 @@
+#include<vector>
+
+const std::vector<std::pair<int, int>> getdecomps(int k);
+
 const int decomps_len[] = {
     //0
     1,

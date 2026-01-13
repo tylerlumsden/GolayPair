@@ -6,10 +6,11 @@
 #include<array>
 #include<time.h>
 #include"golay.h"
+#include<iostream>
+
+#include <fstream>
 
 using namespace std;
-
-#define BOUND 0
 
 std::set<std::pair<int, int>> sumoftwosquares(int constant) {
     std::set<std::pair<int, int>> solutions;
@@ -31,10 +32,10 @@ int PAF(vector<int> seq, int s) {
     return result;
 }
 
-int check_if_pair(vector<int> a, vector<int> b) {
+int check_if_pair(vector<int> a, vector<int> b, const int PAF_CONSTANT, const int COMPRESS) {
 
     for(size_t i = 1; i <= a.size() / 2; i++) {
-        if(PAF(a, i) + PAF(b, i) != BOUND) {
+        if(PAF(a, i) + PAF(b, i) != PAF_CONSTANT * COMPRESS) {
             return 0;
         }
     }
@@ -50,8 +51,8 @@ bool double_equal(double a, int b) {
 }
 
 
-void write_seq(FILE * out, vector<int> seq) {
+void write_seq(std::ofstream& out, vector<int> seq) {
     for(size_t i = 0; i < seq.size(); i++) {
-        fprintf(out, "%d ", seq[i]);
+        out << seq[i] << " ";
     }
 }
