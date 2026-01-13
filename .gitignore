@@ -3,3 +3,6 @@ Report/
 Report90/
 bin/
 .vscode/
+Makefile
+*.cmake
+build/
