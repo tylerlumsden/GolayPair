@@ -16,11 +16,18 @@ find_package(MPI REQUIRED)
 find_library(FFTW3_LIB fftw3 HINTS /usr/local/lib)
 find_path(FFTW3_INCLUDE fftw3.h HINTS /usr/local/include)
 
+# Find Boost (multiprecision headers)
+find_package(Boost REQUIRED COMPONENTS)
+find_path(BOOST_MULTIPRECISION_INCLUDE boost/multiprecision/cpp_int.hpp)
+if(NOT BOOST_MULTIPRECISION_INCLUDE)
+    message(FATAL_ERROR "Boost.Multiprecision headers not found")
+endif()
+
 if(NOT FFTW3_LIB)
     message(FATAL_ERROR "FFTW3 library not found")
 endif()
 
-include_directories(${FFTW3_INCLUDE} include)
+include_directories(${FFTW3_INCLUDE} ${BOOST_MULTIPRECISION_INCLUDE} include)
 
 # Library source files
 set(LIB_SOURCES

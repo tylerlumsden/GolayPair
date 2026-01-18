@@ -140,10 +140,13 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
     set<vector<int>> generatorsA = constructGenerators(0, LEN);
     set<vector<int>> generatorsB = constructGenerators(1, LEN);
 
-    unsigned long long orderly_count = 0;
+    boost::multiprecision::cpp_int orderly_count = 0;
+    boost::multiprecision::cpp_int seq_count = necklace_count(LEN, alphabet.size());
+    Progress Prog(necklace_count(LEN, alphabet.size()));
+
     std::cout << "Generating complete solutions\n";
     generate_necklaces_prefix(LEN, alphabet, [&](const std::vector<int>& seq) {
-        orderly_count++;
+        Prog.update(++orderly_count);
         for(std::pair<int, int> decomp : decompslist) {
             if(rowsum(seq) == decomp.first) {
                 std::vector<double> psd = FourierManager.calculate_psd(seq);

@@ -5,6 +5,7 @@
 #include<numeric>
 #include<set>
 #include <functional>
+#include <boost/multiprecision/cpp_int.hpp>
 
 int mobius(int n) {
     if (n == 1) return 1;
@@ -33,10 +34,11 @@ int lyndon_count(int length, int alphabet_size) {
     return sum / length;
 }
 
-int necklace_count(int length, int alphabet_size) {
-    int sum = 0; 
+boost::multiprecision::cpp_int necklace_count(int length, int alphabet_size) {
+    boost::multiprecision::cpp_int sum = 0;
     for(int i = 1; i <= length; i++) {
-        sum += (int)std::pow(alphabet_size, std::gcd(i, length));
+        int exp = std::gcd(i, length);
+        sum += boost::multiprecision::pow(boost::multiprecision::cpp_int(alphabet_size), exp);
     }
     return sum / length;
 }
