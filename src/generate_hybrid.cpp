@@ -19,6 +19,7 @@
 
 #include "constants.h"
 #include "io.h"
+#include "lyndon.h"
 
 using namespace std;
 
@@ -161,10 +162,11 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
         }
     }
 
+    unsigned long long orderly_count = 0;
     std::cout << "Generating complete solutions\n";
     for(std::vector<int> seq : proc_work) {
-        generate_orderly_prefix((LEN / 2) + 1, alphabet, seq, [&]() {
-            generate_partition_postfix(LEN, alphabet, seq, decompslist, [&]() {
+        generate_necklaces_prefix(LEN, alphabet, [&](const std::vector<int>& seq) {
+                orderly_count++;
                 for(std::pair<int, int> decomp : decompslist) {
                     if(rowsum(seq) == decomp.first) {
                         std::vector<double> psd = FourierManager.calculate_psd(seq);
@@ -182,10 +184,11 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
                         }
                     }
                 }
-            });
         });
     }
 
+    std::cout << "Necklace Count: " << necklace_count(LEN, alphabet.size()) << "\n";
+    std::cout << "Orderly Count: " << orderly_count << "\n";
     printf("%llu\n", count);
 
     return 0;

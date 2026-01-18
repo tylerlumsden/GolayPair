@@ -13,3 +13,5 @@
     ^maybe do this once we have optimized to the point that FFTW dominates runtime > 50% ^^ probably wouldnt work actually
 
 - optimize fftw with real to complex instead of complex to complex?
+- CONSIDER DUVAL'S ALGORITHM IF I EVER WANT TO OPTIMIZE ORDERLY GENERATION !!!
+- Plus research Lyndon words
