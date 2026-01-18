@@ -106,6 +106,7 @@ void generate_partition_postfix(const int LEN,
 
 int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT, std::ofstream& out_a, std::ofstream& out_b, const int PROC_ID = 0, const int PROC_NUM = 1) {
 
+    const int LEN = ORDER / COMPRESS;
     const std::vector<std::pair<int, int>> decompslist = getdecomps(sum_constant(ORDER, PAF_CONSTANT));
 
     if(decompslist.size() == 0) {
@@ -118,35 +119,22 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
         std::cout << decomp.first << " " << decomp.second << "\n";
     }
 
-    const int LEN = ORDER / COMPRESS;
-
-    Fourier FourierManager = Fourier(LEN);
-
-    unsigned long long int count = 0;
-    std::set<int> alphabet;
+    std::set<int> alphabet = getalphabet(COMPRESS);
  
-    if(COMPRESS % 2 == 0) {
-        for(int i = 0; i <= COMPRESS; i += 2) {
-            alphabet.insert(i);
-            alphabet.insert(-i);
-        }
-    } else {
-        for(int i = 1; i <= COMPRESS; i += 2) {
-            alphabet.insert(i);
-            alphabet.insert(-i);
-        }
-    }
-
     set<vector<int>> generatorsA = constructGenerators(0, LEN);
     set<vector<int>> generatorsB = constructGenerators(1, LEN);
 
+    boost::multiprecision::cpp_int count = 0;
     boost::multiprecision::cpp_int orderly_count = 0;
     boost::multiprecision::cpp_int seq_count = necklace_count(LEN, alphabet.size());
-    Progress Prog(necklace_count(LEN, alphabet.size()));
 
-    std::cout << "Generating complete solutions\n";
-    generate_necklaces_prefix(LEN, alphabet, [&](const std::vector<int>& seq) {
-        Prog.update(++orderly_count);
+    Progress Prog(seq_count);
+    Fourier FourierManager = Fourier(LEN);
+
+    std::cout << "Filtering " << seq_count << " sequences\n";
+    generate_necklaces_wrapper(LEN, alphabet, PROC_ID, PROC_NUM, [&](const std::vector<int>& seq) {
+        ++orderly_count;
+        //Prog.update(orderly_count);
         for(std::pair<int, int> decomp : decompslist) {
             if(rowsum(seq) == decomp.first) {
                 std::vector<double> psd = FourierManager.calculate_psd(seq);
@@ -168,7 +156,7 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
 
     std::cout << "Necklace Count: " << necklace_count(LEN, alphabet.size()) << "\n";
     std::cout << "Orderly Count: " << orderly_count << "\n";
-    printf("%llu\n", count);
+    std::cout << "Passed PSD filter: " << count << "\n";
 
     return 0;
 }

@@ -149,8 +149,8 @@ int verify_opts(const Options& opts) {
         return 1;
     }
     for(size_t i = 0; i < opts.compress.size() - 1; i++) {
-        if(opts.compress[i + 1] % opts.compress[i] != 0) {
-            std::cerr << "Invalid compression value: " << opts.compress[0] << " does not divide " << opts.compress[1] << "\n";
+        if(opts.compress[i] % opts.compress[i + 1] != 0) {
+            std::cerr << "Invalid compression value: " << opts.compress[i + 1] << " does not divide " << opts.compress[i] << "\n";
             return 1;
         }
     }

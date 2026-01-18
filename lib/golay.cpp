@@ -56,3 +56,20 @@ void write_seq(std::ofstream& out, vector<int> seq) {
         out << seq[i] << " ";
     }
 }
+
+std::set<int> getalphabet(const int COMPRESS) {
+    std::set<int> alphabet;
+    if(COMPRESS % 2 == 0) {
+        for(int i = 0; i <= COMPRESS; i += 2) {
+            alphabet.insert(i);
+            alphabet.insert(-i);
+        }
+    } else {
+        for(int i = 1; i <= COMPRESS; i += 2) {
+            alphabet.insert(i);
+            alphabet.insert(-i);
+        }
+    }
+
+    return alphabet;
+}

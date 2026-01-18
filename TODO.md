@@ -15,3 +15,7 @@
 - optimize fftw with real to complex instead of complex to complex?
 - CONSIDER DUVAL'S ALGORITHM IF I EVER WANT TO OPTIMIZE ORDERLY GENERATION !!!
 - Plus research Lyndon words
+
+- ^ above notes done, we should implement parallelization for necklaces in a similar way to orderly generation, by generating necklaces of size x and distributing
+
+- Generate diagnostics structs in my pipeline steps so that I can analyze statistics
