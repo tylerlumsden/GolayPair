@@ -137,55 +137,31 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
         }
     }
 
-    set<vector<int>> partialsols;
     set<vector<int>> generatorsA = constructGenerators(0, LEN);
     set<vector<int>> generatorsB = constructGenerators(1, LEN);
-    
-    std::cout << "Generating partial solutions\n";
-    std::vector<int> seq;
-    std::vector<std::vector<int>> proc_work = {{}};
-    if(PROC_NUM > 1) {
-        for(int i = 1; i <= LEN; i++) {
-            proc_work.clear();
-            int count = 0;
-            while(nextBranch(seq, i, alphabet)) {
-                if((int)seq.size() == i && partialCanonical(seq)) {
-                    count++;
-                    if(count % PROC_NUM == PROC_ID) {
-                        proc_work.push_back(seq);
-                    }
-                }
-            }
-            if(count >= PROC_NUM * 1000) {
-                break;
-            }
-        }
-    }
 
     unsigned long long orderly_count = 0;
     std::cout << "Generating complete solutions\n";
-    for(std::vector<int> seq : proc_work) {
-        generate_necklaces_prefix(LEN, alphabet, [&](const std::vector<int>& seq) {
-                orderly_count++;
-                for(std::pair<int, int> decomp : decompslist) {
-                    if(rowsum(seq) == decomp.first) {
-                        std::vector<double> psd = FourierManager.calculate_psd(seq);
-                        if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT) && isCanonical(seq, generatorsA)) {
-                            count++;
-                            write_seq_psd(seq, psd, out_a);
-                        }
-                    }
-
-                    if(rowsum(seq) == decomp.second) {
-                        std::vector<double> psd = FourierManager.calculate_psd(seq);
-                        if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT) && isCanonical(seq, generatorsB)) {
-                            count++;
-                            write_seq_psd_invert(seq, psd, out_b, ORDER * 2 - PAF_CONSTANT);
-                        }
-                    }
+    generate_necklaces_prefix(LEN, alphabet, [&](const std::vector<int>& seq) {
+        orderly_count++;
+        for(std::pair<int, int> decomp : decompslist) {
+            if(rowsum(seq) == decomp.first) {
+                std::vector<double> psd = FourierManager.calculate_psd(seq);
+                if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT) && isCanonical(seq, generatorsA)) {
+                    count++;
+                    write_seq_psd(seq, psd, out_a);
                 }
-        });
-    }
+            }
+
+            if(rowsum(seq) == decomp.second) {
+                std::vector<double> psd = FourierManager.calculate_psd(seq);
+                if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT) && isCanonical(seq, generatorsB)) {
+                    count++;
+                    write_seq_psd_invert(seq, psd, out_b, ORDER * 2 - PAF_CONSTANT);
+                }
+            }
+        }
+    });
 
     std::cout << "Necklace Count: " << necklace_count(LEN, alphabet.size()) << "\n";
     std::cout << "Orderly Count: " << orderly_count << "\n";
