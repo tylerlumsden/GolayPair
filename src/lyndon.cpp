@@ -45,7 +45,7 @@ boost::multiprecision::cpp_int necklace_count(int length, int alphabet_size) {
 }
 
 void generate_necklaces_prefix(const int LEN, 
-    const std::set<int>& alphabet, 
+    const std::vector<int>& alphabet, 
     const std::function<void(const std::vector<int>&, const int)>& callback,
     std::optional<std::reference_wrapper<std::vector<int>>> partial_seq = std::nullopt,
     const int i = 0,
@@ -66,10 +66,12 @@ void generate_necklaces_prefix(const int LEN,
         seq[index] = seq[index - period];
         generate(index + 1, period);
 
-        for (auto it = alphabet.upper_bound(seq[index - period]); it != alphabet.end(); ++it) {
-            seq[index] = *it;
-            generate(index + 1, index + 1);
-        }
+            auto it = std::find(alphabet.begin(), alphabet.end(), seq[index - period]);
+            if (it != alphabet.end()) ++it;
+            for (; it != alphabet.end(); ++it) {
+                seq[index] = *it;
+                generate(index + 1, index + 1);
+            }
     };
 
     if(i == 0 && p == 0) {
@@ -83,14 +85,14 @@ void generate_necklaces_prefix(const int LEN,
 }
 
 void generate_necklaces_wrapper(const int LEN, 
-    const std::set<int>& alphabet, 
+    const std::vector<int>& alphabet, 
     const int PROC_ID,
     const int PROC_NUM, 
     const std::function<void(const std::vector<int>&)>& callback) {
 
     int i = 1;
     for(; i <= LEN; ++i) {
-        if(necklace_count(i, alphabet.size()) >= PROC_NUM * 1000) break;
+        if(necklace_count(i, alphabet.size()) >= PROC_NUM * 10000) break;
     }
     std::vector<std::pair<std::vector<int>, int>> work;
     if(PROC_NUM > 1 && i < LEN) {
@@ -106,6 +108,8 @@ void generate_necklaces_wrapper(const int LEN,
     } else {
         work.push_back({std::vector<int>{}, 0});
     }
+
+    std::cout << "Work precomputation done\n";
 
     for(auto& [seq, period] : work) {
         generate_necklaces_prefix(LEN, alphabet, [&](const std::vector<int>& full_seq, const int period) {

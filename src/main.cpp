@@ -77,7 +77,7 @@ int stage_generate_mpi(const Options& opts, const Paths& paths) {
     {
         std::ofstream file_a(paths.FILE_A + "-" + std::to_string(rank));
         std::ofstream file_b(paths.FILE_B + "-" + std::to_string(rank));
-        if(generate_hybrid(opts.order, opts.compress[0], opts.paf_constant, file_a, file_b, rank, size) > 0) return 1;
+        if(generate_hybrid(opts.order, opts.compress[0], opts.paf_constant, file_a, file_b, rank, opts.parallel_factor) > 0) return 1;
     }
     
     // Synchronize all processes before continuing
