@@ -1,5 +1,7 @@
 This repository contains a set of procedures for the generation and post-processing of binary periodic complementary sequences.
 
+# Overview
+
 This generation pipeline was used to construct the first example of periodic Golay pairs of length 90, which resolved the question of their existence entirely.
 
 Published in AMS Mathematics of Computation at: https://doi.org/10.1090/mcom/4096
