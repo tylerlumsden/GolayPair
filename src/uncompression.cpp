@@ -24,7 +24,7 @@
 #include <thread>
 #include <filesystem>
 
-int uncompress_recursive(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, std::ofstream& outfile, int seqflag);
+int uncompress_recursive(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, std::ofstream& outfile, int seqflag);
 
 
 int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, std::ifstream& IN_PAIRS, std::ofstream& OUT_PAIRS, const std::string& WORK_DIR) {
@@ -78,7 +78,7 @@ int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOM
     return 0;
 }
 
-int uncompress_recursive(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, std::ofstream& outfile, int seqflag) {
+int uncompress_recursive(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, std::ofstream& outfile, int seqflag) {
     const int ORDER = orig.size() * COMPRESS;
     const int LEN = ORDER / COMPRESS;
 
@@ -141,7 +141,7 @@ int uncompress_recursive(std::vector<int> orig, const int COMPRESS, const int NE
         newfirsta.push_back(perm);
     }
 
-    vector<int> seq;
+    std::vector<int> seq;
     seq.resize(ORDER / NEWCOMPRESS);
 
     auto uncompress_lambda = [&](const auto& self, size_t curr_index, std::function<void(const std::vector<int>&)> callback) {
@@ -151,14 +151,14 @@ int uncompress_recursive(std::vector<int> orig, const int COMPRESS, const int NE
         }
 
         else if(curr_index == 0) {
-            for(std::vector<int> permutation : newfirsta) {
+            for(const std::vector<int>& permutation : newfirsta) {
                 for(int i = 0; i < COMPRESS / NEWCOMPRESS; i++) {
                     seq[curr_index + (LEN * i)] = permutation[i];
                 }
                 self(self, curr_index + 1, callback);
             }
         } else {
-            for(std::vector<int> permutation : partitions.at(orig[curr_index])) {
+            for(const std::vector<int>& permutation : partitions.at(orig[curr_index])) {
                 for(int i = 0; i < COMPRESS / NEWCOMPRESS; i++) {
                     seq[curr_index + (LEN * i)] = permutation[i];
                 }
@@ -169,13 +169,13 @@ int uncompress_recursive(std::vector<int> orig, const int COMPRESS, const int NE
 
     uncompress_lambda(uncompress_lambda, 0, [&](const std::vector<int>& full_seq) {
 
-        std::vector<double> psd = FourierManager.calculate_psd(seq);
+        std::vector<double> psd = FourierManager.calculate_psd(full_seq);
 
         if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT)) { 
             if(seqflag) {
-                write_seq_psd(seq, psd, outfile);
+                write_seq_psd(full_seq, psd, outfile);
             } else {
-                write_seq_psd_invert(seq, psd, outfile, ORDER * 2 - PAF_CONSTANT);
+                write_seq_psd_invert(full_seq, psd, outfile, ORDER * 2 - PAF_CONSTANT);
             }
         }
     });
