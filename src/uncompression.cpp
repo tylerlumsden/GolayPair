@@ -169,7 +169,7 @@ int uncompress_recursive(std::vector<int>& orig, const int COMPRESS, const int N
 
     uncompress_lambda(uncompress_lambda, 0, [&](const std::vector<int>& full_seq) {
 
-        std::vector<double> psd = FourierManager.calculate_psd(full_seq);
+        const std::vector<double>& psd = FourierManager.calculate_psd(full_seq);
 
         if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT)) { 
             if(seqflag) {

@@ -138,7 +138,7 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
         Prog.update(orderly_count);
         for(const std::pair<int, int>& decomp : decompslist) {
             if(rowsum(seq) == decomp.first) {
-                std::vector<double> psd = FourierManager.calculate_psd(seq);
+                const std::vector<double>& psd = FourierManager.calculate_psd(seq);
                 if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT) && isCanonical(seq, generatorsA)) {
                     count++;
                     write_seq_psd(seq, psd, out_a);
@@ -146,7 +146,7 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
             }
 
             if(rowsum(seq) == decomp.second) {
-                std::vector<double> psd = FourierManager.calculate_psd(seq);
+                const std::vector<double>& psd = FourierManager.calculate_psd(seq);
                 if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT) && isCanonical(seq, generatorsB)) {
                     count++;
                     write_seq_psd_invert(seq, psd, out_b, ORDER * 2 - PAF_CONSTANT);

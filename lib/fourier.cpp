@@ -12,6 +12,7 @@ Fourier::Fourier(std::size_t length) {
     input = fftw_alloc_complex(length);
     output = fftw_alloc_complex(length);
     plan = fftw_plan_dft_1d(length, input, output, FFTW_FORWARD, FFTW_MEASURE);
+    psd.resize(length);
     len = length;
 }
 
@@ -21,7 +22,7 @@ Fourier::~Fourier() {
     fftw_free(output);
 }
 
-std::vector<double> Fourier::calculate_psd(const std::vector<int>& seq) {
+const std::vector<double>& Fourier::calculate_psd(const std::vector<int>& seq) {
     if(seq.size() != len) {
         throw std::invalid_argument(
             std::format("FourierManager: Sequence size {} does not match expected length {}\n", seq.size(), len)
@@ -34,7 +35,6 @@ std::vector<double> Fourier::calculate_psd(const std::vector<int>& seq) {
 
     fftw_execute(plan);
 
-    std::vector<double> psd(len);
     for(std::size_t i = 0; i < psd.size(); i++) {
         psd[i] = output[i][0] * output[i][0] + output[i][1] * output[i][1];
     }

@@ -11,12 +11,13 @@ private:
     fftw_complex* input;
     fftw_complex* output;
     fftw_plan plan;
+    std::vector<double> psd;
     std::size_t len;
 
 public:
     Fourier(std::size_t length);
     ~Fourier();
-    std::vector<double> calculate_psd(const std::vector<int>& seq);
+    const std::vector<double>& calculate_psd(const std::vector<int>& seq);
     bool psd_filter(const std::vector<double>& psd, const int ORDER, const int PAF_CONSTANT);
 };
 
