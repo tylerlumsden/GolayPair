@@ -24,7 +24,6 @@
 #include <thread>
 #include <filesystem>
 
-int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, std::ofstream& outfile, bool seqflag);
 int uncompress_recursive(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, std::ofstream& outfile, int seqflag);
 
 
@@ -62,8 +61,8 @@ int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOM
             seqb.push_back(seq[i]);
         }
 
-        uncompress(seqa, COMPRESS, NEWCOMPRESS, PAF_CONSTANT, outa, 1);
-        uncompress(seqb, COMPRESS, NEWCOMPRESS, PAF_CONSTANT, outb, 0);
+        uncompress_recursive(seqa, COMPRESS, NEWCOMPRESS, PAF_CONSTANT, outa, 1);
+        uncompress_recursive(seqb, COMPRESS, NEWCOMPRESS, PAF_CONSTANT, outb, 0);
         outa.close();
         outb.close();
 
