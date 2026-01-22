@@ -135,7 +135,7 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
     std::vector<int> alpha(alphabet.begin(), alphabet.end());
     generate_necklaces_wrapper(LEN, alpha, PROC_ID, PROC_NUM, [&](const std::vector<int>& seq) {
         ++orderly_count;
-        //Prog.update(orderly_count);
+        Prog.update(orderly_count);
         for(std::pair<int, int> decomp : decompslist) {
             if(rowsum(seq) == decomp.first) {
                 std::vector<double> psd = FourierManager.calculate_psd(seq);

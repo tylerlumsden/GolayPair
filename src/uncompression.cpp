@@ -16,6 +16,7 @@
 #include<iostream>
 #include<format>
 
+#include"golay.h"
 #include"constants.h"
 #include"match_pairs.h"
 #include"sort.h"
@@ -24,6 +25,8 @@
 #include <filesystem>
 
 int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, std::ofstream& outfile, bool seqflag);
+int uncompress_recursive(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, std::ofstream& outfile, int seqflag);
+
 
 int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, std::ifstream& IN_PAIRS, std::ofstream& OUT_PAIRS, const std::string& WORK_DIR) {
     unsigned long long count = 1;
@@ -76,37 +79,15 @@ int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOM
     return 0;
 }
 
-int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, std::ofstream& outfile, bool seqflag) {
-    const int ORDER = orig.size() * COMPRESS; 
+int uncompress_recursive(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, std::ofstream& outfile, int seqflag) {
+    const int ORDER = orig.size() * COMPRESS;
     const int LEN = ORDER / COMPRESS;
 
     Fourier FourierManager = Fourier(ORDER / NEWCOMPRESS);
 
-    std::set<int> alphabet;
-    if(COMPRESS % 2 == 0) {
-        for(int i = 0; i <= COMPRESS; i += 2) {
-            alphabet.insert(i);
-            alphabet.insert(-i);
-        }
-    } else {
-        for(int i = 1; i <= COMPRESS; i += 2) {
-            alphabet.insert(i);
-            alphabet.insert(-i);
-        }
-    }
+    std::set<int> alphabet = getalphabet(COMPRESS);
 
-    std::set<int> newalphabet;
-    if(NEWCOMPRESS % 2 == 0) {
-        for(int i = 0; i <= NEWCOMPRESS; i += 2) {
-            newalphabet.insert(i);
-            newalphabet.insert(-i);
-        }
-    } else {
-        for(int i = 1; i <= NEWCOMPRESS; i += 2) {
-            newalphabet.insert(i);
-            newalphabet.insert(-i);
-        }
-    }
+    std::set<int> newalphabet = getalphabet(NEWCOMPRESS);
 
     std::vector<std::vector<int>> parts = getCombinations(COMPRESS / NEWCOMPRESS, newalphabet);
     std::vector<std::vector<int>> partition;
@@ -164,64 +145,41 @@ int uncompress(std::vector<int> orig, const int COMPRESS, const int NEWCOMPRESS,
     vector<int> seq;
     seq.resize(ORDER / NEWCOMPRESS);
 
-    unsigned long long int count = 0;
-    unsigned long long int written = 0;
-    int curr = 0;
-    vector<int> stack(LEN, 0);
-
-    while(curr != -1) {
-
-        while(curr != LEN - 1) {
-
-            std::vector<int> permutation = partitions.at(orig[curr])[stack[curr]];
-
-            if(curr == 0) {
-                permutation = newfirsta[stack[curr]];
-            }
-
-            for(int i = 0; i < COMPRESS / NEWCOMPRESS; i++) {
-                seq[curr + (LEN * i)] = permutation[i];
-            }
-            stack[curr]++;
-            curr++;
+    auto uncompress_lambda = [&](const auto& self, size_t curr_index, std::function<void(const std::vector<int>&)> callback) {
+        if(curr_index >= orig.size()) {
+            callback(seq);
+            return;
         }
 
-        //if curr is final element of original sequence, base case
-        if(curr == LEN - 1) {
-
-            for(std::vector<int> permutation : partitions.at(orig[curr])) {
-
-                count++;
-
+        else if(curr_index == 0) {
+            for(std::vector<int> permutation : newfirsta) {
                 for(int i = 0; i < COMPRESS / NEWCOMPRESS; i++) {
-                    seq[curr + (LEN * i)] = permutation[i];
+                    seq[curr_index + (LEN * i)] = permutation[i];
                 }
-
-                std::vector<double> psd = FourierManager.calculate_psd(seq);
-
-                if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT)) { 
-                    written++;
-                    if(seqflag) {
-                        write_seq_psd(seq, psd, outfile);
-                    } else {
-                        write_seq_psd_invert(seq, psd, outfile, ORDER * 2 - PAF_CONSTANT);
-                    }
-                }
+                self(self, curr_index + 1, callback);
             }
-            
-            curr--;
-
-            while((unsigned int)stack[curr] == partitions.at(orig[curr]).size() || (curr == 0 && (size_t)stack[curr] == newfirsta.size())) {
-                stack[curr] = 0;
-                curr--;
-                if(curr == -1) {
-                    curr = -1;
-                    break;
+        } else {
+            for(std::vector<int> permutation : partitions.at(orig[curr_index])) {
+                for(int i = 0; i < COMPRESS / NEWCOMPRESS; i++) {
+                    seq[curr_index + (LEN * i)] = permutation[i];
                 }
+                self(self, curr_index + 1, callback);
             }
-            //printf("curr: %d, stack: %d\n", curr, stack[curr]);
         }
-    }
+    };
+
+    uncompress_lambda(uncompress_lambda, 0, [&](const std::vector<int>& full_seq) {
+
+        std::vector<double> psd = FourierManager.calculate_psd(seq);
+
+        if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT)) { 
+            if(seqflag) {
+                write_seq_psd(seq, psd, outfile);
+            } else {
+                write_seq_psd_invert(seq, psd, outfile, ORDER * 2 - PAF_CONSTANT);
+            }
+        }
+    });
 
     return 0;
 }
