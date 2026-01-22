@@ -50,7 +50,7 @@ set<vector<int>> generateExhaust(vector<int> base, int flag) {
     return map;
 }
 
-int isCanonical(vector<int> seq, set<vector<int>> generators) {
+int isCanonical(const std::vector<int>& seq, const set<vector<int>>& generators) {
     int LEN = seq.size();
 
     vector<int> newseq;

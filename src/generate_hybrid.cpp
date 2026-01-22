@@ -32,7 +32,7 @@ void printArray(vector<int> seq) {
     printf("\n");
 }
 
-int rowsum(vector<int> seq) {
+int rowsum(const std::vector<int>& seq) {
     int sum = 0;
     for(unsigned int i = 0; i < seq.size(); i++) {
         sum = sum + seq[i];
@@ -136,7 +136,7 @@ int generate_hybrid(const int ORDER, const int COMPRESS, const int PAF_CONSTANT,
     generate_necklaces_wrapper(LEN, alpha, PROC_ID, PROC_NUM, [&](const std::vector<int>& seq) {
         ++orderly_count;
         Prog.update(orderly_count);
-        for(std::pair<int, int> decomp : decompslist) {
+        for(const std::pair<int, int>& decomp : decompslist) {
             if(rowsum(seq) == decomp.first) {
                 std::vector<double> psd = FourierManager.calculate_psd(seq);
                 if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT) && isCanonical(seq, generatorsA)) {

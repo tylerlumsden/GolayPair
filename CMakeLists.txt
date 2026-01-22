@@ -39,6 +39,7 @@ set(LIB_SOURCES
     lib/array.cpp
     lib/coprimes.cpp
     lib/decomps.cpp
+    lib/io.cpp
 )
 
 # Create a static library
