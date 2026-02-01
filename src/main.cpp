@@ -170,6 +170,7 @@ int verify_opts(const Options& opts) {
  
 int main(int argc, char* argv[]) {
     Options opts;
+    bool do_full = false;
     bool do_generate = false;
     bool do_sort = false;
     bool do_match = false;
@@ -185,6 +186,7 @@ int main(int argc, char* argv[]) {
     app.add_option("-j,--jobid", opts.job_id, "Set job id (default=0)");
     app.add_option("-n,--numjob", opts.job_count, "Set number of jobs (default=1)");
     app.add_option("-d,--dir", opts.temp_dir, "Set directory for populating temporary files (default=result)");
+    app.add_flag("--full", do_full, "Run full pipeline");
     app.add_flag("--generate", do_generate, "Run generation stage");
     app.add_flag("--sort", do_sort, "Run sorting stage");
     app.add_flag("--match", do_match, "Run matching stage");
@@ -217,11 +219,11 @@ int main(int argc, char* argv[]) {
     }
 
     // Build pipeline based on flags
-    if(do_generate) stage_generate(opts, paths);
-    if(do_sort) stage_sort(opts, paths);
-    if(do_match) stage_match(opts, paths);
-    if(do_uncompress) stage_uncompress(opts, paths);
-    if(do_filter) stage_filter(opts, paths);
+    if(do_full || do_generate) stage_generate(opts, paths);
+    if(do_full || do_sort) stage_sort(opts, paths);
+    if(do_full || do_match) stage_match(opts, paths);
+    if(do_full || do_uncompress) stage_uncompress(opts, paths);
+    if(do_full || do_filter) stage_filter(opts, paths);
     
     if(mpi_enabled) {
         MPI_Finalize();
