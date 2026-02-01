@@ -23,26 +23,8 @@ struct Options {
     int paf_constant = 0;
     int job_id = 0;
     int job_count = 1;
-    int mpi_id = 0;
-    int mpi_count = 0;
     std::vector<int> compress = {1};
     std::string temp_dir = "results";
-
-    int total_jobs() {
-        if(mpi_count != 0) {
-            return mpi_count * job_count;
-        } else {
-            return job_count;
-        }
-    }
-
-    int proc_id() {
-        if(mpi_count != 0) {
-            return (job_id * mpi_count) + mpi_id;
-        } else {
-            return job_id;
-        }
-    }
 };
 
 struct Paths {
@@ -51,10 +33,16 @@ struct Paths {
     const std::string FILE_B;
     const std::string FILE_A_SORTED;
     const std::string FILE_B_SORTED;
+    const std::string FILE_A_REDUCE;
+    const std::string FILE_B_REDUCE;
+    const std::vector<std::string> FILE_A_REDUCE_LIST;
+    const std::vector<std::string> FILE_B_REDUCE_LIST;
     const std::string FILE_A_UNCOMPRESSED;
     const std::string FILE_B_UNCOMPRESSED;
     const std::string FILE_A_UNCOMPRESSED_SORTED;
     const std::string FILE_B_UNCOMPRESSED_SORTED;
+    const std::vector<std::string> FILE_A_LIST;
+    const std::vector<std::string> FILE_B_LIST;
     const std::vector<std::string> FILE_PAIRS_LIST;
     const std::string FILE_PAIRS_FILTERED;
     
@@ -64,10 +52,26 @@ struct Paths {
         , FILE_B(std::format("{}/{}-filtered-b", WORK_DIR, opts.order))
         , FILE_A_SORTED(FILE_A + ".sorted")
         , FILE_B_SORTED(FILE_B + ".sorted")
+        , FILE_A_REDUCE(FILE_A + ".reduce")
+        , FILE_B_REDUCE(FILE_B + ".reduce")
         , FILE_A_UNCOMPRESSED(std::format("{}/{}-uncompressed-a", WORK_DIR, opts.order))
         , FILE_B_UNCOMPRESSED(std::format("{}/{}-uncompressed-b", WORK_DIR, opts.order))
         , FILE_A_UNCOMPRESSED_SORTED(FILE_A_UNCOMPRESSED + ".sorted")
         , FILE_B_UNCOMPRESSED_SORTED(FILE_B_UNCOMPRESSED + ".sorted")
+        , FILE_A_LIST ([&] {
+            std::vector<std::string> list;
+            for(int i = 0; i < opts.job_count; ++i) {
+                list.push_back(FILE_A + "-" + std::to_string(i));
+            }
+            return list;
+        }())
+        , FILE_B_LIST ([&] {
+            std::vector<std::string> list;
+            for(int i = 0; i < opts.job_count; ++i) {
+                list.push_back(FILE_B + "-" + std::to_string(i));
+            }
+            return list;
+        }())
         , FILE_PAIRS_LIST([&] {
             std::vector<std::string> list;
             for(int compress : opts.compress) {
@@ -83,20 +87,19 @@ struct Paths {
 int stage_generate(const Options& opts, const Paths& paths) {
     std::cout << "Generating Candidates\n";
 
-    std::ofstream file_a(paths.FILE_A);
-    std::ofstream file_b(paths.FILE_B);
+    std::ofstream file_a(paths.FILE_A_LIST[opts.job_id]);
+    std::ofstream file_b(paths.FILE_B_LIST[opts.job_id]);
     if(generate_hybrid(opts.order, opts.compress[0], opts.paf_constant, file_a, file_b, opts.job_id, opts.job_count) > 0) return 1;
 
     return 0;
 }
 
 int stage_sort(const Options& opts, const Paths& paths) {
-    std::vector<std::string> files_a = {paths.FILE_A};
-    std::vector<std::string> files_b = {paths.FILE_B};
-
     std::cout << "Sorting Candidates\n";
-    if(GNU_sort(files_a, paths.FILE_A_SORTED) > 0) return 1;
-    if(GNU_sort(files_b, paths.FILE_B_SORTED) > 0) return 1;
+
+    if(GNU_sort(paths.FILE_A_LIST, paths.FILE_A_SORTED) > 0) return 1;
+    if(GNU_sort(paths.FILE_B_LIST, paths.FILE_B_SORTED) > 0) return 1;
+
     return 0;
 }
 
@@ -152,21 +155,6 @@ int stage_filter(const Options& opts, const Paths& paths) {
     std::cout << "Filtering pairs of compression size " << opts.compress.back() << "\n";
     return cache_filter(opts.order, opts.compress.back(), paths.FILE_PAIRS_LIST.back(), paths.FILE_PAIRS_FILTERED);
 }
-
-int verify_opts(const Options& opts) {
-    if(opts.order % opts.compress[0] != 0) {
-        std::cerr << "Invalid compression value: " << opts.compress[0] << " does not divide " << opts.order << "\n";
-        return 1;
-    }
-    for(size_t i = 0; i < opts.compress.size() - 1; i++) {
-        if(opts.compress[i] % opts.compress[i + 1] != 0) {
-            std::cerr << "Invalid compression value: " << opts.compress[i + 1] << " does not divide " << opts.compress[i] << "\n";
-            return 1;
-        }
-    }
-
-    return 0;
-}
  
 int main(int argc, char* argv[]) {
     Options opts;
@@ -180,7 +168,7 @@ int main(int argc, char* argv[]) {
 
     CLI::App app{"Complementary Pairs Pipeline"};
 
-    app.add_option("order", opts.order, "Order");
+    app.add_option("order", opts.order, "Order")->required();
     app.add_option("-c,--compress", opts.compress, "Set compression level (default=1)");
     app.add_option("--paf", opts.paf_constant, "Set PAF constant (default=0)");
     app.add_option("-j,--jobid", opts.job_id, "Set job id (default=0)");
@@ -195,18 +183,26 @@ int main(int argc, char* argv[]) {
     app.add_flag("--mpi", mpi_enabled, "Parallelize with MPI");
     CLI11_PARSE(app, argc, argv);
 
-    if(verify_opts(opts) > 0) return 1;
+    // Verify that options are valid
+    if(opts.job_count > 1 && do_full) {
+        std::cerr << "Cannot run full pipeline with job_count > 1. Run the pipeline in separate steps\n";
+        return 1;
+    }
+    if(opts.order % opts.compress[0] != 0) {
+        std::cerr << "Invalid compression value: " << opts.compress[0] << " does not divide " << opts.order << "\n";
+        return 1;
+    }
+    for(size_t i = 0; i < opts.compress.size() - 1; i++) {
+        if(opts.compress[i] % opts.compress[i + 1] != 0) {
+            std::cerr << "Invalid compression value: " << opts.compress[i + 1] << " does not divide " << opts.compress[i] << "\n";
+            return 1;
+        }
+    }
 
     std::cout << "Searching for complementary sequences of order " << opts.order << "\n";
     std::cout << "With paf-constant " << opts.paf_constant << "\n";
     std::cout << "And compression factor " << opts.compress[0] << "\n";
     std::cout << "Using directory " << opts.temp_dir << " To store temporary files\n";
- 
-    if(mpi_enabled) {
-        MPI_Init(nullptr, nullptr);      
-        MPI_Comm_size(MPI_COMM_WORLD, &opts.mpi_count);
-        MPI_Comm_rank(MPI_COMM_WORLD, &opts.mpi_id);
-    }
 
     const Paths paths(opts);
 
@@ -224,10 +220,6 @@ int main(int argc, char* argv[]) {
     if(do_full || do_match) stage_match(opts, paths);
     if(do_full || do_uncompress) stage_uncompress(opts, paths);
     if(do_full || do_filter) stage_filter(opts, paths);
-    
-    if(mpi_enabled) {
-        MPI_Finalize();
-    }
 
     return 0;
 }
