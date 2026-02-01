@@ -24,21 +24,22 @@
 #include <thread>
 #include <filesystem>
 
-int uncompress_recursive(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, std::ofstream& outfile, int seqflag);
+int uncompress_recursive(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ofstream& outfile, int seqflag);
 
 
-int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, std::ifstream& IN_PAIRS, std::ofstream& OUT_PAIRS, const std::string& WORK_DIR) {
-    unsigned long long count = 1;
-
-    const std::string FILE_A = std::format("{}/{}-uncompressed-a", WORK_DIR, ORDER);
-    const std::string FILE_B = std::format("{}/{}-uncompressed-b", WORK_DIR, ORDER);
+int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ifstream& IN_PAIRS, std::ofstream& OUT_PAIRS, const std::string& WORK_DIR) {
+    const std::string FILE_A = std::format("{}/{}-uncompressed-a-{}", WORK_DIR, ORDER, PROC_ID);
+    const std::string FILE_B = std::format("{}/{}-uncompressed-b-{}", WORK_DIR, ORDER, PROC_ID);
     const std::string FILE_A_SORTED = FILE_A + ".sorted";
     const std::string FILE_B_SORTED = FILE_B + ".sorted";
 
     std::string line;
+    for(long long linecount = 0; std::getline(IN_PAIRS, line); ++linecount) {
+        if(linecount % PROC_NUM != PROC_ID) {
+            continue;
+        }
 
-    while(std::getline(IN_PAIRS, line)) {
-        std::cout << "Uncompressing line: " << count << "\n";
+        std::cout << "Uncompressing line: " << linecount << ", Process ID: " << PROC_ID << "\n";
 
         std::ofstream outa(FILE_A);
         std::ofstream outb(FILE_B);
@@ -61,8 +62,8 @@ int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOM
             seqb.push_back(seq[i]);
         }
 
-        uncompress_recursive(seqa, COMPRESS, NEWCOMPRESS, PAF_CONSTANT, outa, 1);
-        uncompress_recursive(seqb, COMPRESS, NEWCOMPRESS, PAF_CONSTANT, outb, 0);
+        uncompress_recursive(seqa, COMPRESS, NEWCOMPRESS, PAF_CONSTANT, PROC_ID, PROC_NUM, outa, 1);
+        uncompress_recursive(seqb, COMPRESS, NEWCOMPRESS, PAF_CONSTANT, PROC_ID, PROC_NUM, outb, 0);
         outa.close();
         outb.close();
 
@@ -71,14 +72,12 @@ int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOM
         std::ifstream ina(FILE_A_SORTED);
         std::ifstream inb(FILE_B_SORTED);
         match_pairs(ORDER, NEWCOMPRESS, PAF_CONSTANT, ina, inb, OUT_PAIRS);
-
-        count++;
     }
 
     return 0;
 }
 
-int uncompress_recursive(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, std::ofstream& outfile, int seqflag) {
+int uncompress_recursive(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ofstream& outfile, int seqflag) {
     const int ORDER = orig.size() * COMPRESS;
     const int LEN = ORDER / COMPRESS;
 
@@ -141,11 +140,8 @@ int uncompress_recursive(std::vector<int>& orig, const int COMPRESS, const int N
         newfirsta.push_back(perm);
     }
 
-    std::vector<int> seq;
-    seq.resize(ORDER / NEWCOMPRESS);
-
-    auto uncompress_lambda = [&](const auto& self, size_t curr_index, std::function<void(const std::vector<int>&)> callback) {
-        if(curr_index >= orig.size()) {
+    auto uncompress_lambda = [&](const auto& self, std::vector<int>& seq, size_t curr_index, size_t depth_index, std::function<void(const std::vector<int>&)> callback) {
+        if(curr_index >= orig.size() || curr_index == depth_index) {
             callback(seq);
             return;
         }
@@ -155,30 +151,51 @@ int uncompress_recursive(std::vector<int>& orig, const int COMPRESS, const int N
                 for(int i = 0; i < COMPRESS / NEWCOMPRESS; i++) {
                     seq[curr_index + (LEN * i)] = permutation[i];
                 }
-                self(self, curr_index + 1, callback);
+                self(self, seq, curr_index + 1, depth_index, callback);
             }
         } else {
             for(const std::vector<int>& permutation : partitions.at(orig[curr_index])) {
                 for(int i = 0; i < COMPRESS / NEWCOMPRESS; i++) {
                     seq[curr_index + (LEN * i)] = permutation[i];
                 }
-                self(self, curr_index + 1, callback);
+                self(self, seq, curr_index + 1, depth_index, callback);
             }
         }
     };
 
-    uncompress_lambda(uncompress_lambda, 0, [&](const std::vector<int>& full_seq) {
+    std::vector<int> seq;
+    seq.resize(ORDER / NEWCOMPRESS);
+    std::vector<std::vector<int>> prev_depth = {seq};
 
-        const std::vector<double>& psd = FourierManager.calculate_psd(full_seq);
-
-        if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT)) { 
-            if(seqflag) {
-                write_seq_psd(full_seq, psd, outfile);
-            } else {
-                write_seq_psd_invert(full_seq, psd, outfile, ORDER * 2 - PAF_CONSTANT);
-            }
+    size_t depth = 0;
+    long long count = 0;
+    for(; depth < orig.size() && count < 1000 * PROC_NUM; ++depth) {
+        count = 0;
+        std::vector<std::vector<int>> curr_depth;
+        for(std::vector<int>& partial : prev_depth) {
+            uncompress_lambda(uncompress_lambda, partial, depth, depth + 1, [&](const std::vector<int>& partial_seq) {
+                if(count % PROC_NUM == PROC_ID) {
+                    curr_depth.push_back(partial_seq);
+                }
+                ++count;
+            });
         }
-    });
+        prev_depth = curr_depth;
+    }
+
+    for(std::vector<int>& partial_seq : prev_depth) {
+        uncompress_lambda(uncompress_lambda, partial_seq, depth, orig.size(), [&](const std::vector<int>& full_seq) {
+            const std::vector<double>& psd = FourierManager.calculate_psd(full_seq);
+
+            if(FourierManager.psd_filter(psd, ORDER, PAF_CONSTANT)) { 
+                if(seqflag) {
+                    write_seq_psd(full_seq, psd, outfile);
+                } else {
+                    write_seq_psd_invert(full_seq, psd, outfile, ORDER * 2 - PAF_CONSTANT);
+                }
+            }
+        });
+    }
 
     return 0;
 }

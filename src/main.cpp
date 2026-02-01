@@ -16,13 +16,33 @@
 #include "filter.h"
 #include "CLI11.hpp"
 #include "generate_orderly.h"
+#include "io.h"
 
 struct Options {
     int order;
     int paf_constant = 0;
-    int parallel_factor = 1;
+    int job_id = 0;
+    int job_count = 1;
+    int mpi_id = 0;
+    int mpi_count = 0;
     std::vector<int> compress = {1};
     std::string temp_dir = "results";
+
+    int total_jobs() {
+        if(mpi_count != 0) {
+            return mpi_count * job_count;
+        } else {
+            return job_count;
+        }
+    }
+
+    int proc_id() {
+        if(mpi_count != 0) {
+            return (job_id * mpi_count) + mpi_id;
+        } else {
+            return job_id;
+        }
+    }
 };
 
 struct Paths {
@@ -31,77 +51,48 @@ struct Paths {
     const std::string FILE_B;
     const std::string FILE_A_SORTED;
     const std::string FILE_B_SORTED;
-    const std::string FILE_PAIRS;
-    const std::string FILE_PAIRS_UNCOMPRESSED;
+    const std::string FILE_A_UNCOMPRESSED;
+    const std::string FILE_B_UNCOMPRESSED;
+    const std::string FILE_A_UNCOMPRESSED_SORTED;
+    const std::string FILE_B_UNCOMPRESSED_SORTED;
+    const std::vector<std::string> FILE_PAIRS_LIST;
+    const std::string FILE_PAIRS_FILTERED;
     
-    Paths(const std::string& temp_dir, int order)
-        : WORK_DIR(std::format("{}/order-{}", temp_dir, order))
-        , FILE_A(std::format("{}/{}-filtered-a", WORK_DIR, order))
-        , FILE_B(std::format("{}/{}-filtered-b", WORK_DIR, order))
+    Paths(const Options& opts)
+        : WORK_DIR(std::format("{}/order-{}", opts.temp_dir, opts.order))
+        , FILE_A(std::format("{}/{}-filtered-a", WORK_DIR, opts.order))
+        , FILE_B(std::format("{}/{}-filtered-b", WORK_DIR, opts.order))
         , FILE_A_SORTED(FILE_A + ".sorted")
         , FILE_B_SORTED(FILE_B + ".sorted")
-        , FILE_PAIRS(std::format("{}/{}-pairs", WORK_DIR, order))
-        , FILE_PAIRS_UNCOMPRESSED(FILE_PAIRS + ".uncompress")
+        , FILE_A_UNCOMPRESSED(std::format("{}/{}-uncompressed-a", WORK_DIR, opts.order))
+        , FILE_B_UNCOMPRESSED(std::format("{}/{}-uncompressed-b", WORK_DIR, opts.order))
+        , FILE_A_UNCOMPRESSED_SORTED(FILE_A_UNCOMPRESSED + ".sorted")
+        , FILE_B_UNCOMPRESSED_SORTED(FILE_B_UNCOMPRESSED + ".sorted")
+        , FILE_PAIRS_LIST([&] {
+            std::vector<std::string> list;
+            for(int compress : opts.compress) {
+                list.push_back(std::format("{}/{}-pairs-{}", WORK_DIR, opts.order, compress));
+            }
+            return list;
+        }())
+        , FILE_PAIRS_FILTERED(std::format("{}/{}-pairs-unique", WORK_DIR, opts.order))
     {}
 };
-
-// Pipeline stage type
-using PipelineStage = std::function<int(const Options&, const Paths&)>;
 
 // Individual pipeline stages
 int stage_generate(const Options& opts, const Paths& paths) {
     std::cout << "Generating Candidates\n";
-    for(int i = 0; i < opts.parallel_factor; i++) {
-        std::ofstream file_a(paths.FILE_A + "-" + std::to_string(i));
-        std::ofstream file_b(paths.FILE_B + "-" + std::to_string(i));
-        if(generate_hybrid(opts.order, opts.compress[0], opts.paf_constant, file_a, file_b, i, opts.parallel_factor) > 0) return 1;
-    }
-    return 0;
-}
 
-int stage_generate_mpi(const Options& opts, const Paths& paths) {
-    static bool mpi_initialized = false;
-    if(!mpi_initialized) {
-        MPI_Init(nullptr, nullptr);
-        mpi_initialized = true;
-    }
-    
-    int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    
-    if(rank == 0) {
-        std::cout << "Generating Candidates with " << size << " MPI processes\n";
-    }
+    std::ofstream file_a(paths.FILE_A);
+    std::ofstream file_b(paths.FILE_B);
+    if(generate_hybrid(opts.order, opts.compress[0], opts.paf_constant, file_a, file_b, opts.job_id, opts.job_count) > 0) return 1;
 
-    {
-        std::ofstream file_a(paths.FILE_A + "-" + std::to_string(rank));
-        std::ofstream file_b(paths.FILE_B + "-" + std::to_string(rank));
-        if(generate_hybrid(opts.order, opts.compress[0], opts.paf_constant, file_a, file_b, rank, opts.parallel_factor) > 0) return 1;
-    }
-    
-    // Synchronize all processes before continuing
-    MPI_Barrier(MPI_COMM_WORLD);
-    
-    // Only rank 0 continues with rest of pipeline
-    if(rank != 0) {
-        MPI_Finalize();
-        exit(0);
-    }
-    
     return 0;
 }
 
 int stage_sort(const Options& opts, const Paths& paths) {
-    std::vector<std::string> files_a;
-    for(int i = 0; i < opts.parallel_factor; i++) {
-        files_a.push_back(std::format("{}-{}", paths.FILE_A, i));
-    }
-
-    std::vector<std::string> files_b;
-    for(int i = 0; i < opts.parallel_factor; i++) {
-        files_b.push_back(std::format("{}-{}", paths.FILE_B, i));
-    }
+    std::vector<std::string> files_a = {paths.FILE_A};
+    std::vector<std::string> files_b = {paths.FILE_B};
 
     std::cout << "Sorting Candidates\n";
     if(GNU_sort(files_a, paths.FILE_A_SORTED) > 0) return 1;
@@ -111,7 +102,7 @@ int stage_sort(const Options& opts, const Paths& paths) {
 
 int stage_match(const Options& opts, const Paths& paths) {
     std::cout << "Matching Candidates\n";
-    std::ofstream pairs(paths.FILE_PAIRS);
+    std::ofstream pairs(paths.FILE_PAIRS_LIST.front());
     std::ifstream file_a_sorted(paths.FILE_A_SORTED);
     std::ifstream file_b_sorted(paths.FILE_B_SORTED);
     return match_pairs(opts.order, opts.compress[0], opts.paf_constant, file_a_sorted, file_b_sorted, pairs);
@@ -119,28 +110,47 @@ int stage_match(const Options& opts, const Paths& paths) {
 
 int stage_uncompress(const Options& opts, const Paths& paths) {
     if(opts.compress[0] <= 1) return 0;
-    
+
     std::cout << "Running Uncompression Pipeline\n";
     for(size_t i = 0; i < opts.compress.size() - 1; i++) {
         std::cout << "Uncompressing to new compression ratio " << opts.compress[i + 1] << "\n";
-        std::ifstream in_pairs(paths.FILE_PAIRS);
-        std::ofstream out_pairs(paths.FILE_PAIRS_UNCOMPRESSED);
-        if(uncompression_pipeline(opts.order, opts.compress[i], opts.compress[i + 1], opts.paf_constant, in_pairs, out_pairs, paths.WORK_DIR) > 0) return 1;
-        std::filesystem::rename(paths.FILE_PAIRS_UNCOMPRESSED, paths.FILE_PAIRS);
+
+        std::ifstream in_pairs(paths.FILE_PAIRS_LIST[i]);
+        std::ofstream out_pairs(paths.FILE_PAIRS_LIST[i + 1]);
+
+        std::vector<int> a, b;
+        for(long long linecount = 0; read_pair(in_pairs, a, b); ++linecount) {
+            if(static_cast<int>(a.size()) != opts.order / opts.compress[i] || static_cast<int>(b.size()) != opts.order / opts.compress[i]) {
+                std::cerr << "Compressed pair has invalid length: " << a.size() << " " << b.size() << "\n";
+                return 1;
+            }
+
+            std::cout << "Uncompressing line: " << linecount << "\n";
+
+            std::ofstream outa(paths.FILE_A_UNCOMPRESSED);
+            std::ofstream outb(paths.FILE_B_UNCOMPRESSED);
+
+            uncompress_recursive(a, opts.compress[i], opts.compress[i + 1], opts.paf_constant, opts.job_id, opts.job_count, outa, 0);
+            uncompress_recursive(b, opts.compress[i], opts.compress[i + 1], opts.paf_constant, opts.job_id, opts.job_count, outb, 1);
+            outa.close();
+            outb.close();
+
+            GNU_sort({paths.FILE_A_UNCOMPRESSED}, paths.FILE_A_UNCOMPRESSED_SORTED);
+            GNU_sort({paths.FILE_B_UNCOMPRESSED}, paths.FILE_B_UNCOMPRESSED_SORTED);
+            std::ifstream ina(paths.FILE_A_UNCOMPRESSED_SORTED);
+            std::ifstream inb(paths.FILE_B_UNCOMPRESSED_SORTED);
+            match_pairs(opts.order, opts.compress[i + 1], opts.paf_constant, ina, inb, out_pairs);
+
+            a.clear();
+            b.clear();
+        }
     }
     return 0;
 }
 
 int stage_filter(const Options& opts, const Paths& paths) {
     std::cout << "Filtering pairs of compression size " << opts.compress.back() << "\n";
-    return cache_filter(opts.order, opts.compress.back(), paths.FILE_PAIRS, paths.FILE_PAIRS + ".unique");
-}
-
-int run_pipeline(const std::vector<PipelineStage>& pipeline, const Options& opts, const Paths& paths) {
-    for(const auto& stage : pipeline) {
-        if(stage(opts, paths) > 0) return 1;
-    }
-    return 0;
+    return cache_filter(opts.order, opts.compress.back(), paths.FILE_PAIRS_LIST.back(), paths.FILE_PAIRS_FILTERED);
 }
 
 int verify_opts(const Options& opts) {
@@ -165,19 +175,22 @@ int main(int argc, char* argv[]) {
     bool do_match = false;
     bool do_uncompress = false;
     bool do_filter = false;
+    bool mpi_enabled = false;
 
     CLI::App app{"Complementary Pairs Pipeline"};
 
     app.add_option("order", opts.order, "Order");
     app.add_option("-c,--compress", opts.compress, "Set compression level (default=1)");
     app.add_option("--paf", opts.paf_constant, "Set PAF constant (default=0)");
-    app.add_option("-p,--proc", opts.parallel_factor, "Set parallelization factor (default=1)");
+    app.add_option("-j,--jobid", opts.job_id, "Set job id (default=0)");
+    app.add_option("-n,--numjob", opts.job_count, "Set number of jobs (default=1)");
     app.add_option("-d,--dir", opts.temp_dir, "Set directory for populating temporary files (default=result)");
     app.add_flag("--generate", do_generate, "Run generation stage");
     app.add_flag("--sort", do_sort, "Run sorting stage");
     app.add_flag("--match", do_match, "Run matching stage");
     app.add_flag("--uncompress", do_uncompress, "Run uncompression stage");
     app.add_flag("--filter", do_filter, "Run filtering stage");
+    app.add_flag("--mpi", mpi_enabled, "Parallelize with MPI");
     CLI11_PARSE(app, argc, argv);
 
     if(verify_opts(opts) > 0) return 1;
@@ -186,8 +199,14 @@ int main(int argc, char* argv[]) {
     std::cout << "With paf-constant " << opts.paf_constant << "\n";
     std::cout << "And compression factor " << opts.compress[0] << "\n";
     std::cout << "Using directory " << opts.temp_dir << " To store temporary files\n";
+ 
+    if(mpi_enabled) {
+        MPI_Init(nullptr, nullptr);      
+        MPI_Comm_size(MPI_COMM_WORLD, &opts.mpi_count);
+        MPI_Comm_rank(MPI_COMM_WORLD, &opts.mpi_id);
+    }
 
-    const Paths paths(opts.temp_dir, opts.order);
+    const Paths paths(opts);
 
     // Make sure temporary directories are created beforehand
     std::error_code ec;
@@ -198,20 +217,15 @@ int main(int argc, char* argv[]) {
     }
 
     // Build pipeline based on flags
-    std::vector<PipelineStage> pipeline;
-    if(do_generate) pipeline.push_back(opts.parallel_factor > 1 ? stage_generate_mpi : stage_generate);
-    if(do_sort) pipeline.push_back(stage_sort);
-    if(do_match) pipeline.push_back(stage_match);
-    if(do_uncompress) pipeline.push_back(stage_uncompress);
-    if(do_filter) pipeline.push_back(stage_filter);
+    if(do_generate) stage_generate(opts, paths);
+    if(do_sort) stage_sort(opts, paths);
+    if(do_match) stage_match(opts, paths);
+    if(do_uncompress) stage_uncompress(opts, paths);
+    if(do_filter) stage_filter(opts, paths);
     
-    // If no stages specified, run all (default full pipeline)
-    if(pipeline.empty()) {
-        pipeline = {opts.parallel_factor > 1 ? stage_generate_mpi : stage_generate, stage_sort, stage_match, stage_uncompress, stage_filter};
+    if(mpi_enabled) {
+        MPI_Finalize();
     }
-    
-    // Execute pipeline
-    if(run_pipeline(pipeline, opts, paths) > 0) return 1;
 
     return 0;
 }

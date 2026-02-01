@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <chrono>
 
+bool read_pair(std::ifstream& in, std::vector<int>& a, std::vector<int>& b);
 void write_seq_psd(const std::vector<int>& seq, const std::vector<double>& psd, std::ofstream& out);
 void write_seq_psd_invert(const std::vector<int>& seq, const std::vector<double>& psd, std::ofstream& out, const int BOUND);
 
