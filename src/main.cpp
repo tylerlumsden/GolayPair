@@ -232,6 +232,8 @@ int main(int argc, char* argv[]) {
     std::cout << "With paf-constant " << opts.paf_constant << "\n";
     std::cout << "And compression factor " << opts.compress[0] << "\n";
     std::cout << "Using directory " << opts.temp_dir << " To store temporary files\n";
+    std::cout << "With " << opts.job_count << " jobs" << "\n";
+    std::cout << "Current job: " << opts.job_id << "\n";
 
     const Paths paths(opts);
 

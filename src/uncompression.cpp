@@ -174,9 +174,7 @@ int uncompress_recursive(std::vector<int>& orig, const int COMPRESS, const int N
             std::vector<std::vector<int>> curr_depth;
             for(std::vector<int>& partial : prev_depth) {
                 uncompress_lambda(uncompress_lambda, partial, depth, depth + 1, [&](const std::vector<int>& partial_seq) {
-                    if(count % PROC_NUM == PROC_ID) {
-                        curr_depth.push_back(partial_seq);
-                    }
+                    curr_depth.push_back(partial_seq);
                     ++count;
                 });
             }
@@ -184,7 +182,16 @@ int uncompress_recursive(std::vector<int>& orig, const int COMPRESS, const int N
         }
     }
 
-    for(std::vector<int>& partial_seq : prev_depth) {
+    std::vector<std::vector<int>> partial_list;
+    for(size_t i = 0; i < prev_depth.size(); ++i) {
+        if(static_cast<int>(i) % PROC_NUM == PROC_ID) {
+            partial_list.push_back(prev_depth[i]);
+        }
+    }
+
+    std::cout << "Partial size: " << partial_list.size() << "\n";
+
+    for(std::vector<int>& partial_seq : partial_list) {
         uncompress_lambda(uncompress_lambda, partial_seq, depth, orig.size(), [&](const std::vector<int>& full_seq) {
             const std::vector<double>& psd = FourierManager.calculate_psd(full_seq);
 
