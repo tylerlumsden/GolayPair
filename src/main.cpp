@@ -33,10 +33,6 @@ struct Paths {
     const std::string FILE_B;
     const std::string FILE_A_SORTED;
     const std::string FILE_B_SORTED;
-    const std::string FILE_A_REDUCE;
-    const std::string FILE_B_REDUCE;
-    const std::vector<std::string> FILE_A_REDUCE_LIST;
-    const std::vector<std::string> FILE_B_REDUCE_LIST;
     const std::string FILE_A_UNCOMPRESSED;
     const std::string FILE_B_UNCOMPRESSED;
     const std::string FILE_A_UNCOMPRESSED_SORTED;
@@ -52,8 +48,6 @@ struct Paths {
         , FILE_B(std::format("{}/{}-filtered-b", WORK_DIR, opts.order))
         , FILE_A_SORTED(FILE_A + ".sorted")
         , FILE_B_SORTED(FILE_B + ".sorted")
-        , FILE_A_REDUCE(FILE_A + ".reduce")
-        , FILE_B_REDUCE(FILE_B + ".reduce")
         , FILE_A_UNCOMPRESSED(std::format("{}/{}-uncompressed-a", WORK_DIR, opts.order))
         , FILE_B_UNCOMPRESSED(std::format("{}/{}-uncompressed-b", WORK_DIR, opts.order))
         , FILE_A_UNCOMPRESSED_SORTED(FILE_A_UNCOMPRESSED + ".sorted")
