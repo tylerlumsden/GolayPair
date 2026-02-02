@@ -166,21 +166,22 @@ int uncompress_recursive(std::vector<int>& orig, const int COMPRESS, const int N
     std::vector<int> seq;
     seq.resize(ORDER / NEWCOMPRESS);
     std::vector<std::vector<int>> prev_depth = {seq};
-
     size_t depth = 0;
-    long long count = 0;
-    for(; depth < orig.size() && count < 1000 * PROC_NUM; ++depth) {
-        count = 0;
-        std::vector<std::vector<int>> curr_depth;
-        for(std::vector<int>& partial : prev_depth) {
-            uncompress_lambda(uncompress_lambda, partial, depth, depth + 1, [&](const std::vector<int>& partial_seq) {
-                if(count % PROC_NUM == PROC_ID) {
-                    curr_depth.push_back(partial_seq);
-                }
-                ++count;
-            });
+    if(PROC_NUM > 1) {
+        long long count = 0;
+        for(; depth < orig.size() && count < 1000 * PROC_NUM; ++depth) {
+            count = 0;
+            std::vector<std::vector<int>> curr_depth;
+            for(std::vector<int>& partial : prev_depth) {
+                uncompress_lambda(uncompress_lambda, partial, depth, depth + 1, [&](const std::vector<int>& partial_seq) {
+                    if(count % PROC_NUM == PROC_ID) {
+                        curr_depth.push_back(partial_seq);
+                    }
+                    ++count;
+                });
+            }
+            prev_depth = curr_depth;
         }
-        prev_depth = curr_depth;
     }
 
     for(std::vector<int>& partial_seq : prev_depth) {

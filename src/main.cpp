@@ -111,6 +111,38 @@ int stage_match(const Options& opts, const Paths& paths) {
     return match_pairs(opts.order, opts.compress[0], opts.paf_constant, file_a_sorted, file_b_sorted, pairs);
 }
 
+int uncompress_line(const Options& opts, const Paths& paths, int linenumber) {
+    if(opts.compress[0] <= 1 || opts.compress.size() < 2) return 0;
+
+    std::cout << "Uncompressing line " << linenumber << "\n";
+
+
+    std::cout << "Uncompressing to new compression ratio " << opts.compress[1] << "\n";
+    std::ifstream in_pairs(paths.FILE_PAIRS_LIST[0]);
+
+    std::vector<int> a, b;
+    for(long long linecount = 0; read_pair(in_pairs, a, b); ++linecount) {
+        if(static_cast<int>(a.size()) != opts.order / opts.compress[0] || static_cast<int>(b.size()) != opts.order / opts.compress[0]) {
+            std::cerr << "Compressed pair has invalid length: " << a.size() << " " << b.size() << "\n";
+            return 1;
+        }
+
+        if(linecount == linenumber) {
+            std::ofstream outa(paths.FILE_A_LIST[opts.job_id]);
+            std::ofstream outb(paths.FILE_B_LIST[opts.job_id]);
+
+            uncompress_recursive(a, opts.compress[0], opts.compress[1], opts.paf_constant, opts.job_id, opts.job_count, outa, 0);
+            uncompress_recursive(b, opts.compress[0], opts.compress[1], opts.paf_constant, opts.job_id, opts.job_count, outb, 1);
+
+            return 0;
+        }
+        a.clear();
+        b.clear();
+    }
+
+    return 0;
+}
+
 int stage_uncompress(const Options& opts, const Paths& paths) {
     if(opts.compress[0] <= 1) return 0;
 
@@ -128,13 +160,15 @@ int stage_uncompress(const Options& opts, const Paths& paths) {
                 return 1;
             }
 
+            // TODO: Only compute the line if it is the work of the current job
+
             std::cout << "Uncompressing line: " << linecount << "\n";
 
             std::ofstream outa(paths.FILE_A_UNCOMPRESSED);
             std::ofstream outb(paths.FILE_B_UNCOMPRESSED);
 
-            uncompress_recursive(a, opts.compress[i], opts.compress[i + 1], opts.paf_constant, opts.job_id, opts.job_count, outa, 0);
-            uncompress_recursive(b, opts.compress[i], opts.compress[i + 1], opts.paf_constant, opts.job_id, opts.job_count, outb, 1);
+            uncompress_recursive(a, opts.compress[i], opts.compress[i + 1], opts.paf_constant, 0, 1, outa, 0);
+            uncompress_recursive(b, opts.compress[i], opts.compress[i + 1], opts.paf_constant, 0, 1, outb, 1);
             outa.close();
             outb.close();
 
@@ -165,6 +199,7 @@ int main(int argc, char* argv[]) {
     bool do_uncompress = false;
     bool do_filter = false;
     bool mpi_enabled = false;
+    std::optional<int> linenumber = std::nullopt;
 
     CLI::App app{"Complementary Pairs Pipeline"};
 
@@ -174,6 +209,7 @@ int main(int argc, char* argv[]) {
     app.add_option("-j,--jobid", opts.job_id, "Set job id (default=0)");
     app.add_option("-n,--numjob", opts.job_count, "Set number of jobs (default=1)");
     app.add_option("-d,--dir", opts.temp_dir, "Set directory for populating temporary files (default=result)");
+    app.add_flag("-l,--line", linenumber, "Line number to uncompress (default=nullopt)");
     app.add_flag("--full", do_full, "Run full pipeline");
     app.add_flag("--generate", do_generate, "Run generation stage");
     app.add_flag("--sort", do_sort, "Run sorting stage");
@@ -212,6 +248,11 @@ int main(int argc, char* argv[]) {
     if(ec) {
         std::cerr << "Failed to create temp directories: " << ec.message() << "\n";
         return 1;
+    }
+
+    if(linenumber.has_value()) {
+        uncompress_line(opts, paths, linenumber.value());
+        return 0;
     }
 
     // Build pipeline based on flags
