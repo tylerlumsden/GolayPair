@@ -6,7 +6,6 @@
 #include <format>
 #include <fstream>
 #include <functional>
-#include <mpi.h>
 
 #include "constants.h"
 #include "generate_hybrid.h"
