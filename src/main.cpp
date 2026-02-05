@@ -90,8 +90,8 @@ int stage_generate(const Options& opts, const Paths& paths) {
 int stage_sort(const Options& opts, const Paths& paths) {
     std::cout << "Sorting Candidates\n";
 
-    if(GNU_sort(paths.FILE_A_LIST, paths.FILE_A_SORTED) > 0) return 1;
-    if(GNU_sort(paths.FILE_B_LIST, paths.FILE_B_SORTED) > 0) return 1;
+    if(GNU_sort(paths.FILE_A_LIST, paths.FILE_A_SORTED, paths.WORK_DIR) > 0) return 1;
+    if(GNU_sort(paths.FILE_B_LIST, paths.FILE_B_SORTED, paths.WORK_DIR) > 0) return 1;
 
     return 0;
 }
@@ -165,8 +165,8 @@ int stage_uncompress(const Options& opts, const Paths& paths) {
             outa.close();
             outb.close();
 
-            GNU_sort({paths.FILE_A_UNCOMPRESSED}, paths.FILE_A_UNCOMPRESSED_SORTED);
-            GNU_sort({paths.FILE_B_UNCOMPRESSED}, paths.FILE_B_UNCOMPRESSED_SORTED);
+            GNU_sort({paths.FILE_A_UNCOMPRESSED}, paths.FILE_A_UNCOMPRESSED_SORTED, paths.WORK_DIR);
+            GNU_sort({paths.FILE_B_UNCOMPRESSED}, paths.FILE_B_UNCOMPRESSED_SORTED, paths.WORK_DIR);
             std::ifstream ina(paths.FILE_A_UNCOMPRESSED_SORTED);
             std::ifstream inb(paths.FILE_B_UNCOMPRESSED_SORTED);
             match_pairs(opts.order, opts.compress[i + 1], opts.paf_constant, ina, inb, out_pairs);
