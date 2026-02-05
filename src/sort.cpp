@@ -14,7 +14,7 @@ int GNU_sort(const std::vector<std::string>& IN_PATH, const std::string& OUT_PAT
         }
     );
 
-    std::string cmd = std::format("sort {} | uniq > {}", in_files, OUT_PATH);
+    std::string cmd = std::format("sort -S 2G -T {} {} | uniq > {}", OUT_PATH, in_files, OUT_PATH);
     if(std::system(cmd.c_str()) != 0) {
         std::cerr << "Sort failed\n";
         return 1;

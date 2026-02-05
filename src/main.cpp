@@ -212,6 +212,8 @@ int main(int argc, char* argv[]) {
     app.add_flag("--mpi", mpi_enabled, "Parallelize with MPI");
     CLI11_PARSE(app, argc, argv);
 
+    // TODO: Check verify that solutions can exist given order and paf constant
+
     // Verify that options are valid
     if(opts.job_count > 1 && do_full) {
         std::cerr << "Cannot run full pipeline with job_count > 1. Run the pipeline in separate steps\n";
