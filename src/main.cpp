@@ -24,6 +24,7 @@ struct Options {
     int job_count = 1;
     std::vector<int> compress = {1};
     std::string temp_dir = "results";
+    bool file_append = false;
 };
 
 struct Paths {
@@ -79,7 +80,7 @@ struct Paths {
 // Individual pipeline stages
 int stage_generate(const Options& opts, const Paths& paths) {
     std::cout << "Generating Candidates\n";
-
+    
     std::ofstream file_a(paths.FILE_A_LIST[opts.job_id]);
     std::ofstream file_b(paths.FILE_B_LIST[opts.job_id]);
     if(generate_hybrid(opts.order, opts.compress[0], opts.paf_constant, file_a, file_b, opts.job_id, opts.job_count) > 0) return 1;
@@ -96,9 +97,9 @@ int stage_sort(const Options& opts, const Paths& paths) {
     return 0;
 }
 
-int stage_match(const Options& opts, const Paths& paths) {
+int stage_match(const Options& opts, const Paths& paths, std::ios::openmode open_mode = std::ios::trunc) {
     std::cout << "Matching Candidates\n";
-    std::ofstream pairs(paths.FILE_PAIRS_LIST.front());
+    std::ofstream pairs(paths.FILE_PAIRS_LIST.front(), open_mode);
     std::ifstream file_a_sorted(paths.FILE_A_SORTED);
     std::ifstream file_b_sorted(paths.FILE_B_SORTED);
     return match_pairs(opts.order, opts.compress[0], opts.paf_constant, file_a_sorted, file_b_sorted, pairs);
@@ -192,6 +193,7 @@ int main(int argc, char* argv[]) {
     bool do_uncompress = false;
     bool do_filter = false;
     bool mpi_enabled = false;
+    bool file_append = false;
     std::optional<int> linenumber = std::nullopt;
 
     CLI::App app{"Complementary Pairs Pipeline"};
@@ -202,6 +204,7 @@ int main(int argc, char* argv[]) {
     app.add_option("-j,--jobid", opts.job_id, "Set job id (default=0)");
     app.add_option("-n,--numjob", opts.job_count, "Set number of jobs (default=1)");
     app.add_option("-d,--dir", opts.temp_dir, "Set directory for populating temporary files (default=result)");
+    app.add_flag("-a,--append", file_append, "Matched pairs files are opened to append instead of overwrite");
     app.add_flag("-l,--line", linenumber, "Line number to uncompress (default=nullopt)");
     app.add_flag("--full", do_full, "Run full pipeline");
     app.add_flag("--generate", do_generate, "Run generation stage");
@@ -255,7 +258,7 @@ int main(int argc, char* argv[]) {
     // Build pipeline based on flags
     if(do_full || do_generate) stage_generate(opts, paths);
     if(do_full || do_sort) stage_sort(opts, paths);
-    if(do_full || do_match) stage_match(opts, paths);
+    if(do_full || do_match) stage_match(opts, paths, file_append ? std::ios::app : std::ios::trunc);
     if(do_full || do_uncompress) stage_uncompress(opts, paths);
     if(do_full || do_filter) stage_filter(opts, paths);
 
