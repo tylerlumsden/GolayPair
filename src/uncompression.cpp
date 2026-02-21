@@ -139,7 +139,7 @@ int uncompress_recursive(std::vector<int>& orig, const int COMPRESS, const int N
     for(vector<int> perm : perma) {
         newfirsta.push_back(perm);
     }
-
+    
     auto uncompress_lambda = [&](const auto& self, std::vector<int>& seq, size_t curr_index, size_t depth_index, std::function<void(const std::vector<int>&)> callback) {
         if(curr_index >= orig.size() || curr_index == depth_index) {
             callback(seq);

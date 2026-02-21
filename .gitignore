@@ -6,3 +6,5 @@ bin/
 Makefile
 *.cmake
 build/
+.cache/
+compile_commands.json
