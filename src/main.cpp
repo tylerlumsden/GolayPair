@@ -1,21 +1,13 @@
-#include <iostream>
-#include <vector>
-#include <string>
-#include <stdexcept>
-#include <filesystem>
-#include <format>
-#include <fstream>
-#include <functional>
-
-#include "constants.h"
+#include "CLI11.hpp"
 #include "generate_hybrid.h"
 #include "sort.h"
 #include "match_pairs.h"
 #include "uncompression.h"
-#include "filter.h"
-#include "CLI11.hpp"
-#include "generate_orderly.h"
 #include "io.h"
+#include "filter.h"
+
+#include <format>
+#include <string>
 
 struct Options {
     int order;
@@ -24,128 +16,112 @@ struct Options {
     int job_count = 1;
     std::vector<int> compress = {1};
     std::string temp_dir = "results";
-    bool file_append = false;
+
+    std::string work_dir() const {
+        return std::format("{}/order-{}", temp_dir, order);
+    }
 };
 
-struct Paths {
-    const std::string WORK_DIR;
-    const std::string FILE_A;
-    const std::string FILE_B;
-    const std::string FILE_A_SORTED;
-    const std::string FILE_B_SORTED;
-    const std::string FILE_A_UNCOMPRESSED;
-    const std::string FILE_B_UNCOMPRESSED;
-    const std::string FILE_A_UNCOMPRESSED_SORTED;
-    const std::string FILE_B_UNCOMPRESSED_SORTED;
-    const std::vector<std::string> FILE_A_LIST;
-    const std::vector<std::string> FILE_B_LIST;
-    const std::vector<std::string> FILE_PAIRS_LIST;
-    const std::string FILE_PAIRS_FILTERED;
-    
-    Paths(const Options& opts)
-        : WORK_DIR(std::format("{}/order-{}", opts.temp_dir, opts.order))
-        , FILE_A(std::format("{}/{}-filtered-a", WORK_DIR, opts.order))
-        , FILE_B(std::format("{}/{}-filtered-b", WORK_DIR, opts.order))
-        , FILE_A_SORTED(FILE_A + ".sorted")
-        , FILE_B_SORTED(FILE_B + ".sorted")
-        , FILE_A_UNCOMPRESSED(std::format("{}/{}-uncompressed-a", WORK_DIR, opts.order))
-        , FILE_B_UNCOMPRESSED(std::format("{}/{}-uncompressed-b", WORK_DIR, opts.order))
-        , FILE_A_UNCOMPRESSED_SORTED(FILE_A_UNCOMPRESSED + ".sorted")
-        , FILE_B_UNCOMPRESSED_SORTED(FILE_B_UNCOMPRESSED + ".sorted")
-        , FILE_A_LIST ([&] {
-            std::vector<std::string> list;
-            for(int i = 0; i < opts.job_count; ++i) {
-                list.push_back(FILE_A + "-" + std::to_string(i));
-            }
-            return list;
-        }())
-        , FILE_B_LIST ([&] {
-            std::vector<std::string> list;
-            for(int i = 0; i < opts.job_count; ++i) {
-                list.push_back(FILE_B + "-" + std::to_string(i));
-            }
-            return list;
-        }())
-        , FILE_PAIRS_LIST([&] {
-            std::vector<std::string> list;
-            for(int compress : opts.compress) {
-                list.push_back(std::format("{}/{}-pairs-{}", WORK_DIR, opts.order, compress));
-            }
-            return list;
-        }())
-        , FILE_PAIRS_FILTERED(std::format("{}/{}-pairs-unique", WORK_DIR, opts.order))
-    {}
+struct Gen_Options {
+    std::string file_prefix = "filtered";
 };
+
+using Candidate_Files = std::pair<std::vector<std::string>, std::vector<std::string>>;
+Candidate_Files candidate_output(const Options& opts, const std::string& prefix) {
+    const std::string file_a = std::format("{}/{}-{}-a", opts.work_dir(), opts.order, prefix);
+    const std::string file_b = std::format("{}/{}-{}-b", opts.work_dir(), opts.order, prefix);
+    std::vector<std::string> list_a;
+    std::vector<std::string> list_b;
+    for(int i = 0; i < opts.job_count; ++i) {
+        std::string indexed_file_a = file_a + "#" + std::to_string(i);
+        list_a.push_back(indexed_file_a);
+        std::string indexed_file_b = file_b + "#" + std::to_string(i);
+        list_b.push_back(indexed_file_b);
+    }
+    return make_pair(list_a, list_b);
+}
 
 // Individual pipeline stages
-int stage_generate(const Options& opts, const Paths& paths) {
-    std::cout << "Generating Candidates\n";
-    
-    std::ofstream file_a(paths.FILE_A_LIST[opts.job_id]);
-    std::ofstream file_b(paths.FILE_B_LIST[opts.job_id]);
+int stage_generate(const Options& opts, const Candidate_Files& file_list) {
+    std::string outfile_a = file_list.first[opts.job_id];
+    std::string outfile_b = file_list.second[opts.job_id];
+    std::ofstream file_a(outfile_a);
+    std::ofstream file_b(outfile_b);
     if(generate_hybrid(opts.order, opts.compress[0], opts.paf_constant, file_a, file_b, opts.job_id, opts.job_count) > 0) return 1;
 
     return 0;
 }
 
-int stage_sort(const Options& opts, const Paths& paths) {
+struct Sort_Options {
+    std::string input_prefix = "filtered";
+    std::string output_prefix = "filtered_sorted";
+};
+
+using Sorted_Files = std::pair<std::string, std::string>;
+Sorted_Files sort_output(const Options& opts, const std::string& prefix) {
+    std::string sorted_a = std::format("{}/{}-{}-a", opts.work_dir(), opts.order, prefix);
+    std::string sorted_b = std::format("{}/{}-{}-b", opts.work_dir(), opts.order, prefix);
+
+    return make_pair(sorted_a, sorted_b);
+}
+
+int stage_sort(const Options& opts, const Candidate_Files& file_list, const Sorted_Files& files_sorted) {
     std::cout << "Sorting Candidates\n";
 
-    if(GNU_sort(paths.FILE_A_LIST, paths.FILE_A_SORTED, paths.WORK_DIR) > 0) return 1;
-    if(GNU_sort(paths.FILE_B_LIST, paths.FILE_B_SORTED, paths.WORK_DIR) > 0) return 1;
+    if(GNU_sort(file_list.first, files_sorted.first, opts.work_dir()) > 0) return 1;
+    if(GNU_sort(file_list.second, files_sorted.second, opts.work_dir()) > 0) return 1;
 
     return 0;
 }
 
-int stage_match(const Options& opts, const Paths& paths, std::ios::openmode open_mode = std::ios::trunc) {
+struct Match_Options {
+    std::string input_prefix = "filtered_sorted";
+    std::string output_prefix = "pairs";
+    bool file_append = false;
+};
+
+using Match_File = std::string;
+Match_File match_output(const Options& opts, const std::string& prefix, int compress_index) {
+    return std::format("{}/{}-{}-{}", opts.work_dir(), opts.order, prefix, opts.compress[compress_index]);
+}
+
+int stage_match(const Options& opts, const Sorted_Files& files_sorted, const Match_File& files_matched, std::ios::openmode open_mode = std::ios::trunc) {
     std::cout << "Matching Candidates\n";
-    std::ofstream pairs(paths.FILE_PAIRS_LIST.front(), open_mode);
-    std::ifstream file_a_sorted(paths.FILE_A_SORTED);
-    std::ifstream file_b_sorted(paths.FILE_B_SORTED);
+    std::ofstream pairs(files_matched, open_mode);
+    std::ifstream file_a_sorted(files_sorted.first);
+    std::ifstream file_b_sorted(files_sorted.second);
     return match_pairs(opts.order, opts.compress[0], opts.paf_constant, file_a_sorted, file_b_sorted, pairs);
 }
 
-int uncompress_line(const Options& opts, const Paths& paths, int linenumber) {
-    if(opts.compress[0] <= 1 || opts.compress.size() < 2) return 0;
+struct Uncompress_Options {
+    std::string input_prefix = "pairs";
+    std::string internal_prefix = "filtered";
+    std::string sorted_prefix = "filtered_sorted";
+    std::string output_prefix = "pairs";
+};
 
-    std::cout << "Uncompressing line " << linenumber << "\n";
-
-
-    std::cout << "Uncompressing to new compression ratio " << opts.compress[1] << "\n";
-    std::ifstream in_pairs(paths.FILE_PAIRS_LIST[0]);
-
-    std::vector<int> a, b;
-    for(long long linecount = 0; read_pair(in_pairs, a, b); ++linecount) {
-        if(static_cast<int>(a.size()) != opts.order / opts.compress[0] || static_cast<int>(b.size()) != opts.order / opts.compress[0]) {
-            std::cerr << "Compressed pair has invalid length: " << a.size() << " " << b.size() << "\n";
-            return 1;
-        }
-
-        if(linecount == linenumber) {
-            std::ofstream outa(paths.FILE_A_LIST[opts.job_id]);
-            std::ofstream outb(paths.FILE_B_LIST[opts.job_id]);
-
-            uncompress_recursive(a, opts.compress[0], opts.compress[1], opts.paf_constant, opts.job_id, opts.job_count, outa, 0);
-            uncompress_recursive(b, opts.compress[0], opts.compress[1], opts.paf_constant, opts.job_id, opts.job_count, outb, 1);
-
-            return 0;
-        }
-        a.clear();
-        b.clear();
-    }
-
-    return 0;
-}
-
-int stage_uncompress(const Options& opts, const Paths& paths) {
+int stage_uncompress(const Options& opts, const Uncompress_Options& uncompress_opts) {
     if(opts.compress[0] <= 1) return 0;
+
+    auto [files_a, files_b] = candidate_output(opts, uncompress_opts.internal_prefix);
+
+    std::vector<std::string> input_list;
+    for(size_t i = 0; i < opts.compress.size(); i++) {
+        std::string prefix;
+        if(i == 0) {
+            prefix = uncompress_opts.input_prefix;
+        } else {
+            prefix = uncompress_opts.output_prefix;
+        }
+        input_list.push_back(match_output(opts, prefix, i));
+    }
 
     std::cout << "Running Uncompression Pipeline\n";
     for(size_t i = 0; i < opts.compress.size() - 1; i++) {
         std::cout << "Uncompressing to new compression ratio " << opts.compress[i + 1] << "\n";
 
-        std::ifstream in_pairs(paths.FILE_PAIRS_LIST[i]);
-        std::ofstream out_pairs(paths.FILE_PAIRS_LIST[i + 1]);
+        std::ifstream in_pairs(input_list[i]);
+        std::ofstream out_pairs(input_list[i + 1]);
 
         std::vector<int> a, b;
         for(long long linecount = 0; read_pair(in_pairs, a, b); ++linecount) {
@@ -158,18 +134,20 @@ int stage_uncompress(const Options& opts, const Paths& paths) {
 
             std::cout << "Uncompressing line: " << linecount << "\n";
 
-            std::ofstream outa(paths.FILE_A_UNCOMPRESSED);
-            std::ofstream outb(paths.FILE_B_UNCOMPRESSED);
+            std::ofstream outa(files_a[opts.job_id]);
+            std::ofstream outb(files_b[opts.job_id]);
 
             uncompress_recursive(a, opts.compress[i], opts.compress[i + 1], opts.paf_constant, 0, 1, outa, 0);
             uncompress_recursive(b, opts.compress[i], opts.compress[i + 1], opts.paf_constant, 0, 1, outb, 1);
             outa.close();
             outb.close();
 
-            GNU_sort({paths.FILE_A_UNCOMPRESSED}, paths.FILE_A_UNCOMPRESSED_SORTED, paths.WORK_DIR);
-            GNU_sort({paths.FILE_B_UNCOMPRESSED}, paths.FILE_B_UNCOMPRESSED_SORTED, paths.WORK_DIR);
-            std::ifstream ina(paths.FILE_A_UNCOMPRESSED_SORTED);
-            std::ifstream inb(paths.FILE_B_UNCOMPRESSED_SORTED);
+            auto [file_a_sorted, file_b_sorted] = sort_output(opts, uncompress_opts.sorted_prefix);
+
+            GNU_sort({files_a[opts.job_id]}, file_a_sorted, opts.work_dir());
+            GNU_sort({files_b[opts.job_id]}, file_b_sorted, opts.work_dir());
+            std::ifstream ina(file_a_sorted);
+            std::ifstream inb(file_b_sorted);
             match_pairs(opts.order, opts.compress[i + 1], opts.paf_constant, ina, inb, out_pairs);
 
             a.clear();
@@ -179,88 +157,117 @@ int stage_uncompress(const Options& opts, const Paths& paths) {
     return 0;
 }
 
-int stage_filter(const Options& opts, const Paths& paths) {
-    std::cout << "Filtering pairs of compression size " << opts.compress.back() << "\n";
-    return cache_filter(opts.order, opts.compress.back(), paths.FILE_PAIRS_LIST.back(), paths.FILE_PAIRS_FILTERED);
+struct Filter_Options {
+    std::string input_prefix = "pairs";
+    std::string output_prefix = "unique";
+};
+
+using Filter_File = std::string;
+Filter_File filter_output(const Options& opts, const std::string& prefix) {
+    return std::format("{}/{}-{}", opts.work_dir(), opts.order, prefix);
 }
- 
+
+int stage_filter(const Options& opts, const Filter_Options& filter_opts) {
+    std::cout << "Filtering pairs of compression size " << opts.compress.back() << "\n";
+    return cache_filter(
+        opts.order, 
+        opts.compress.back(), 
+        match_output(opts, filter_opts.input_prefix, opts.compress.size() - 1), 
+        filter_output(opts, filter_opts.output_prefix)
+    );
+}
+
+
 int main(int argc, char* argv[]) {
     Options opts;
-    bool do_full = false;
-    bool do_generate = false;
-    bool do_sort = false;
-    bool do_match = false;
-    bool do_uncompress = false;
-    bool do_filter = false;
-    bool mpi_enabled = false;
-    bool file_append = false;
-    std::optional<int> linenumber = std::nullopt;
 
     CLI::App app{"Complementary Pairs Pipeline"};
 
+    // SUBCOMMANDS
+
+    auto all = app.add_subcommand("all", "Run all steps in the pipeline");
+
+    Gen_Options gen_opts;
+    auto gen = app.add_subcommand("gen", "Candidate generation step");
+    gen->add_option("--output,-o", gen_opts.file_prefix, "Output file");
+
+    Sort_Options sort_opts;
+    auto sort = app.add_subcommand("sort", "File sorting step");
+    sort->add_option("--input,-i", sort_opts.input_prefix, "Input file");
+    sort->add_option("--output,-o", sort_opts.output_prefix, "Output file");
+
+    Match_Options match_opts;
+    auto match = app.add_subcommand("match", "Candidate matching step");
+    match->add_option("--input,-i", match_opts.input_prefix, "Input file");
+    match->add_option("--output,-o", match_opts.output_prefix, "Output file");
+    match->add_option("-a,--append", match_opts.file_append, "Matched pairs files are opened to append instead of overwrite");
+    
+    Uncompress_Options uncompress_opts;
+    auto uncompress = app.add_subcommand("uncompress", "Pair uncompression step");
+    uncompress->add_option("--input,-i", uncompress_opts.input_prefix, "Input file");
+    uncompress->add_option("--output,-o", uncompress_opts.output_prefix, "Output file");
+
+    Filter_Options filter_opts;
+    auto filter = app.add_subcommand("filter", "Pair equivalence filter step");
+    filter->add_option("--input,-i", uncompress_opts.input_prefix, "Input file");
+    filter->add_option("--output,-o", uncompress_opts.output_prefix, "Output file");
+
+    // Require a minimum of one subcommand, and any maximum
+    app.require_subcommand(1, 0);
+
+    // GLOBAL OPTIONS
     app.add_option("order", opts.order, "Order")->required();
     app.add_option("-c,--compress", opts.compress, "Set compression level (default=1)");
     app.add_option("--paf", opts.paf_constant, "Set PAF constant (default=0)");
     app.add_option("-j,--jobid", opts.job_id, "Set job id (default=0)");
     app.add_option("-n,--numjob", opts.job_count, "Set number of jobs (default=1)");
     app.add_option("-d,--dir", opts.temp_dir, "Set directory for populating temporary files (default=result)");
-    app.add_flag("-a,--append", file_append, "Matched pairs files are opened to append instead of overwrite");
-    app.add_flag("-l,--line", linenumber, "Line number to uncompress (default=nullopt)");
-    app.add_flag("--full", do_full, "Run full pipeline");
-    app.add_flag("--generate", do_generate, "Run generation stage");
-    app.add_flag("--sort", do_sort, "Run sorting stage");
-    app.add_flag("--match", do_match, "Run matching stage");
-    app.add_flag("--uncompress", do_uncompress, "Run uncompression stage");
-    app.add_flag("--filter", do_filter, "Run filtering stage");
-    app.add_flag("--mpi", mpi_enabled, "Parallelize with MPI");
     CLI11_PARSE(app, argc, argv);
 
-    // TODO: Check verify that solutions can exist given order and paf constant
-
-    // Verify that options are valid
-    if(opts.job_count > 1 && do_full) {
-        std::cerr << "Cannot run full pipeline with job_count > 1. Run the pipeline in separate steps\n";
-        return 1;
-    }
-    if(opts.order % opts.compress[0] != 0) {
-        std::cerr << "Invalid compression value: " << opts.compress[0] << " does not divide " << opts.order << "\n";
-        return 1;
-    }
-    for(size_t i = 0; i < opts.compress.size() - 1; i++) {
-        if(opts.compress[i] % opts.compress[i + 1] != 0) {
-            std::cerr << "Invalid compression value: " << opts.compress[i + 1] << " does not divide " << opts.compress[i] << "\n";
-            return 1;
-        }
-    }
-
-    std::cout << "Searching for complementary sequences of order " << opts.order << "\n";
-    std::cout << "With paf-constant " << opts.paf_constant << "\n";
-    std::cout << "And compression factor " << opts.compress[0] << "\n";
-    std::cout << "Using directory " << opts.temp_dir << " To store temporary files\n";
-    std::cout << "With " << opts.job_count << " jobs" << "\n";
-    std::cout << "Current job: " << opts.job_id << "\n";
-
-    const Paths paths(opts);
-
-    // Make sure temporary directories are created beforehand
     std::error_code ec;
-    std::filesystem::create_directories(paths.WORK_DIR, ec);
+    std::filesystem::create_directories(opts.work_dir(), ec);
     if(ec) {
         std::cerr << "Failed to create temp directories: " << ec.message() << "\n";
         return 1;
     }
 
-    if(linenumber.has_value()) {
-        uncompress_line(opts, paths, linenumber.value());
-        return 0;
+    if(*gen || *all) {
+        if(stage_generate(
+            opts, 
+            candidate_output(opts, gen_opts.file_prefix)
+        )) return 1;            
     }
 
-    // Build pipeline based on flags
-    if(do_full || do_generate) stage_generate(opts, paths);
-    if(do_full || do_sort) stage_sort(opts, paths);
-    if(do_full || do_match) stage_match(opts, paths, file_append ? std::ios::app : std::ios::trunc);
-    if(do_full || do_uncompress) stage_uncompress(opts, paths);
-    if(do_full || do_filter) stage_filter(opts, paths);
+    if(*sort || *all) {
+        if(stage_sort(
+            opts, 
+            candidate_output(opts, sort_opts.input_prefix), 
+            sort_output(opts, sort_opts.output_prefix)
+        )) return 1;
+    }
+    
+    if(*match || *all) {
+        if(stage_match(
+            opts, 
+            sort_output(opts, match_opts.input_prefix), 
+            match_output(opts, match_opts.output_prefix, 0),
+            match_opts.file_append ? std::ios::app : std::ios::trunc
+        )) return 1;
+    }
 
+    if(*uncompress || *all) {
+        if(stage_uncompress(
+            opts, 
+            uncompress_opts
+        )) return 1;
+    }
+
+    if(*filter || *all) {
+        if(stage_filter(
+            opts,
+            filter_opts
+        )) return 1;
+    }
+    
     return 0;
 }
