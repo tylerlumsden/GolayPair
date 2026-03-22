@@ -7,6 +7,7 @@
 #include "filter.h"
 
 #include <format>
+#include <optional>
 #include <string>
 
 struct Options {
@@ -101,6 +102,7 @@ struct Uncompress_Options {
     std::string internal_prefix = "filtered";
     std::string sorted_prefix = "filtered_sorted";
     std::string output_prefix = "pairs";
+    std::optional<long long> line_number;
 };
 
 int stage_uncompress(const Options& opts, const Uncompress_Options& uncompress_opts) {
@@ -110,12 +112,7 @@ int stage_uncompress(const Options& opts, const Uncompress_Options& uncompress_o
 
     std::vector<std::string> input_list;
     for(size_t i = 0; i < opts.compress.size(); i++) {
-        std::string prefix;
-        if(i == 0) {
-            prefix = uncompress_opts.input_prefix;
-        } else {
-            prefix = uncompress_opts.output_prefix;
-        }
+        std::string prefix = (i == 0) ? uncompress_opts.input_prefix : uncompress_opts.output_prefix;
         input_list.push_back(match_output(opts, prefix, i));
     }
 
@@ -128,30 +125,37 @@ int stage_uncompress(const Options& opts, const Uncompress_Options& uncompress_o
 
         std::vector<int> a, b;
         for(long long linecount = 0; read_pair(in_pairs, a, b); ++linecount) {
+            if(uncompress_opts.line_number.has_value()) {
+                if(linecount < *uncompress_opts.line_number - 1) { a.clear(); b.clear(); continue; }
+                if(linecount > *uncompress_opts.line_number - 1) break;
+            }
             if(static_cast<int>(a.size()) != opts.order / opts.compress[i] || static_cast<int>(b.size()) != opts.order / opts.compress[i]) {
                 std::cerr << "Compressed pair has invalid length: " << a.size() << " " << b.size() << "\n";
                 return 1;
             }
-
-            // TODO: Only compute the line if it is the work of the current job
 
             std::cout << "Uncompressing line: " << linecount << "\n";
 
             std::ofstream outa(files_a[opts.job_id]);
             std::ofstream outb(files_b[opts.job_id]);
 
-            uncompress_recursive(a, opts.compress[i], opts.compress[i + 1], opts.paf_constant, 0, 1, outa, 0);
-            uncompress_recursive(b, opts.compress[i], opts.compress[i + 1], opts.paf_constant, 0, 1, outb, 1);
-            outa.close();
-            outb.close();
+            if(uncompress_opts.line_number.has_value()) {
+                uncompress_recursive(a, opts.compress[i], opts.compress[i + 1], opts.paf_constant, opts.job_id, opts.job_count, outa, 0);
+                uncompress_recursive(b, opts.compress[i], opts.compress[i + 1], opts.paf_constant, opts.job_id, opts.job_count, outb, 1);
+            } else {
+                uncompress_recursive(a, opts.compress[i], opts.compress[i + 1], opts.paf_constant, 0, 1, outa, 0);
+                uncompress_recursive(b, opts.compress[i], opts.compress[i + 1], opts.paf_constant, 0, 1, outb, 1);
+                outa.close();
+                outb.close();
 
-            auto [file_a_sorted, file_b_sorted] = sort_output(opts, uncompress_opts.sorted_prefix);
+                auto [file_a_sorted, file_b_sorted] = sort_output(opts, uncompress_opts.sorted_prefix);
 
-            GNU_sort({files_a[opts.job_id]}, file_a_sorted, opts.work_dir());
-            GNU_sort({files_b[opts.job_id]}, file_b_sorted, opts.work_dir());
-            std::ifstream ina(file_a_sorted);
-            std::ifstream inb(file_b_sorted);
-            match_pairs(opts.order, opts.compress[i + 1], opts.paf_constant, ina, inb, out_pairs);
+                GNU_sort({files_a[opts.job_id]}, file_a_sorted, opts.work_dir());
+                GNU_sort({files_b[opts.job_id]}, file_b_sorted, opts.work_dir());
+                std::ifstream ina(file_a_sorted);
+                std::ifstream inb(file_b_sorted);
+                match_pairs(opts.order, opts.compress[i + 1], opts.paf_constant, ina, inb, out_pairs);
+            }
 
             a.clear();
             b.clear();
@@ -209,6 +213,9 @@ int main(int argc, char* argv[]) {
     auto uncompress = app.add_subcommand("uncompress", "Pair uncompression step");
     uncompress->add_option("--input,-i", uncompress_opts.input_prefix, "Input file");
     uncompress->add_option("--output,-o", uncompress_opts.output_prefix, "Output file");
+    uncompress->add_option("--internal", uncompress_opts.internal_prefix, "Internal candidate file prefix");
+    uncompress->add_option("--sorted", uncompress_opts.sorted_prefix, "Sorted candidate file prefix");
+    uncompress->add_option("--line,-l", uncompress_opts.line_number, "Process only this line number (1-indexed)");
 
     Filter_Options filter_opts;
     auto filter = app.add_subcommand("filter", "Pair equivalence filter step");
