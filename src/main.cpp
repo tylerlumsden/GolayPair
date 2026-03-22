@@ -42,11 +42,10 @@ Candidate_Files candidate_output(const Options& opts, const std::string& prefix)
 }
 
 // Individual pipeline stages
-int stage_generate(const Options& opts, const Candidate_Files& file_list) {
-    std::string outfile_a = file_list.first[opts.job_id];
-    std::string outfile_b = file_list.second[opts.job_id];
-    std::ofstream file_a(outfile_a);
-    std::ofstream file_b(outfile_b);
+int stage_generate(const Options& opts, const Gen_Options& gen_opts) {
+    auto [files_a, files_b] = candidate_output(opts, gen_opts.file_prefix);
+    std::ofstream file_a(files_a[opts.job_id]);
+    std::ofstream file_b(files_b[opts.job_id]);
     if(generate_hybrid(opts.order, opts.compress[0], opts.paf_constant, file_a, file_b, opts.job_id, opts.job_count) > 0) return 1;
 
     return 0;
@@ -65,11 +64,14 @@ Sorted_Files sort_output(const Options& opts, const std::string& prefix) {
     return make_pair(sorted_a, sorted_b);
 }
 
-int stage_sort(const Options& opts, const Candidate_Files& file_list, const Sorted_Files& files_sorted) {
+int stage_sort(const Options& opts, const Sort_Options& sort_opts) {
     std::cout << "Sorting Candidates\n";
 
-    if(GNU_sort(file_list.first, files_sorted.first, opts.work_dir()) > 0) return 1;
-    if(GNU_sort(file_list.second, files_sorted.second, opts.work_dir()) > 0) return 1;
+    auto [files_a, files_b] = candidate_output(opts, sort_opts.input_prefix);
+    auto [sorted_a, sorted_b] = sort_output(opts, sort_opts.output_prefix);
+
+    if(GNU_sort(files_a, sorted_a, opts.work_dir()) > 0) return 1;
+    if(GNU_sort(files_b, sorted_b, opts.work_dir()) > 0) return 1;
 
     return 0;
 }
@@ -85,12 +87,13 @@ Match_File match_output(const Options& opts, const std::string& prefix, int comp
     return std::format("{}/{}-{}-{}", opts.work_dir(), opts.order, prefix, opts.compress[compress_index]);
 }
 
-int stage_match(const Options& opts, const Sorted_Files& files_sorted, const Match_File& files_matched, std::ios::openmode open_mode = std::ios::trunc) {
+int stage_match(const Options& opts, const Match_Options& match_opts) {
     std::cout << "Matching Candidates\n";
-    std::ofstream pairs(files_matched, open_mode);
-    std::ifstream file_a_sorted(files_sorted.first);
-    std::ifstream file_b_sorted(files_sorted.second);
-    return match_pairs(opts.order, opts.compress[0], opts.paf_constant, file_a_sorted, file_b_sorted, pairs);
+    auto [file_a_sorted, file_b_sorted] = sort_output(opts, match_opts.input_prefix);
+    std::ifstream ifa(file_a_sorted);
+    std::ifstream ifb(file_b_sorted);
+    std::ofstream pairs(match_output(opts, match_opts.output_prefix, 0), match_opts.file_append ? std::ios::app : std::ios::trunc);
+    return match_pairs(opts.order, opts.compress[0], opts.paf_constant, ifa, ifb, pairs);
 }
 
 struct Uncompress_Options {
@@ -232,41 +235,23 @@ int main(int argc, char* argv[]) {
     }
 
     if(*gen || *all) {
-        if(stage_generate(
-            opts, 
-            candidate_output(opts, gen_opts.file_prefix)
-        )) return 1;            
+        if(stage_generate(opts, gen_opts)) return 1;
     }
 
     if(*sort || *all) {
-        if(stage_sort(
-            opts, 
-            candidate_output(opts, sort_opts.input_prefix), 
-            sort_output(opts, sort_opts.output_prefix)
-        )) return 1;
+        if(stage_sort(opts, sort_opts)) return 1;
     }
-    
+
     if(*match || *all) {
-        if(stage_match(
-            opts, 
-            sort_output(opts, match_opts.input_prefix), 
-            match_output(opts, match_opts.output_prefix, 0),
-            match_opts.file_append ? std::ios::app : std::ios::trunc
-        )) return 1;
+        if(stage_match(opts, match_opts)) return 1;
     }
 
     if(*uncompress || *all) {
-        if(stage_uncompress(
-            opts, 
-            uncompress_opts
-        )) return 1;
+        if(stage_uncompress(opts, uncompress_opts)) return 1;
     }
 
     if(*filter || *all) {
-        if(stage_filter(
-            opts,
-            filter_opts
-        )) return 1;
+        if(stage_filter(opts,filter_opts)) return 1;
     }
     
     return 0;
