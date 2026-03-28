@@ -140,8 +140,8 @@ int stage_uncompress(const Options& opts, const Uncompress_Options& uncompress_o
             std::ofstream outb(files_b[opts.job_id]);
 
             if(uncompress_opts.line_number.has_value()) {
-                uncompress_recursive(a, opts.compress[i], opts.compress[i + 1], opts.paf_constant, opts.job_id, opts.job_count, outa, 0);
-                uncompress_recursive(b, opts.compress[i], opts.compress[i + 1], opts.paf_constant, opts.job_id, opts.job_count, outb, 1);
+                uncompress_gpu(a, opts.compress[i], opts.compress[i + 1], opts.paf_constant, opts.job_id, opts.job_count, outa, 0);
+                uncompress_gpu(b, opts.compress[i], opts.compress[i + 1], opts.paf_constant, opts.job_id, opts.job_count, outb, 1);
             } else {
                 uncompress_recursive(a, opts.compress[i], opts.compress[i + 1], opts.paf_constant, 0, 1, outa, 0);
                 uncompress_recursive(b, opts.compress[i], opts.compress[i + 1], opts.paf_constant, 0, 1, outb, 1);

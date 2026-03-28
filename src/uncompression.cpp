@@ -23,9 +23,10 @@
 #include"io.h"
 #include <thread>
 #include <filesystem>
+#include "uncompression.h"
 
 int uncompress_recursive(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ofstream& outfile, int seqflag);
-
+int uncompress_gpu(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ofstream& outfile, int seqflag);
 
 int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ifstream& IN_PAIRS, std::ofstream& OUT_PAIRS, const std::string& WORK_DIR) {
     const std::string FILE_A = std::format("{}/{}-uncompressed-a-{}", WORK_DIR, ORDER, PROC_ID);
@@ -62,8 +63,8 @@ int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOM
             seqb.push_back(seq[i]);
         }
 
-        uncompress_recursive(seqa, COMPRESS, NEWCOMPRESS, PAF_CONSTANT, PROC_ID, PROC_NUM, outa, 1);
-        uncompress_recursive(seqb, COMPRESS, NEWCOMPRESS, PAF_CONSTANT, PROC_ID, PROC_NUM, outb, 0);
+        uncompress_gpu(seqa, COMPRESS, NEWCOMPRESS, PAF_CONSTANT, PROC_ID, PROC_NUM, outa, 1);
+        uncompress_gpu(seqb, COMPRESS, NEWCOMPRESS, PAF_CONSTANT, PROC_ID, PROC_NUM, outb, 0);
         outa.close();
         outb.close();
 
@@ -73,6 +74,42 @@ int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOM
         std::ifstream inb(FILE_B_SORTED);
         match_pairs(ORDER, NEWCOMPRESS, PAF_CONSTANT, ina, inb, OUT_PAIRS);
     }
+
+    return 0;
+}
+
+int uncompress_gpu(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ofstream& outfile, int seqflag) {
+    const int ORDER = orig.size() * COMPRESS;
+
+    Fourier FourierManager = Fourier(ORDER / NEWCOMPRESS);
+
+    std::set<int> alphabet = getalphabet(COMPRESS);
+
+    std::set<int> newalphabet = getalphabet(NEWCOMPRESS);
+
+    std::vector<std::vector<int>> parts = getCombinations(COMPRESS / NEWCOMPRESS, newalphabet);
+    std::vector<std::vector<int>> partition;
+
+    std::map<int, std::vector<std::vector<int>>> partitions;
+
+    //generate all permutations of possible decompositions for each letter in the alphabet
+    for(int letter : alphabet) {
+        partition.clear();
+        for(std::vector<int> part : parts) {
+            int sum = 0;
+            for(long unsigned int i = 0; i < part.size(); i++) {
+                sum += part[i];
+            }
+            if(sum == letter) {
+                do {
+                    partition.push_back(part);
+                } while(next_permutation(part.begin(), part.end()));
+            }
+        }
+        partitions.insert(make_pair(letter, partition));
+    }
+
+    uncompress_kernel(orig, partitions, ORDER / NEWCOMPRESS);
 
     return 0;
 }
@@ -207,3 +244,4 @@ int uncompress_recursive(std::vector<int>& orig, const int COMPRESS, const int N
 
     return 0;
 }
+
