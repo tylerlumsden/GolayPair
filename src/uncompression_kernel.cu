@@ -2,12 +2,21 @@
 #include <map>
 #include <span>
 #include <cstdio>
-#include<cstdint>
+#include <cstdint>
+#include <algorithm>
 
 #include <boost/multiprecision/cpp_int.hpp>
 #include <thrust/device_vector.h>
 #include <cuda/std/mdspan>
 #include <cuda/std/span>
+
+void check_cuda_error(cudaError_t err) {
+  if(err != cudaSuccess) {
+    throw std::runtime_error("CUDA malloc failed: " + std::string(cudaGetErrorString(err)));
+  }
+}
+
+using BigInt = boost::multiprecision::cpp_int;
 
 using PermMap = std::map<
   int,
@@ -111,8 +120,8 @@ class FlatPermList {
 
       indexes_size = host_indexes.size();
       data_size = host_data.size();
-      cudaMallocManaged(&indexes, host_indexes.size() * sizeof(int));
-      cudaMallocManaged(&data, host_data.size() * sizeof(int));
+      check_cuda_error(cudaMallocManaged(&indexes, host_indexes.size() * sizeof(int)));
+      check_cuda_error(cudaMallocManaged(&data, host_data.size() * sizeof(int)));
 
       cudaMemcpy(indexes, host_indexes.data(), host_indexes.size() * sizeof(int), cudaMemcpyHostToDevice);
       cudaMemcpy(data, host_data.data(), host_data.size() * sizeof(int), cudaMemcpyHostToDevice);
@@ -170,21 +179,25 @@ class MixedRadixPool {
 
   public:
     __host__
-    MixedRadixPool(const std::vector<int>& input_radices, boost::multiprecision::cpp_int input_num, uint64_t num_threads) {
+    MixedRadixPool(const std::vector<int>& input_radices, uint64_t num_threads, BigInt base = 0) {
       digits = input_radices.size();
-      cudaMallocManaged(&radices, digits * sizeof(int));
-      cudaMallocManaged(&base_num, digits * sizeof(int));
-      cudaMallocManaged(&num_pool, num_threads * digits * sizeof(int));
+      check_cuda_error(cudaMallocManaged(&radices, digits * sizeof(int)));
+      check_cuda_error(cudaMallocManaged(&base_num, digits * sizeof(int)));
+      check_cuda_error(cudaMallocManaged(&num_pool, num_threads * digits * sizeof(int)));
 
       for(int i = 0; i < digits; ++i) {
         radices[i] = input_radices[i];
       }
-      for(int i = digits - 1; i >= 0; --i) {
-        base_num[i] = static_cast<int>(input_num % radices[i]);
-        input_num /= radices[i];
-      }
+      set_base(base);
     }
 
+    void set_base(BigInt base) {
+      for(int i = digits - 1; i >= 0; --i) {
+        base_num[i] = static_cast<int>(base % radices[i]);
+        base /= radices[i];
+      }
+    } 
+    
     MixedRadixView view() {
       return MixedRadixView(num_pool, base_num, radices, digits);
     }
@@ -225,11 +238,19 @@ class OutputPool {
   public:
     __host__ 
     OutputPool(size_t len, uint64_t num_threads) : length(len) {
-      cudaMallocManaged(&values, num_threads * len * sizeof(int));
+      check_cuda_error(cudaMallocManaged(&values, num_bytes(len, num_threads)));
     }
 
     OutputView view() {
       return OutputView(values, length);
+    }
+
+    static size_t num_bytes(size_t len, uint64_t num_threads) {
+      return num_threads * len * sizeof(int);
+    }
+
+    static size_t items_storable(std::size_t len, std::size_t total_bytes) {
+      return total_bytes / (len * sizeof(int));
     }
 
     ~OutputPool() {
@@ -259,7 +280,18 @@ void cartesian_product(
   }
 }
 
+void print_vram() {
+  std::size_t free_mem, total_mem;
+  cudaMemGetInfo(&free_mem, &total_mem);
+
+  printf("Free:  %.2f GB\n", free_mem  / 1e9);
+  printf("Total: %.2f GB\n", total_mem / 1e9);
+  printf("Used:  %.2f GB\n", (total_mem - free_mem) / 1e9);
+}
+
 void uncompress_kernel(std::vector<int> seq, PermMap permutations, size_t new_length) {   
+  size_t seq_length = seq.size();
+
   FlatPermList flat_perm_list(permutations, seq);
 
   std::vector<int> radices;
@@ -267,27 +299,65 @@ void uncompress_kernel(std::vector<int> seq, PermMap permutations, size_t new_le
     radices.push_back(permutations[num].size());
   }
 
-  boost::multiprecision::cpp_int count = 1;
+  BigInt count = 1;
   for(int num : radices) {
     count *= num;
   }
 
-  int num_blocks = 1, threads_per_block = 256;
-  uint64_t num_threads = num_blocks * threads_per_block;
-  MixedRadixPool rad_pool(radices, 0, num_threads);
+  printf("Pre-allocation VRAM:\n");
+  print_vram();
 
-  OutputPool out_pool(new_length, num_threads);
-  OutputView out_view = out_pool.view();
+  std::size_t free_mem, total_mem;
+  cudaMemGetInfo(&free_mem, &total_mem);
 
-  cartesian_product<<<num_blocks, threads_per_block>>>(flat_perm_list.view(), rad_pool.view(), out_pool.view());
-  cudaDeviceSynchronize();
+  // TODO: free_mem division should be designated somewhere else
+  size_t items_per_iter = static_cast<size_t>(std::min(count, static_cast<BigInt>(OutputPool::items_storable(seq_length, free_mem / 8))));
 
-  printf("count: %s\n", count.str().c_str());
-  for(int i = 0; i < num_threads; ++i) {
-    printf("i: %d\n", i);
-    for(int j = 0; j < out_view[i].size(); ++j) {
-        printf("%d ", out_view[i][j]);
+  MixedRadixPool rad_pool(radices, items_per_iter);
+  OutputPool out_pool(new_length, items_per_iter);
+
+  printf("Post-allocation VRAM, %lu sequences allocated:\n", items_per_iter);
+  print_vram();
+
+  printf("Uncompressing with a count of: %s", count.str().c_str());
+  for(BigInt offset = 0; offset < count;) {
+    std::cout << offset << "\n";
+    
+    rad_pool.set_base(offset);
+    BigInt remaining = count - offset;
+
+    // TODO: refactor
+    std::size_t threads_per_block, num_blocks;
+    if(remaining < items_per_iter) {
+      if(remaining < 256) {
+        threads_per_block = static_cast<int>(remaining);
+        num_blocks = 1;
+      } else {
+        threads_per_block = std::min(static_cast<std::size_t>(256), items_per_iter);
+        num_blocks = static_cast<std::size_t>(remaining / static_cast<BigInt>(threads_per_block));
+      } 
+    } else {
+      threads_per_block = std::min(static_cast<std::size_t>(256), items_per_iter);
+      num_blocks = static_cast<std::size_t>(items_per_iter / threads_per_block);
     }
-    printf("\n");
+    std::size_t num_threads = num_blocks * threads_per_block;
+    std::cout << "num_threads: " << num_threads << "\n";
+
+    printf("Launching kernel\n");
+    cartesian_product<<<num_blocks, threads_per_block>>>(flat_perm_list.view(), rad_pool.view(), out_pool.view());
+    cudaDeviceSynchronize();
+
+    /*
+    OutputView out_view = out_pool.view();
+    printf("count: %s\n", count.str().c_str());
+    for(int i = 0; i < num_threads; ++i) {
+      printf("i: %d\n", i);
+      for(int j = 0; j < out_view[i].size(); ++j) {
+          printf("%d ", out_view[i][j]);
+      }
+      printf("\n");
+    }
+    */
+    offset += num_threads;
   }
 }
