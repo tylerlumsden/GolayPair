@@ -120,8 +120,8 @@ class FlatPermList {
 
       indexes_size = host_indexes.size();
       data_size = host_data.size();
-      check_cuda_error(cudaMallocManaged(&indexes, host_indexes.size() * sizeof(int)));
-      check_cuda_error(cudaMallocManaged(&data, host_data.size() * sizeof(int)));
+      check_cuda_error(cudaMalloc(&indexes, host_indexes.size() * sizeof(int)));
+      check_cuda_error(cudaMalloc(&data, host_data.size() * sizeof(int)));
 
       cudaMemcpy(indexes, host_indexes.data(), host_indexes.size() * sizeof(int), cudaMemcpyHostToDevice);
       cudaMemcpy(data, host_data.data(), host_data.size() * sizeof(int), cudaMemcpyHostToDevice);
@@ -177,27 +177,32 @@ class MixedRadixPool {
   int* radices;
   int digits;
 
+  std::vector<int> host_radices;
+
   public:
     __host__
     MixedRadixPool(const std::vector<int>& input_radices, uint64_t num_threads, BigInt base = 0) {
       digits = input_radices.size();
-      check_cuda_error(cudaMallocManaged(&radices, digits * sizeof(int)));
-      check_cuda_error(cudaMallocManaged(&base_num, digits * sizeof(int)));
-      check_cuda_error(cudaMallocManaged(&num_pool, num_threads * digits * sizeof(int)));
+      check_cuda_error(cudaMalloc(&radices, digits * sizeof(int)));
+      check_cuda_error(cudaMalloc(&base_num, digits * sizeof(int)));
+      check_cuda_error(cudaMalloc(&num_pool, num_threads * digits * sizeof(int)));
 
-      for(int i = 0; i < digits; ++i) {
-        radices[i] = input_radices[i];
-      }
+      check_cuda_error(cudaMemcpy(radices, input_radices.data(), digits, cudaMemcpyHostToDevice));
+      host_radices = input_radices;
+
       set_base(base);
     }
 
+    __host__
     void set_base(BigInt base) {
+      std::vector<int> mixed_base(digits);
       for(int i = digits - 1; i >= 0; --i) {
-        base_num[i] = static_cast<int>(base % radices[i]);
-        base /= radices[i];
+        mixed_base[i] = static_cast<int>(base % host_radices[i]);
+        base /= host_radices[i];
       }
+      check_cuda_error(cudaMemcpy(base_num, mixed_base.data(), digits, cudaMemcpyHostToDevice));
     } 
-    
+    __host__ __device__
     MixedRadixView view() {
       return MixedRadixView(num_pool, base_num, radices, digits);
     }
@@ -238,7 +243,7 @@ class OutputPool {
   public:
     __host__ 
     OutputPool(size_t len, uint64_t num_threads) : length(len) {
-      check_cuda_error(cudaMallocManaged(&values, num_bytes(len, num_threads)));
+      check_cuda_error(cudaMalloc(&values, num_bytes(len, num_threads)));
     }
 
     OutputView view() {
