@@ -50,4 +50,6 @@ target_link_libraries(golay_lib ${FFTW3_LIB} m)
 
 # Main executable
 add_executable(main src/main.cpp src/generate_hybrid.cpp src/match_pairs.cpp src/sort.cpp src/uncompression.cpp src/uncompression_kernel.cu src/filter.cpp src/lyndon.cpp)
-target_link_libraries(main golay_lib)
+target_link_libraries(main golay_lib nvrtc cuda)
+target_include_directories(main SYSTEM PRIVATE include)
+target_compile_definitions(main PRIVATE VKFFT_BACKEND=1)

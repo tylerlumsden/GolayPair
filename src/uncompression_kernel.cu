@@ -4,11 +4,14 @@
 #include <cstdio>
 #include <cstdint>
 #include <algorithm>
+#include <format>
 
 #include <boost/multiprecision/cpp_int.hpp>
 #include <thrust/device_vector.h>
 #include <cuda/std/mdspan>
 #include <cuda/std/span>
+
+#include "vkFFT.h"
 
 void check_cuda_error(cudaError_t err) {
   if(err != cudaSuccess) {
@@ -187,7 +190,7 @@ class MixedRadixPool {
       check_cuda_error(cudaMalloc(&base_num, digits * sizeof(int)));
       check_cuda_error(cudaMalloc(&num_pool, num_threads * digits * sizeof(int)));
 
-      check_cuda_error(cudaMemcpy(radices, input_radices.data(), digits, cudaMemcpyHostToDevice));
+      check_cuda_error(cudaMemcpy(radices, input_radices.data(), digits * sizeof(int), cudaMemcpyHostToDevice));
       host_radices = input_radices;
 
       set_base(base);
@@ -200,7 +203,7 @@ class MixedRadixPool {
         mixed_base[i] = static_cast<int>(base % host_radices[i]);
         base /= host_radices[i];
       }
-      check_cuda_error(cudaMemcpy(base_num, mixed_base.data(), digits, cudaMemcpyHostToDevice));
+      check_cuda_error(cudaMemcpy(base_num, mixed_base.data(), digits * sizeof(int), cudaMemcpyHostToDevice));
     } 
     __host__ __device__
     MixedRadixView view() {
@@ -236,30 +239,108 @@ class OutputView {
     }
 };
 
-class OutputPool {
+struct OutputPool {
   int* values;
+  cuComplex* fourier;
   size_t length;
+  size_t batch_size;
 
   public:
     __host__ 
-    OutputPool(size_t len, uint64_t num_threads) : length(len) {
-      check_cuda_error(cudaMalloc(&values, num_bytes(len, num_threads)));
+    OutputPool(size_t len, uint64_t num_threads) : length(len), batch_size(num_threads) {
+      check_cuda_error(cudaMalloc(&values, seq_bytes()));
+      check_cuda_error(cudaMalloc(&fourier, fourier_bytes()));
     }
 
     OutputView view() {
       return OutputView(values, length);
     }
 
-    static size_t num_bytes(size_t len, uint64_t num_threads) {
-      return num_threads * len * sizeof(int);
+    size_t fourier_bytes() {
+      return length * batch_size * sizeof(cuComplex);
+    }
+
+    size_t seq_bytes() {
+      return length * batch_size * sizeof(int);
+    } 
+
+    size_t num_bytes() {
+      return fourier_bytes() + seq_bytes();
     }
 
     static size_t items_storable(std::size_t len, std::size_t total_bytes) {
       return total_bytes / (len * sizeof(int));
     }
 
+    OutputPool(const OutputPool&) = delete;
+
     ~OutputPool() {
       cudaFree(values);
+      cudaFree(fourier);
+    }
+};
+
+struct Fourier {
+  private:
+    size_t in_bytes;
+    size_t out_bytes;
+    int device = 0;
+
+  public: 
+
+    VkFFTApplication app = {};
+
+    void launch_batch() {
+      // --- Launch Parameters ---
+      VkFFTLaunchParams launchParams = {};
+
+      // --- Forward FFT (in-place) ---
+      // inverse = 0 → forward FFT
+      // inverse = 1 → inverse FFT
+      auto result = VkFFTAppend(&app, 0, &launchParams);
+      if (result != VKFFT_SUCCESS) {
+          printf("VkFFT launch failed: %d\n", result);
+          throw std::runtime_error(std::format("VkFFT launch failed: {}\n", static_cast<int>(result)));
+      }
+    }
+
+    Fourier(OutputPool& pool) {
+      // --- VkFFT Application Config ---
+      VkFFTConfiguration config = {};
+      config.FFTdim      = 1;           // 1D FFT
+      config.size[0]     = pool.length;           // Sequence length
+      config.numberBatches = pool.batch_size; // Number of sequences
+
+      config.isInputFormatted = 1;
+      config.isOutputFormatted = 1;
+
+      // Target CUDA
+      config.performR2C  = 1;           // 0 = complex-to-complex; 1 = real-to-complex
+      config.device      = &device;  // CUDA device index
+
+      // Point VkFFT at your existing buffer
+      in_bytes = pool.seq_bytes();
+      config.inputBufferSize  = &in_bytes;
+      config.inputBuffer = (void**)&pool.values;
+
+      out_bytes = pool.fourier_bytes();
+      config.outputBufferSize = &out_bytes;
+      config.outputBuffer= (void**)&pool.fourier;
+
+      config.bufferSize = &out_bytes;
+      config.buffer = (void**)&pool.fourier;
+      
+      // --- Initialize VkFFT ---
+      VkFFTResult result = initializeVkFFT(&app, config);
+      if (result != VKFFT_SUCCESS) {
+          throw std::runtime_error(std::format("VkFFT init failed: {}\n", static_cast<int>(result)));
+      }
+    }
+
+    Fourier(const Fourier&) = delete;
+
+    ~Fourier() {
+      deleteVkFFT(&app);
     }
 };
 
@@ -316,22 +397,24 @@ void uncompress_kernel(std::vector<int> seq, PermMap permutations, size_t new_le
   cudaMemGetInfo(&free_mem, &total_mem);
 
   // TODO: free_mem division should be designated somewhere else
-  size_t items_per_iter = static_cast<size_t>(std::min(count, static_cast<BigInt>(OutputPool::items_storable(seq_length, free_mem / 8))));
+  size_t items_per_iter = static_cast<size_t>(std::min(count, static_cast<BigInt>(OutputPool::items_storable(seq_length, free_mem / 64))));
 
   MixedRadixPool rad_pool(radices, items_per_iter);
   OutputPool out_pool(new_length, items_per_iter);
 
+  Fourier fft(out_pool);
+
   printf("Post-allocation VRAM, %lu sequences allocated:\n", items_per_iter);
   print_vram();
 
-  printf("Uncompressing with a count of: %s", count.str().c_str());
+  printf("Uncompressing with a count of: %s\n", count.str().c_str());
   for(BigInt offset = 0; offset < count;) {
-    std::cout << offset << "\n";
+    printf("Current offset: %s\n", offset.str().c_str());
     
     rad_pool.set_base(offset);
     BigInt remaining = count - offset;
 
-    // TODO: refactor
+    // TODO: refactor... ugly if else chain
     std::size_t threads_per_block, num_blocks;
     if(remaining < items_per_iter) {
       if(remaining < 256) {
@@ -348,21 +431,16 @@ void uncompress_kernel(std::vector<int> seq, PermMap permutations, size_t new_le
     std::size_t num_threads = num_blocks * threads_per_block;
     std::cout << "num_threads: " << num_threads << "\n";
 
-    printf("Launching kernel\n");
+    printf("Launching cartesian product\n");
     cartesian_product<<<num_blocks, threads_per_block>>>(flat_perm_list.view(), rad_pool.view(), out_pool.view());
     cudaDeviceSynchronize();
 
-    /*
-    OutputView out_view = out_pool.view();
-    printf("count: %s\n", count.str().c_str());
-    for(int i = 0; i < num_threads; ++i) {
-      printf("i: %d\n", i);
-      for(int j = 0; j < out_view[i].size(); ++j) {
-          printf("%d ", out_view[i][j]);
-      }
-      printf("\n");
-    }
-    */
+    printf("Launching FFT batch\n");
+    fft.launch_batch();
+    cudaDeviceSynchronize();
+
     offset += num_threads;
   }
+
+  printf("Done uncompressing\n");
 }
