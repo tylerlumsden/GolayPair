@@ -224,14 +224,14 @@ Perm get_permutation(PermSpan perm_list, int i) {
   return Perm(row.data_handle(), row.size());
 }
 
-using SequenceView = cuda::std::span<int>;
+using SequenceView = cuda::std::span<float>;
 class OutputView {
-  int* values;
+  float* values;
   size_t length;
 
   public: 
     __host__
-    OutputView(int* v, size_t len) : values(v), length(len) {}
+    OutputView(float* v, size_t len) : values(v), length(len) {}
 
     __host__ __device__
     SequenceView operator[](uint64_t thread_id) {
@@ -240,7 +240,7 @@ class OutputView {
 };
 
 struct OutputPool {
-  int* values;
+  float* values;
   cuComplex* fourier;
   size_t length;
   size_t batch_size;
@@ -261,7 +261,7 @@ struct OutputPool {
     }
 
     size_t seq_bytes() {
-      return length * batch_size * sizeof(int);
+      return length * batch_size * sizeof(float);
     } 
 
     size_t num_bytes() {
@@ -269,7 +269,7 @@ struct OutputPool {
     }
 
     static size_t items_storable(std::size_t len, std::size_t total_bytes) {
-      return total_bytes / (len * sizeof(int));
+      return total_bytes / (len * sizeof(float));
     }
 
     OutputPool(const OutputPool&) = delete;
@@ -280,7 +280,7 @@ struct OutputPool {
     }
 };
 
-struct Fourier {
+struct GPUFourier {
   private:
     size_t in_bytes;
     size_t out_bytes;
@@ -304,7 +304,7 @@ struct Fourier {
       }
     }
 
-    Fourier(OutputPool& pool) {
+    GPUFourier(OutputPool& pool) {
       // --- VkFFT Application Config ---
       VkFFTConfiguration config = {};
       config.FFTdim      = 1;           // 1D FFT
@@ -337,9 +337,9 @@ struct Fourier {
       }
     }
 
-    Fourier(const Fourier&) = delete;
+    GPUFourier(const GPUFourier&) = delete;
 
-    ~Fourier() {
+    ~GPUFourier() {
       deleteVkFFT(&app);
     }
 };
@@ -402,7 +402,7 @@ void uncompress_kernel(std::vector<int> seq, PermMap permutations, size_t new_le
   MixedRadixPool rad_pool(radices, items_per_iter);
   OutputPool out_pool(new_length, items_per_iter);
 
-  Fourier fft(out_pool);
+  GPUFourier fft(out_pool);
 
   printf("Post-allocation VRAM, %lu sequences allocated:\n", items_per_iter);
   print_vram();
