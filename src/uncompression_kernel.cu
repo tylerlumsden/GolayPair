@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <format>
+#include <functional>
 
 #include <boost/multiprecision/cpp_int.hpp>
 #include <thrust/device_vector.h>
@@ -12,6 +13,7 @@
 #include <cuda/std/span>
 
 #include "vkFFT.h"
+#include "io.h"
 
 void check_cuda_error(cudaError_t err) {
   if(err != cudaSuccess) {
@@ -373,6 +375,8 @@ void sequence_filter(
     float imag_squared = local_fourier[i].y * local_fourier[i].y;
     float psd = real_squared + imag_squared;
 
+    local_fourier[i].x = psd;
+
     if(psd > 2 * order - paf_constant) {
       return;
     }
@@ -384,7 +388,7 @@ void sequence_filter(
   FourierView write_fourier = input.get_fourier(next_buffer);
   for(size_t i = 0; i < write_seq.size(); ++i) {
     write_seq[i] = local_seq[i];
-    local_fourier[i] = local_fourier[i];
+    write_fourier[i] = local_fourier[i];
   }
 }
 
@@ -424,7 +428,8 @@ void uncompress_kernel(
   PermMap permutations, 
   size_t new_length, 
   int order, 
-  int paf_constant
+  int paf_constant,
+  std::function<void(std::span<int>, std::span<double>)> writer
 ) {   
   size_t seq_length = seq.size();
 
@@ -460,6 +465,7 @@ void uncompress_kernel(
   printf("Post-allocation VRAM, %lu sequences allocated:\n", items_per_iter);
   print_vram();
 
+  size_t filtered_count = 0;
   printf("Uncompressing with a count of: %s\n", count.str().c_str());
   for(BigInt offset = 0; offset < count;) {
     printf("Current offset: %s\n", offset.str().c_str());
@@ -507,9 +513,60 @@ void uncompress_kernel(
       order,
       paf_constant
     );
+    check_cuda_error(cudaDeviceSynchronize());
+
+    size_t count = counter[0];
+    filtered_count += count;
+
+    printf("Filtered count: %lu\n", count);
+
+    std::vector<float> filtered_values(count * new_length);
+    thrust::copy(
+        filtered_pool.values.begin(),
+        filtered_pool.values.begin() + count * new_length,
+        filtered_values.begin()
+    );
+
+    std::vector<cuComplex> filtered_fourier(count * new_length);
+    thrust::copy(
+        filtered_pool.fourier.begin(),
+        filtered_pool.fourier.begin() + count * new_length,
+        filtered_fourier.begin()
+    );
+
+    printf("Copying sequence data\n");
+    thrust::device_vector<int> int_vals(count * new_length);
+    thrust::transform(
+        filtered_pool.values.begin(),
+        filtered_pool.values.begin() + count * new_length,
+        int_vals.begin(),
+        [] __device__ (float f) { return static_cast<int>(f); }
+    );
+    std::vector<int> flat_sequences(count * new_length);
+    thrust::copy(int_vals.begin(), int_vals.end(), flat_sequences.begin());
+
+    printf("Copying PSD data\n");
+    thrust::device_vector<float> psd_device(count * new_length);
+    thrust::transform(
+        filtered_pool.fourier.begin(),
+        filtered_pool.fourier.begin() + count * new_length,
+        psd_device.begin(),
+        [] __device__ (cuComplex c) { return c.x; }
+    );
+    std::vector<double> psds(count * new_length);
+    thrust::copy(psd_device.begin(), psd_device.end(), psds.begin());
+    
+    printf("Writing sequence data\n");
+    for(size_t i = 0; i < count; ++i) {
+      writer(
+        std::span<int>(&flat_sequences[i * out_pool.length], out_pool.length),
+        std::span<double>(&psds[i * out_pool.length], out_pool.length)
+      );
+    }
+      
 
     offset += num_threads;
   }
 
-  printf("Done uncompressing\n");
+  printf("Done uncompressing, total output: %lu\n", filtered_count);
 }

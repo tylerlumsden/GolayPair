@@ -6,8 +6,10 @@
 #include <iostream>
 #include <iomanip>
 #include <chrono>
+#include <span>
+#include <sstream>
 
-void write_seq_psd(const std::vector<int>& seq, const std::vector<double>& psd, std::ofstream& out) {
+void write_seq_psd(std::span<const int> seq, std::span<const double> psd, std::ofstream& out) {
     out << "PSD";
     for(std::size_t i = 1; i < psd.size(); i++) {
         out << (int)rint(psd[i]);
@@ -19,7 +21,7 @@ void write_seq_psd(const std::vector<int>& seq, const std::vector<double>& psd, 
     out << "\n";
 }
 
-void write_seq_psd_invert(const std::vector<int>& seq, const std::vector<double>& psd, std::ofstream& out, const int BOUND) {
+void write_seq_psd_invert(std::span<const int> seq, std::span<const double> psd, std::ofstream& out, const int BOUND) {
     out << "PSD";
     for(std::size_t i = 1; i < psd.size(); i++) {
         out << BOUND - (int)rint(psd[i]);

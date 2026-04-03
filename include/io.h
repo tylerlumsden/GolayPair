@@ -1,5 +1,6 @@
 #pragma once
 
+#include <span>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <vector>
@@ -10,8 +11,8 @@
 #include <chrono>
 
 bool read_pair(std::ifstream& in, std::vector<int>& a, std::vector<int>& b);
-void write_seq_psd(const std::vector<int>& seq, const std::vector<double>& psd, std::ofstream& out);
-void write_seq_psd_invert(const std::vector<int>& seq, const std::vector<double>& psd, std::ofstream& out, const int BOUND);
+void write_seq_psd(std::span<const int> seq, std::span<const double> psd, std::ofstream& out);
+void write_seq_psd_invert(std::span<const int> seq, std::span<const double> psd, std::ofstream& out, const int BOUND);
 
 inline void print_seq(std::vector<int> seq, std::ofstream& out) {
     for(int val : seq) {
