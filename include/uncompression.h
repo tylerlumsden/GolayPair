@@ -3,4 +3,10 @@ int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOM
 int uncompress_recursive(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ofstream& outfile, int seqflag);
 int uncompress_gpu(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ofstream& outfile, int seqflag);
 
-void uncompress_kernel(std::vector<int> seq, PermMap permutations, size_t new_length);
+void uncompress_kernel(
+  std::vector<int> seq, 
+  PermMap permutations, 
+  size_t new_length, 
+  int order, 
+  int paf_constant
+);

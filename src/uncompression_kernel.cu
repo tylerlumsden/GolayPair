@@ -224,36 +224,40 @@ Perm get_permutation(PermSpan perm_list, int i) {
   return Perm(row.data_handle(), row.size());
 }
 
+using FourierView = cuda::std::span<cuComplex>;
 using SequenceView = cuda::std::span<float>;
 class OutputView {
   float* values;
+  cuComplex* fourier;
   size_t length;
 
   public: 
     __host__
-    OutputView(float* v, size_t len) : values(v), length(len) {}
+    OutputView(float* v, cuComplex* c, size_t len) : values(v), fourier(c), length(len) {}
 
-    __host__ __device__
-    SequenceView operator[](uint64_t thread_id) {
+    __device__ 
+    SequenceView get_seq(uint64_t thread_id) {
       return SequenceView(&values[length * thread_id], length);
+    }
+
+    __device__
+    FourierView get_fourier(uint64_t thread_id) {
+      return FourierView(&fourier[length * thread_id], length);
     }
 };
 
 struct OutputPool {
-  float* values;
-  cuComplex* fourier;
+  thrust::device_vector<float> values;
+  thrust::device_vector<cuComplex> fourier;
   size_t length;
   size_t batch_size;
 
   public:
     __host__ 
-    OutputPool(size_t len, uint64_t num_threads) : length(len), batch_size(num_threads) {
-      check_cuda_error(cudaMalloc(&values, seq_bytes()));
-      check_cuda_error(cudaMalloc(&fourier, fourier_bytes()));
-    }
+    OutputPool(size_t len, uint64_t num_threads) : values(len * num_threads), fourier(len * num_threads), length(len), batch_size(num_threads) {}
 
     OutputView view() {
-      return OutputView(values, length);
+      return OutputView(thrust::raw_pointer_cast(values.data()), thrust::raw_pointer_cast(fourier.data()), length);
     }
 
     size_t fourier_bytes() {
@@ -273,20 +277,19 @@ struct OutputPool {
     }
 
     OutputPool(const OutputPool&) = delete;
-
-    ~OutputPool() {
-      cudaFree(values);
-      cudaFree(fourier);
-    }
 };
 
 struct GPUFourier {
   private:
     size_t in_bytes;
     size_t out_bytes;
+    size_t work_bytes;
+    void* work_buffer = nullptr;
+    void* input_ptr = nullptr;
+    void* output_ptr = nullptr;
     int device = 0;
 
-  public: 
+  public:
 
     VkFFTApplication app = {};
 
@@ -318,18 +321,24 @@ struct GPUFourier {
       config.performR2C  = 1;           // 0 = complex-to-complex; 1 = real-to-complex
       config.device      = &device;  // CUDA device index
 
-      // Point VkFFT at your existing buffer
+      // Separate working buffer for VkFFT's internal in-place FFT
+      work_bytes = (pool.length / 2 + 1) * pool.batch_size * sizeof(cuComplex);
+      check_cuda_error(cudaMalloc(&work_buffer, work_bytes));
+      config.bufferSize = &work_bytes;
+      config.buffer     = &work_buffer;
+
+      // Store raw device pointers so VkFFT gets valid void** targets
+      input_ptr  = thrust::raw_pointer_cast(pool.values.data());
+      output_ptr = thrust::raw_pointer_cast(pool.fourier.data());
+
       in_bytes = pool.seq_bytes();
       config.inputBufferSize  = &in_bytes;
-      config.inputBuffer = (void**)&pool.values;
+      config.inputBuffer = &input_ptr;
 
       out_bytes = pool.fourier_bytes();
       config.outputBufferSize = &out_bytes;
-      config.outputBuffer= (void**)&pool.fourier;
+      config.outputBuffer = &output_ptr;
 
-      config.bufferSize = &out_bytes;
-      config.buffer = (void**)&pool.fourier;
-      
       // --- Initialize VkFFT ---
       VkFFTResult result = initializeVkFFT(&app, config);
       if (result != VKFFT_SUCCESS) {
@@ -341,8 +350,43 @@ struct GPUFourier {
 
     ~GPUFourier() {
       deleteVkFFT(&app);
+      cudaFree(work_buffer);
     }
 };
+
+__global__
+void sequence_filter(
+  OutputView input, 
+  OutputView filtered, 
+  size_t* counter,
+  int order,
+  int paf_constant
+) {
+  uint64_t thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+
+  SequenceView local_seq = input.get_seq(thread_id);
+  FourierView local_fourier = input.get_fourier(thread_id);
+
+  // Filtering logic
+  for(size_t i = 1; i < local_seq.size() / 2; ++i) {
+    float real_squared = local_fourier[i].x * local_fourier[i].x;
+    float imag_squared = local_fourier[i].y * local_fourier[i].y;
+    float psd = real_squared + imag_squared;
+
+    if(psd > 2 * order - paf_constant) {
+      return;
+    }
+  }
+
+  // The local sequence has passed the filter
+  size_t next_buffer = atomicAdd((unsigned long long*)counter, 1);
+  SequenceView write_seq = input.get_seq(next_buffer);
+  FourierView write_fourier = input.get_fourier(next_buffer);
+  for(size_t i = 0; i < write_seq.size(); ++i) {
+    write_seq[i] = local_seq[i];
+    local_fourier[i] = local_fourier[i];
+  }
+}
 
 __global__
 void cartesian_product(
@@ -355,7 +399,7 @@ void cartesian_product(
   radi.init(threadId);
   MixedRadix local_radix = radi[threadId];
 
-  SequenceView local_seq = output[threadId];
+  SequenceView local_seq = output.get_seq(threadId);
 
   for(int i = 0; i < local_radix.size(); ++i) {
     auto perm = get_permutation(permutations[i], local_radix[i]);
@@ -375,7 +419,13 @@ void print_vram() {
   printf("Used:  %.2f GB\n", (total_mem - free_mem) / 1e9);
 }
 
-void uncompress_kernel(std::vector<int> seq, PermMap permutations, size_t new_length) {   
+void uncompress_kernel(
+  std::vector<int> seq, 
+  PermMap permutations, 
+  size_t new_length, 
+  int order, 
+  int paf_constant
+) {   
   size_t seq_length = seq.size();
 
   FlatPermList flat_perm_list(permutations, seq);
@@ -397,10 +447,13 @@ void uncompress_kernel(std::vector<int> seq, PermMap permutations, size_t new_le
   cudaMemGetInfo(&free_mem, &total_mem);
 
   // TODO: free_mem division should be designated somewhere else
-  size_t items_per_iter = static_cast<size_t>(std::min(count, static_cast<BigInt>(OutputPool::items_storable(seq_length, free_mem / 64))));
+  size_t items_per_iter = static_cast<size_t>(
+    std::min(count, static_cast<BigInt>(OutputPool::items_storable(seq_length, free_mem / 64)))
+  );
 
   MixedRadixPool rad_pool(radices, items_per_iter);
   OutputPool out_pool(new_length, items_per_iter);
+  OutputPool filtered_pool(new_length, items_per_iter);
 
   GPUFourier fft(out_pool);
 
@@ -432,12 +485,28 @@ void uncompress_kernel(std::vector<int> seq, PermMap permutations, size_t new_le
     std::cout << "num_threads: " << num_threads << "\n";
 
     printf("Launching cartesian product\n");
-    cartesian_product<<<num_blocks, threads_per_block>>>(flat_perm_list.view(), rad_pool.view(), out_pool.view());
-    cudaDeviceSynchronize();
+    cartesian_product<<<num_blocks, threads_per_block>>>(
+      flat_perm_list.view(), 
+      rad_pool.view(), 
+      out_pool.view()
+    );
+    check_cuda_error(cudaDeviceSynchronize());
 
     printf("Launching FFT batch\n");
     fft.launch_batch();
-    cudaDeviceSynchronize();
+    check_cuda_error(cudaDeviceSynchronize());
+
+    printf("Filtering batch\n");
+    // Initialize a device vector containing one counter element
+    // We do this so that we can pass a raw pointer to the kernel but with RAII on the host side
+    thrust::device_vector<size_t> counter(1, 0);
+    sequence_filter<<<num_blocks, threads_per_block>>>(
+      out_pool.view(), 
+      filtered_pool.view(), 
+      thrust::raw_pointer_cast(counter.data()),
+      order,
+      paf_constant
+    );
 
     offset += num_threads;
   }

@@ -109,7 +109,7 @@ int uncompress_gpu(std::vector<int>& orig, const int COMPRESS, const int NEWCOMP
         partitions.insert(make_pair(letter, partition));
     }
 
-    uncompress_kernel(orig, partitions, ORDER / NEWCOMPRESS);
+    uncompress_kernel(orig, partitions, ORDER / NEWCOMPRESS, ORDER, PAF_CONSTANT);
 
     return 0;
 }
