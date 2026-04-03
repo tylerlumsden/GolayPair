@@ -263,7 +263,7 @@ struct CoalescedView {
   
   __host__ __device__
   SequenceView<T> operator[](size_t thread_id) {
-    return SequenceView(values + thread_id, length, stride);
+    return SequenceView(values + thread_id * (length / stride), length, stride);
   }
 };
 
@@ -325,8 +325,11 @@ struct GPUFourier {
       config.FFTdim      = 1;           // 1D FFT
       config.size[0]     = input_pool.length;           // Sequence length
       config.numberBatches = input_pool.batch_size; // Number of sequences
-      config.bufferStride[0] = input_pool.stride; // Our data is coalesced
-      config.bufferStride[1] = 1; // Distance of 1 between each element
+      config.inputBufferStride[0] = input_pool.stride;
+      config.inputBufferStride[1] = input_pool.length / input_pool.stride;
+
+      config.outputBufferStride[0] = output_pool.stride;
+      config.outputBufferStride[1] = output_pool.length / output_pool.stride;
 
       config.isInputFormatted = 1;
       config.isOutputFormatted = 1;
@@ -392,6 +395,8 @@ void sequence_filter(
     float psd = real_squared + imag_squared;
 
     local_fourier[i].x = psd;
+
+    printf("%f\n", psd);
 
     if(psd > 2 * order - paf_constant) {
       return;
