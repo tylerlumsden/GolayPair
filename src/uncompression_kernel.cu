@@ -333,7 +333,7 @@ struct GPUFourier {
 
       config.isInputFormatted = 1;
       config.isOutputFormatted = 1;
-
+https://www.youtube.com/watch?v=4QToz2SM2mM&t=1721s
       // Target CUDA
       config.performR2C  = 1;           // 0 = complex-to-complex; 1 = real-to-complex
       config.device      = &device;  // CUDA device index
