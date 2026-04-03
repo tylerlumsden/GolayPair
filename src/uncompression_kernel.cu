@@ -21,6 +21,9 @@ void check_cuda_error(cudaError_t err) {
   }
 }
 
+using SeqVal = float;
+using Fourier = cuComplex;
+
 using BigInt = boost::multiprecision::cpp_int;
 
 using PermMap = std::map<
@@ -226,59 +229,66 @@ Perm get_permutation(PermSpan perm_list, int i) {
   return Perm(row.data_handle(), row.size());
 }
 
-using FourierView = cuda::std::span<cuComplex>;
-using SequenceView = cuda::std::span<float>;
-class OutputView {
-  float* values;
-  cuComplex* fourier;
+template <typename T>
+struct SequenceView {
+  T* values;
   size_t length;
+  size_t stride;
 
-  public: 
-    __host__
-    OutputView(float* v, cuComplex* c, size_t len) : values(v), fourier(c), length(len) {}
+  __host__ __device__
+  SequenceView(T* v, size_t len, size_t stride) :
+    values(v), length(len), stride(stride) {} 
 
-    __device__ 
-    SequenceView get_seq(uint64_t thread_id) {
-      return SequenceView(&values[length * thread_id], length);
-    }
+  __host__  __device__
+  T& operator[](size_t index) {
+    return values[index * stride];
+  }
 
-    __device__
-    FourierView get_fourier(uint64_t thread_id) {
-      return FourierView(&fourier[length * thread_id], length);
-    }
+  __host__ __device__
+  size_t size() {
+    return length;
+  }
 };
 
-struct OutputPool {
-  thrust::device_vector<float> values;
-  thrust::device_vector<cuComplex> fourier;
+template <typename T>
+struct CoalescedView {
+  T* values;
   size_t length;
   size_t batch_size;
+  size_t stride;
 
-  public:
-    __host__ 
-    OutputPool(size_t len, uint64_t num_threads) : values(len * num_threads), fourier(len * num_threads), length(len), batch_size(num_threads) {}
+  __host__
+  CoalescedView(T* v, size_t len, size_t batch, size_t stride) :
+    values(v), length(len), batch_size(batch), stride(stride) {}
+  
+  __host__ __device__
+  SequenceView<T> operator[](size_t thread_id) {
+    return SequenceView(values + thread_id, length, stride);
+  }
+};
 
-    OutputView view() {
-      return OutputView(thrust::raw_pointer_cast(values.data()), thrust::raw_pointer_cast(fourier.data()), length);
-    }
+template <typename T>
+struct CoalescedMemoryPool {
+  thrust::device_vector<T> values;
+  size_t length;
+  size_t batch_size;
+  size_t stride;
 
-    size_t fourier_bytes() {
-      return length * batch_size * sizeof(cuComplex);
-    }
+  __host__
+  CoalescedMemoryPool(size_t len, size_t num_threads, size_t stride) : 
+    values(len * num_threads), length(len), batch_size(num_threads), stride(stride) {}
 
-    size_t seq_bytes() {
-      return length * batch_size * sizeof(float);
-    } 
+  CoalescedView<T> view() {
+    return CoalescedView(thrust::raw_pointer_cast(values.data()), length, batch_size, stride);
+  }
 
-    size_t num_bytes() {
-      return fourier_bytes() + seq_bytes();
-    }
+  size_t bytes() {
+    return length * batch_size * sizeof(T);
+  }
 
-    static size_t items_storable(std::size_t len, std::size_t total_bytes) {
-      return total_bytes / (len * sizeof(float));
-    }
-
-    OutputPool(const OutputPool&) = delete;
+  static size_t items_storable(std::size_t len, std::size_t total_bytes) {
+    return total_bytes / (len * sizeof(T));
+  }
 };
 
 struct GPUFourier {
@@ -309,12 +319,14 @@ struct GPUFourier {
       }
     }
 
-    GPUFourier(OutputPool& pool) {
+    GPUFourier(CoalescedMemoryPool<SeqVal>& input_pool, CoalescedMemoryPool<Fourier>& output_pool) {
       // --- VkFFT Application Config ---
       VkFFTConfiguration config = {};
       config.FFTdim      = 1;           // 1D FFT
-      config.size[0]     = pool.length;           // Sequence length
-      config.numberBatches = pool.batch_size; // Number of sequences
+      config.size[0]     = input_pool.length;           // Sequence length
+      config.numberBatches = input_pool.batch_size; // Number of sequences
+      config.bufferStride[0] = input_pool.stride; // Our data is coalesced
+      config.bufferStride[1] = 1; // Distance of 1 between each element
 
       config.isInputFormatted = 1;
       config.isOutputFormatted = 1;
@@ -324,20 +336,20 @@ struct GPUFourier {
       config.device      = &device;  // CUDA device index
 
       // Separate working buffer for VkFFT's internal in-place FFT
-      work_bytes = (pool.length / 2 + 1) * pool.batch_size * sizeof(cuComplex);
+      work_bytes = (input_pool.length / 2 + 1) * input_pool.batch_size * sizeof(cuComplex);
       check_cuda_error(cudaMalloc(&work_buffer, work_bytes));
       config.bufferSize = &work_bytes;
       config.buffer     = &work_buffer;
 
       // Store raw device pointers so VkFFT gets valid void** targets
-      input_ptr  = thrust::raw_pointer_cast(pool.values.data());
-      output_ptr = thrust::raw_pointer_cast(pool.fourier.data());
+      input_ptr  = thrust::raw_pointer_cast(input_pool.values.data());
+      output_ptr = thrust::raw_pointer_cast(output_pool.values.data());
 
-      in_bytes = pool.seq_bytes();
+      in_bytes = input_pool.bytes();
       config.inputBufferSize  = &in_bytes;
       config.inputBuffer = &input_ptr;
 
-      out_bytes = pool.fourier_bytes();
+      out_bytes = output_pool.bytes();
       config.outputBufferSize = &out_bytes;
       config.outputBuffer = &output_ptr;
 
@@ -356,21 +368,25 @@ struct GPUFourier {
     }
 };
 
+// TODO: Instead of outputting an entire copy of the filtered sequences,
+// We could write a bitmap of the sequences which pass the filter
 __global__
 void sequence_filter(
-  OutputView input, 
-  OutputView filtered, 
+  CoalescedView<SeqVal> input_seq, 
+  CoalescedView<SeqVal> filtered_seq,
+  CoalescedView<Fourier> input_fourier,
+  CoalescedView<Fourier> filtered_fourier,
   size_t* counter,
   int order,
   int paf_constant
 ) {
   uint64_t thread_id = blockIdx.x * blockDim.x + threadIdx.x;
 
-  SequenceView local_seq = input.get_seq(thread_id);
-  FourierView local_fourier = input.get_fourier(thread_id);
+  SequenceView<SeqVal> local_seq = input_seq[thread_id];
+  SequenceView<Fourier> local_fourier = input_fourier[thread_id];
 
   // Filtering logic
-  for(size_t i = 1; i < local_seq.size() / 2; ++i) {
+  for(size_t i = 1; i <= local_seq.size() / 2; ++i) {
     float real_squared = local_fourier[i].x * local_fourier[i].x;
     float imag_squared = local_fourier[i].y * local_fourier[i].y;
     float psd = real_squared + imag_squared;
@@ -384,8 +400,8 @@ void sequence_filter(
 
   // The local sequence has passed the filter
   size_t next_buffer = atomicAdd((unsigned long long*)counter, 1);
-  SequenceView write_seq = input.get_seq(next_buffer);
-  FourierView write_fourier = input.get_fourier(next_buffer);
+  SequenceView<SeqVal> write_seq = filtered_seq[next_buffer];
+  SequenceView<Fourier> write_fourier = filtered_fourier[next_buffer];
   for(size_t i = 0; i < write_seq.size(); ++i) {
     write_seq[i] = local_seq[i];
     write_fourier[i] = local_fourier[i];
@@ -396,14 +412,14 @@ __global__
 void cartesian_product(
   FlatPermView permutations, 
   MixedRadixView radi, 
-  OutputView output
+  CoalescedView<SeqVal> output
 ) {
   uint64_t threadId = blockIdx.x * blockDim.x + threadIdx.x;
 
   radi.init(threadId);
   MixedRadix local_radix = radi[threadId];
 
-  SequenceView local_seq = output.get_seq(threadId);
+  SequenceView<SeqVal> local_seq = output[threadId];
 
   for(int i = 0; i < local_radix.size(); ++i) {
     auto perm = get_permutation(permutations[i], local_radix[i]);
@@ -453,14 +469,17 @@ void uncompress_kernel(
 
   // TODO: free_mem division should be designated somewhere else
   size_t items_per_iter = static_cast<size_t>(
-    std::min(count, static_cast<BigInt>(OutputPool::items_storable(seq_length, free_mem / 64)))
+    std::min(count, static_cast<BigInt>(CoalescedMemoryPool<float>::items_storable(seq_length, free_mem / 128)))
   );
 
   MixedRadixPool rad_pool(radices, items_per_iter);
-  OutputPool out_pool(new_length, items_per_iter);
-  OutputPool filtered_pool(new_length, items_per_iter);
+  CoalescedMemoryPool<SeqVal> seq_pool(new_length, items_per_iter, 1);
+  CoalescedMemoryPool<Fourier> psd_pool(new_length, items_per_iter, 1);
 
-  GPUFourier fft(out_pool);
+  CoalescedMemoryPool<SeqVal> seq_filtered(new_length, items_per_iter, 1);
+  CoalescedMemoryPool<Fourier> psd_filtered(new_length, items_per_iter, 1);
+
+  GPUFourier fft(seq_pool, psd_pool);
 
   printf("Post-allocation VRAM, %lu sequences allocated:\n", items_per_iter);
   print_vram();
@@ -494,7 +513,7 @@ void uncompress_kernel(
     cartesian_product<<<num_blocks, threads_per_block>>>(
       flat_perm_list.view(), 
       rad_pool.view(), 
-      out_pool.view()
+      seq_pool.view()
     );
     check_cuda_error(cudaDeviceSynchronize());
 
@@ -503,12 +522,15 @@ void uncompress_kernel(
     check_cuda_error(cudaDeviceSynchronize());
 
     printf("Filtering batch\n");
+    
     // Initialize a device vector containing one counter element
     // We do this so that we can pass a raw pointer to the kernel but with RAII on the host side
     thrust::device_vector<size_t> counter(1, 0);
     sequence_filter<<<num_blocks, threads_per_block>>>(
-      out_pool.view(), 
-      filtered_pool.view(), 
+      seq_pool.view(), 
+      seq_filtered.view(), 
+      psd_pool.view(),
+      psd_filtered.view(),
       thrust::raw_pointer_cast(counter.data()),
       order,
       paf_constant
@@ -522,25 +544,25 @@ void uncompress_kernel(
 
     std::vector<float> filtered_values(count * new_length);
     thrust::copy(
-        filtered_pool.values.begin(),
-        filtered_pool.values.begin() + count * new_length,
+        seq_pool.values.begin(),
+        seq_pool.values.begin() + count * new_length,
         filtered_values.begin()
     );
 
     std::vector<cuComplex> filtered_fourier(count * new_length);
     thrust::copy(
-        filtered_pool.fourier.begin(),
-        filtered_pool.fourier.begin() + count * new_length,
+        psd_pool.values.begin(),
+        psd_pool.values.begin() + count * new_length,
         filtered_fourier.begin()
     );
 
     printf("Copying sequence data\n");
     thrust::device_vector<int> int_vals(count * new_length);
     thrust::transform(
-        filtered_pool.values.begin(),
-        filtered_pool.values.begin() + count * new_length,
+        seq_filtered.values.begin(),
+        seq_filtered.values.begin() + count * new_length,
         int_vals.begin(),
-        [] __device__ (float f) { return static_cast<int>(f); }
+        [] __device__ (SeqVal f) { return static_cast<int>(f); }
     );
     std::vector<int> flat_sequences(count * new_length);
     thrust::copy(int_vals.begin(), int_vals.end(), flat_sequences.begin());
@@ -548,8 +570,8 @@ void uncompress_kernel(
     printf("Copying PSD data\n");
     thrust::device_vector<float> psd_device(count * new_length);
     thrust::transform(
-        filtered_pool.fourier.begin(),
-        filtered_pool.fourier.begin() + count * new_length,
+        psd_filtered.values.begin(),
+        psd_filtered.values.begin() + count * new_length,
         psd_device.begin(),
         [] __device__ (cuComplex c) { return c.x; }
     );
@@ -559,11 +581,10 @@ void uncompress_kernel(
     printf("Writing sequence data\n");
     for(size_t i = 0; i < count; ++i) {
       writer(
-        std::span<int>(&flat_sequences[i * out_pool.length], out_pool.length),
-        std::span<double>(&psds[i * out_pool.length], out_pool.length)
+        std::span<int>(&flat_sequences[i], seq_filtered.length),
+        std::span<double>(&psds[i], seq_filtered.length / 2)
       );
     }
-      
 
     offset += num_threads;
   }
