@@ -11,8 +11,8 @@
 #include <thrust/device_vector.h>
 #include <cuda/std/mdspan>
 #include <cuda/std/span>
+#include <cufft.h>
 
-#include "vkFFT.h"
 #include "io.h"
 
 void check_cuda_error(cudaError_t err) {
@@ -255,15 +255,14 @@ struct CoalescedView {
   T* values;
   size_t length;
   size_t batch_size;
-  size_t stride;
 
   __host__
-  CoalescedView(T* v, size_t len, size_t batch, size_t stride) :
-    values(v), length(len), batch_size(batch), stride(stride) {}
+  CoalescedView(T* v, size_t len, size_t batch) :
+    values(v), length(len), batch_size(batch) {}
   
   __host__ __device__
   SequenceView<T> operator[](size_t thread_id) {
-    return SequenceView(values + thread_id * (length / stride), length, stride);
+    return SequenceView(values + thread_id, length, batch_size);
   }
 };
 
@@ -272,14 +271,13 @@ struct CoalescedMemoryPool {
   thrust::device_vector<T> values;
   size_t length;
   size_t batch_size;
-  size_t stride;
 
   __host__
-  CoalescedMemoryPool(size_t len, size_t num_threads, size_t stride) : 
-    values(len * num_threads), length(len), batch_size(num_threads), stride(stride) {}
+  CoalescedMemoryPool(size_t len, size_t num_threads) : 
+    values(len * num_threads), length(len), batch_size(num_threads) {}
 
   CoalescedView<T> view() {
-    return CoalescedView(thrust::raw_pointer_cast(values.data()), length, batch_size, stride);
+    return CoalescedView(thrust::raw_pointer_cast(values.data()), length, batch_size);
   }
 
   size_t bytes() {
@@ -293,81 +291,52 @@ struct CoalescedMemoryPool {
 
 struct GPUFourier {
   private:
-    size_t in_bytes;
-    size_t out_bytes;
-    size_t work_bytes;
-    void* work_buffer = nullptr;
+    cufftHandle plan;
     void* input_ptr = nullptr;
     void* output_ptr = nullptr;
-    int device = 0;
 
   public:
 
-    VkFFTApplication app = {};
-
     void launch_batch() {
-      // --- Launch Parameters ---
-      VkFFTLaunchParams launchParams = {};
-
-      // --- Forward FFT (in-place) ---
-      // inverse = 0 → forward FFT
-      // inverse = 1 → inverse FFT
-      auto result = VkFFTAppend(&app, 0, &launchParams);
-      if (result != VKFFT_SUCCESS) {
-          printf("VkFFT launch failed: %d\n", result);
-          throw std::runtime_error(std::format("VkFFT launch failed: {}\n", static_cast<int>(result)));
+      auto result = cufftExecR2C(
+          plan,
+          reinterpret_cast<cufftReal*>(input_ptr),
+          reinterpret_cast<cufftComplex*>(output_ptr)
+      );
+      if (result != CUFFT_SUCCESS) {
+          throw std::runtime_error(std::format("cuFFT launch failed: {}\n", static_cast<int>(result)));
       }
     }
 
     GPUFourier(CoalescedMemoryPool<SeqVal>& input_pool, CoalescedMemoryPool<Fourier>& output_pool) {
-      // --- VkFFT Application Config ---
-      VkFFTConfiguration config = {};
-      config.FFTdim      = 1;           // 1D FFT
-      config.size[0]     = input_pool.length;           // Sequence length
-      config.numberBatches = input_pool.batch_size; // Number of sequences
-      config.inputBufferStride[0] = input_pool.stride;
-      config.inputBufferStride[1] = input_pool.length / input_pool.stride;
-
-      config.outputBufferStride[0] = output_pool.stride;
-      config.outputBufferStride[1] = output_pool.length / output_pool.stride;
-
-      config.isInputFormatted = 1;
-      config.isOutputFormatted = 1;
-
-      // Target CUDA
-      config.performR2C  = 1;           // 0 = complex-to-complex; 1 = real-to-complex
-      config.device      = &device;  // CUDA device index
-
-      // Separate working buffer for VkFFT's internal in-place FFT
-      work_bytes = (input_pool.length / 2 + 1) * input_pool.batch_size * sizeof(cuComplex);
-      check_cuda_error(cudaMalloc(&work_buffer, work_bytes));
-      config.bufferSize = &work_bytes;
-      config.buffer     = &work_buffer;
-
-      // Store raw device pointers so VkFFT gets valid void** targets
       input_ptr  = thrust::raw_pointer_cast(input_pool.values.data());
       output_ptr = thrust::raw_pointer_cast(output_pool.values.data());
 
-      in_bytes = input_pool.bytes();
-      config.inputBufferSize  = &in_bytes;
-      config.inputBuffer = &input_ptr;
+      int n[]     = { (int)input_pool.length };
+      int batch   = (int)input_pool.batch_size;
 
-      out_bytes = output_pool.bytes();
-      config.outputBufferSize = &out_bytes;
-      config.outputBuffer = &output_ptr;
+      int istride = batch;   // stride between real input elements of same sequence
+      int idist   = 1;       // stride between sequence starts
+      int ostride = batch;   // stride between complex output elements of same sequence
+      int odist   = 1;
 
-      // --- Initialize VkFFT ---
-      VkFFTResult result = initializeVkFFT(&app, config);
-      if (result != VKFFT_SUCCESS) {
-          throw std::runtime_error(std::format("VkFFT init failed: {}\n", static_cast<int>(result)));
+      auto result = cufftPlanMany(
+          &plan,
+          1, n,              // 1D FFT of length n[0]
+          n, istride, idist, // input layout (real)
+          n, ostride, odist, // output layout (complex)
+          CUFFT_R2C,
+          batch
+      );
+      if (result != CUFFT_SUCCESS) {
+          throw std::runtime_error(std::format("cuFFT plan failed: {}\n", static_cast<int>(result)));
       }
     }
 
     GPUFourier(const GPUFourier&) = delete;
 
     ~GPUFourier() {
-      deleteVkFFT(&app);
-      cudaFree(work_buffer);
+      cufftDestroy(plan);
     }
 };
 
@@ -395,8 +364,6 @@ void sequence_filter(
     float psd = real_squared + imag_squared;
 
     local_fourier[i].x = psd;
-
-    printf("%f\n", psd);
 
     if(psd > 2 * order - paf_constant) {
       return;
@@ -474,15 +441,15 @@ void uncompress_kernel(
 
   // TODO: free_mem division should be designated somewhere else
   size_t items_per_iter = static_cast<size_t>(
-    std::min(count, static_cast<BigInt>(CoalescedMemoryPool<float>::items_storable(seq_length, free_mem / 128)))
+    std::min(count, static_cast<BigInt>(CoalescedMemoryPool<float>::items_storable(seq_length, free_mem / 256)))
   );
 
   MixedRadixPool rad_pool(radices, items_per_iter);
-  CoalescedMemoryPool<SeqVal> seq_pool(new_length, items_per_iter, 1);
-  CoalescedMemoryPool<Fourier> psd_pool(new_length, items_per_iter, 1);
+  CoalescedMemoryPool<SeqVal> seq_pool(new_length, items_per_iter);
+  CoalescedMemoryPool<Fourier> psd_pool(new_length, items_per_iter);
 
-  CoalescedMemoryPool<SeqVal> seq_filtered(new_length, items_per_iter, 1);
-  CoalescedMemoryPool<Fourier> psd_filtered(new_length, items_per_iter, 1);
+  CoalescedMemoryPool<SeqVal> seq_filtered(new_length, items_per_iter);
+  CoalescedMemoryPool<Fourier> psd_filtered(new_length, items_per_iter);
 
   GPUFourier fft(seq_pool, psd_pool);
 
