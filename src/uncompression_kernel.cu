@@ -355,7 +355,7 @@ void sequence_filter(
 
     local_fourier[i].x = psd;
 
-    if(psd > 2 * order - paf_constant) {
+    if(psd > 2 * order - paf_constant + 0.001) {
       return;
     }
   }
@@ -504,47 +504,49 @@ void uncompress_kernel(
 
     printf("Filtered count: %lu\n", count);
 
-    std::vector<float> filtered_values(count * new_length);
-    thrust::copy(
-        seq_pool.values.begin(),
-        seq_pool.values.begin() + count * new_length,
-        filtered_values.begin()
-    );
-
-    std::vector<cuComplex> filtered_fourier(count * new_length);
-    thrust::copy(
-        psd_pool.values.begin(),
-        psd_pool.values.begin() + count * new_length,
-        filtered_fourier.begin()
-    );
-
     printf("Copying sequence data\n");
-    thrust::device_vector<int> int_vals(count * new_length);
+    // Repack from coalesced layout (values[seq_idx + elem_idx * batch_size])
+    // into packed layout (values[seq_idx * length + elem_idx]) for the writer.
+    auto seq_raw = thrust::raw_pointer_cast(seq_filtered.values.data());
+    size_t seq_batch = seq_filtered.batch_size;
+    size_t seq_len   = seq_filtered.length;
+    thrust::device_vector<int> int_vals(count * seq_len);
     thrust::transform(
-        seq_filtered.values.begin(),
-        seq_filtered.values.begin() + count * new_length,
+        thrust::make_counting_iterator<size_t>(0),
+        thrust::make_counting_iterator<size_t>(count * seq_len),
         int_vals.begin(),
-        [] __device__ (SeqVal f) { return static_cast<int>(f); }
+        [seq_raw, seq_batch, seq_len] __device__ (size_t k) {
+            size_t seq_idx  = k / seq_len;
+            size_t elem_idx = k % seq_len;
+            return static_cast<int>(seq_raw[seq_idx + elem_idx * seq_batch]);
+        }
     );
-    std::vector<int> flat_sequences(count * new_length);
+    std::vector<int> flat_sequences(count * seq_len);
     thrust::copy(int_vals.begin(), int_vals.end(), flat_sequences.begin());
 
     printf("Copying PSD data\n");
-    thrust::device_vector<float> psd_device(count * new_length);
+    auto psd_raw = thrust::raw_pointer_cast(psd_filtered.values.data());
+    size_t psd_batch = psd_filtered.batch_size;
+    size_t psd_len   = psd_filtered.length;
+    thrust::device_vector<float> psd_device(count * psd_len);
     thrust::transform(
-        psd_filtered.values.begin(),
-        psd_filtered.values.begin() + count * new_length,
+        thrust::make_counting_iterator<size_t>(0),
+        thrust::make_counting_iterator<size_t>(count * psd_len),
         psd_device.begin(),
-        [] __device__ (cuComplex c) { return c.x; }
+        [psd_raw, psd_batch, psd_len] __device__ (size_t k) {
+            size_t seq_idx  = k / psd_len;
+            size_t elem_idx = k % psd_len;
+            return psd_raw[seq_idx + elem_idx * psd_batch].x;
+        }
     );
-    std::vector<double> psds(count * new_length);
+    std::vector<double> psds(count * psd_len);
     thrust::copy(psd_device.begin(), psd_device.end(), psds.begin());
-    
+
     printf("Writing sequence data\n");
     for(size_t i = 0; i < count; ++i) {
       writer(
-        std::span<int>(&flat_sequences[i], seq_filtered.length),
-        std::span<double>(&psds[i], seq_filtered.length / 2)
+        std::span<int>(&flat_sequences[i * seq_len], seq_len),
+        std::span<double>(&psds[i * psd_len], psd_len / 2)
       );
     }
 
