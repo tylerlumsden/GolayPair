@@ -110,6 +110,43 @@ int uncompress_gpu(std::vector<int>& orig, const int COMPRESS, const int NEWCOMP
         partitions.insert(make_pair(letter, partition));
     }
 
+    //shift original sequence such that the element with the largest number of permutations is in the front
+    set<int> seta;
+    for(int element : orig) {
+        seta.insert(element);
+    }
+
+    size_t max = 0;
+    int best = orig[0];
+    for(int element : seta) {
+        if(partitions.at(element).size() > max) {
+            max = partitions.at(element).size();
+            best = element;
+        }
+    }
+    for(size_t i = 0; i < orig.size(); i++) {
+        if(orig[i] == best) {
+            rotate(orig.begin(), orig.begin() + i, orig.end());
+        }
+    }
+
+    set<vector<int>> perma;
+    for(vector<int> perm : partitions.at(orig[0])) {
+        set<vector<int>> equiv = generateUncompress(perm);
+        perma.insert(*equiv.begin());
+    }
+
+    vector<vector<int>> newfirsta;
+    for(vector<int> perm : perma) {
+        newfirsta.push_back(perm);
+    }
+
+    PermList permutation_list;
+    permutation_list.push_back(newfirsta);
+    for(size_t i = 1; i < orig.size(); ++i) {
+        permutation_list.push_back(partitions.at(orig[i]));
+    }
+    
     std::function<void(std::span<int>, std::span<double>)> write_function; 
     if(seqflag) {
         write_function =
@@ -126,7 +163,7 @@ int uncompress_gpu(std::vector<int>& orig, const int COMPRESS, const int NEWCOMP
 
     uncompress_kernel(
         orig, 
-        partitions, 
+        permutation_list,
         ORDER / NEWCOMPRESS, 
         ORDER, 
         PAF_CONSTANT,

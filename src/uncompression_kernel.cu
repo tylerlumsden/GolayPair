@@ -26,11 +26,6 @@ using Fourier = cuComplex;
 
 using BigInt = boost::multiprecision::cpp_int;
 
-using PermMap = std::map<
-  int,
-  std::vector<std::vector<int>>
->;
-
 using PermList = std::vector<
   std::vector<std::vector<int>>
 >;
@@ -104,12 +99,7 @@ class FlatPermList {
     }
 
     __host__ 
-    FlatPermList(const PermMap& input_map, const std::vector<int>& input_seq) {
-      PermList list;
-      for(int num : input_seq) {
-        list.push_back(input_map.at(num));
-      }
-
+    FlatPermList(const PermList& list, const std::vector<int>& input_seq) {
       permutation_size = list[0][0].size();
 
       std::vector<int> host_indexes;
@@ -413,7 +403,7 @@ void print_vram() {
 
 void uncompress_kernel(
   std::vector<int> seq, 
-  PermMap permutations, 
+  PermList permutations, 
   size_t new_length, 
   int order, 
   int paf_constant,
@@ -424,8 +414,8 @@ void uncompress_kernel(
   FlatPermList flat_perm_list(permutations, seq);
 
   std::vector<int> radices;
-  for(int num : seq) {
-    radices.push_back(permutations[num].size());
+  for(auto list : permutations) {
+    radices.push_back(list.size());
   }
 
   BigInt count = 1;
