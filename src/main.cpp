@@ -103,6 +103,7 @@ struct Uncompress_Options {
     std::string sorted_prefix = "filtered_sorted";
     std::string output_prefix = "pairs";
     std::optional<long long> line_number;
+    std::optional<std::pair<size_t, size_t>> range;
 };
 
 int stage_uncompress(const Options& opts, const Uncompress_Options& uncompress_opts) {
@@ -143,8 +144,8 @@ int stage_uncompress(const Options& opts, const Uncompress_Options& uncompress_o
                 uncompress_gpu(a, opts.compress[i], opts.compress[i + 1], opts.paf_constant, opts.job_id, opts.job_count, outa, 0);
                 uncompress_gpu(b, opts.compress[i], opts.compress[i + 1], opts.paf_constant, opts.job_id, opts.job_count, outb, 1);
             } else {
-                uncompress_recursive(a, opts.compress[i], opts.compress[i + 1], opts.paf_constant, 0, 1, outa, 0);
-                uncompress_recursive(b, opts.compress[i], opts.compress[i + 1], opts.paf_constant, 0, 1, outb, 1);
+                uncompress_gpu(a, opts.compress[i], opts.compress[i + 1], opts.paf_constant, 0, 1, outa, 0);
+                uncompress_gpu(b, opts.compress[i], opts.compress[i + 1], opts.paf_constant, 0, 1, outb, 1);
                 outa.close();
                 outb.close();
 
@@ -216,6 +217,7 @@ int main(int argc, char* argv[]) {
     uncompress->add_option("--internal", uncompress_opts.internal_prefix, "Internal candidate file prefix");
     uncompress->add_option("--sorted", uncompress_opts.sorted_prefix, "Sorted candidate file prefix");
     uncompress->add_option("--line,-l", uncompress_opts.line_number, "Process only this line number (1-indexed)");
+    uncompress->add_option("-r,--range", uncompress_opts.range, "Range of lines to uncompress")->expected(2);
 
     Filter_Options filter_opts;
     auto filter = app.add_subcommand("filter", "Pair equivalence filter step");
