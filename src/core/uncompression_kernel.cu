@@ -423,8 +423,8 @@ void uncompress_kernel(
     count *= num;
   }
 
-  printf("Pre-allocation VRAM:\n");
-  print_vram();
+  //printf("Pre-allocation VRAM:\n");
+  //print_vram();
 
   std::size_t free_mem, total_mem;
   cudaMemGetInfo(&free_mem, &total_mem);
@@ -443,8 +443,8 @@ void uncompress_kernel(
 
   GPUFourier fft(seq_pool, psd_pool);
 
-  printf("Post-allocation VRAM, %lu sequences allocated:\n", items_per_iter);
-  print_vram();
+  //printf("Post-allocation VRAM, %lu sequences allocated:\n", items_per_iter);
+  //print_vram();
 
   size_t filtered_count = 0;
   printf("Uncompressing with a count of: %s\n", count.str().c_str());
@@ -479,11 +479,11 @@ void uncompress_kernel(
     );
     check_cuda_error(cudaDeviceSynchronize());
 
-    printf("Launching FFT batch\n");
+    //printf("Launching FFT batch\n");
     fft.launch_batch();
     check_cuda_error(cudaDeviceSynchronize());
 
-    printf("Filtering batch\n");
+    //printf("Filtering batch\n");
     
     // Initialize a device vector containing one counter element
     // We do this so that we can pass a raw pointer to the kernel but with RAII on the host side
@@ -502,9 +502,9 @@ void uncompress_kernel(
     size_t count = counter[0];
     filtered_count += count;
 
-    printf("Filtered count: %lu\n", count);
+    //printf("Filtered count: %lu\n", count);
 
-    printf("Copying sequence data\n");
+    //printf("Copying sequence data\n");
     // Repack from coalesced layout (values[seq_idx + elem_idx * batch_size])
     // into packed layout (values[seq_idx * length + elem_idx]) for the writer.
     auto seq_raw = thrust::raw_pointer_cast(seq_filtered.values.data());
@@ -542,7 +542,7 @@ void uncompress_kernel(
     std::vector<double> psds(count * psd_len);
     thrust::copy(psd_device.begin(), psd_device.end(), psds.begin());
 
-    printf("Writing sequence data\n");
+    //printf("Writing sequence data\n");
     for(size_t i = 0; i < count; ++i) {
       writer(
         std::span<int>(&flat_sequences[i * seq_len], seq_len),
