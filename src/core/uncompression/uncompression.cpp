@@ -19,8 +19,6 @@
 
 #include"golay.h"
 #include"constants.h"
-#include"match_pairs.h"
-#include"sort.h"
 #include"io.h"
 #include <thread>
 #include <filesystem>
@@ -28,56 +26,6 @@
 
 int uncompress_recursive(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ofstream& outfile, int seqflag);
 int uncompress_gpu(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ofstream& outfile, int seqflag);
-
-int uncompression_pipeline(const int ORDER, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ifstream& IN_PAIRS, std::ofstream& OUT_PAIRS, const std::string& WORK_DIR) {
-    const std::string FILE_A = std::format("{}/{}-uncompressed-a-{}", WORK_DIR, ORDER, PROC_ID);
-    const std::string FILE_B = std::format("{}/{}-uncompressed-b-{}", WORK_DIR, ORDER, PROC_ID);
-    const std::string FILE_A_SORTED = FILE_A + ".sorted";
-    const std::string FILE_B_SORTED = FILE_B + ".sorted";
-
-    std::string line;
-    for(long long linecount = 0; std::getline(IN_PAIRS, line); ++linecount) {
-        if(linecount % PROC_NUM != PROC_ID) {
-            continue;
-        }
-
-        std::cout << "Uncompressing line: " << linecount << ", Process ID: " << PROC_ID << "\n";
-
-        std::ofstream outa(FILE_A);
-        std::ofstream outb(FILE_B);
-
-        std::vector<int> seq;
-        std::istringstream iss(line);
-        std::string val;
-        
-        while(iss >> val) {
-            seq.push_back(std::stoi(val));
-        }
-
-        std::vector<int> seqa;
-        for(size_t i = 0; i < seq.size() / 2; i++) {
-            seqa.push_back(seq[i]);
-        }
-
-        std::vector<int> seqb;
-        for(size_t i = seq.size() / 2; i < seq.size(); i++) {
-            seqb.push_back(seq[i]);
-        }
-
-        uncompress_gpu(seqa, COMPRESS, NEWCOMPRESS, PAF_CONSTANT, PROC_ID, PROC_NUM, outa, 1);
-        uncompress_gpu(seqb, COMPRESS, NEWCOMPRESS, PAF_CONSTANT, PROC_ID, PROC_NUM, outb, 0);
-        outa.close();
-        outb.close();
-
-        GNU_sort({FILE_A}, FILE_A_SORTED, WORK_DIR);
-        GNU_sort({FILE_B}, FILE_B_SORTED, WORK_DIR);
-        std::ifstream ina(FILE_A_SORTED);
-        std::ifstream inb(FILE_B_SORTED);
-        match_pairs(ORDER, NEWCOMPRESS, PAF_CONSTANT, ina, inb, OUT_PAIRS);
-    }
-
-    return 0;
-}
 
 int uncompress_gpu(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ofstream& outfile, int seqflag) {
     const int ORDER = orig.size() * COMPRESS;
