@@ -14,4 +14,4 @@ target_include_directories(uncompress
         ${GOLAYPAIR_BOOST_MULTIPRECISION_INCLUDE}
 )
 
-target_link_libraries(uncompress PRIVATE utils CUDA::cufft CUDA::cudart)
+target_link_libraries(uncompress PRIVATE utils match sort CUDA::cufft CUDA::cudart)

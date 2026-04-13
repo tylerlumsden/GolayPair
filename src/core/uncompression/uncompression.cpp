@@ -18,6 +18,8 @@
 #include <functional>
 
 #include"golay.h"
+#include"match_pairs.h"
+#include"sort.h"
 #include"constants.h"
 #include"io.h"
 #include <thread>
@@ -26,6 +28,55 @@
 
 int uncompress_recursive(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ofstream& outfile, int seqflag);
 int uncompress_gpu(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ofstream& outfile, int seqflag);
+
+int uncompress_pipeline(
+    int order, 
+    int compress,
+    int new_compress,
+    int paf_constant,
+    std::ifstream& input,
+    std::ofstream& out_pairs,
+    const std::string& work_dir,
+    const std::string& prefix,
+    size_t range_begin,
+    size_t range_end,
+    size_t step
+) {
+    if(compress <= 1) return 0;
+
+    const std::string file_a = work_dir + "/" + prefix + "uncompress_tmp_a";
+    const std::string file_b = work_dir + "/" + prefix + "uncompress_tmp_b";
+    const std::string file_a_sorted = file_a + ".sorted";
+    const std::string file_b_sorted = file_b + ".sorted";
+
+    std::vector<int> a, b;
+    for(size_t linecount = 0; read_pair(input, a, b); ++linecount) {
+        if(static_cast<int>(a.size()) != order / compress || static_cast<int>(b.size()) != order / compress) {
+            std::cerr << "Compressed pair has invalid length: " << a.size() << " " << b.size() << "\n";
+            return 1;
+        }
+
+        std::cout << "Uncompressing line: " << linecount << "\n";
+
+        std::ofstream outa(file_a);
+        std::ofstream outb(file_b);
+        uncompress_gpu(a, compress, new_compress, paf_constant, 0, 1, outa, 0);
+        uncompress_gpu(b, compress, new_compress, paf_constant, 0, 1, outb, 1);
+        outa.close();
+        outb.close();
+
+        GNU_sort({file_a}, file_a_sorted, work_dir);
+        GNU_sort({file_b}, file_b_sorted, work_dir);
+
+        std::ifstream ina(file_a_sorted);
+        std::ifstream inb(file_b_sorted);
+        match_pairs(order, new_compress, paf_constant, ina, inb, out_pairs);
+
+        a.clear();
+        b.clear();
+    }
+    return 0;
+}
 
 int uncompress_gpu(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ofstream& outfile, int seqflag) {
     const int ORDER = orig.size() * COMPRESS;
