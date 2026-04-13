@@ -1,8 +1,16 @@
 #include <span>
 #include <limits>
+#include <vector>
+#include <fstream>
+#include <string>
+#include <functional>
 using PermList = std::vector<std::vector<std::vector<int>>>;
 int uncompress_recursive(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ofstream& outfile, int seqflag);
-int uncompress_gpu(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ofstream& outfile, int seqflag);
+
+enum DeviceType {
+  CPU,
+  GPU
+};
 
 int uncompress_pipeline(
     int order, 
@@ -15,7 +23,8 @@ int uncompress_pipeline(
     const std::string& prefix = "",
     size_t range_begin = 0,
     size_t range_end = std::numeric_limits<size_t>::max(),
-    size_t step = 1
+    size_t step = 1,
+    DeviceType dev = DeviceType::CPU
 );
 
 void uncompress_kernel(

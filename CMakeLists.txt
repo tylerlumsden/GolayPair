@@ -1,24 +1,29 @@
 cmake_minimum_required(VERSION 3.16)
-project(GolayPair LANGUAGES CXX CUDA)
+project(GolayPair LANGUAGES CXX)
 
-set(CMAKE_CUDA_ARCHITECTURES "native")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(GPU_ARCH "" CACHE STRING "CUDA architecture to compile for (e.g. native, 89, 80). Leave empty to disable GPU support.")
+if(GPU_ARCH)
+add_compile_definitions(USE_GPU)
+enable_language(CUDA)
+set(CMAKE_CUDA_ARCHITECTURES ${GPU_ARCH})
 set(CMAKE_CUDA_STANDARD 20)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 set(CMAKE_CUDA_EXTENSIONS OFF)
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --extended-lambda")
+find_package(CUDAToolkit REQUIRED)
+endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -g")
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3")
 endif()
-
-find_package(CUDAToolkit REQUIRED)
 
 find_library(FFTW3_LIB fftw3 HINTS /usr/local/lib)
 find_path(FFTW3_INCLUDE fftw3.h HINTS /usr/local/include)

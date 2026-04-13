@@ -1,17 +1,28 @@
-add_library(uncompress STATIC
+set(UNCOMPRESS_SOURCE
     uncompression.cpp
     cpu/uncompress_cpu.cpp
-    gpu/uncompress_kernel_interface.cpp
-    gpu/uncompress_kernel.cu
 )
 
+if(GPU_ARCH)
+    list(APPEND UNCOMPRESS_SOURCE
+        gpu/uncompress_kernel_interface.cpp
+        gpu/uncompress_kernel.cu
+    )
+endif()
+
+add_library(uncompress STATIC ${UNCOMPRESS_SOURCE})
+
 target_include_directories(uncompress
-    PUBLIC
+    PUBLIC  
         ${CMAKE_CURRENT_SOURCE_DIR}
-    PRIVATE
+    PRIVATE 
         ${CMAKE_CURRENT_SOURCE_DIR}/cpu
         ${CMAKE_CURRENT_SOURCE_DIR}/gpu
         ${GOLAYPAIR_BOOST_MULTIPRECISION_INCLUDE}
 )
 
-target_link_libraries(uncompress PRIVATE utils match sort CUDA::cufft CUDA::cudart)
+if(GPU_ARCH)
+    target_link_libraries(uncompress PRIVATE utils match sort CUDA::cufft CUDA::cudart)
+else()
+    target_link_libraries(uncompress PRIVATE utils match sort)
+endif()

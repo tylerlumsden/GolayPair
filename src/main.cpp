@@ -108,6 +108,7 @@ struct Uncompress_Options {
     size_t range_begin = 0;
     size_t range_end = std::numeric_limits<size_t>::max();
     size_t range_step = 1;
+    DeviceType dev = DeviceType::CPU;
 };
 
 int stage_uncompress(const Options& opts, const Uncompress_Options& uncompress_opts) {
@@ -128,7 +129,8 @@ int stage_uncompress(const Options& opts, const Uncompress_Options& uncompress_o
             uncompress_opts.temp_prefix,
             uncompress_opts.range_begin,
             uncompress_opts.range_end,
-            uncompress_opts.range_step
+            uncompress_opts.range_step,
+            uncompress_opts.dev
         );
     }
 
@@ -191,6 +193,14 @@ int main(int argc, char* argv[]) {
     uncompress->add_option("-e,--range_end", uncompress_opts.range_end, "Ending range of lines to uncompress");
     uncompress->add_option("-s,--range_step", uncompress_opts.range_step, "Step of range to uncompress");
     uncompress->add_option("-p,--prefix", uncompress_opts.temp_prefix, "Prefix for generated temp files");
+
+    std::map<std::string, DeviceType> device_map{
+        {"cpu", DeviceType::CPU},
+        {"gpu", DeviceType::GPU}
+    };
+    uncompress->add_option("-d,--device", uncompress_opts.dev)
+        ->transform(CLI::CheckedTransformer(device_map, CLI::ignore_case))
+        ->description("Device to use for uncompression, options: [cpu, gpu]");
 
     Filter_Options filter_opts;
     auto filter = app.add_subcommand("filter", "Pair equivalence filter step");
