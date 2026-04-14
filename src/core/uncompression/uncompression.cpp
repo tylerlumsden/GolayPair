@@ -51,14 +51,14 @@ int uncompress_pipeline(
     const std::string file_b_sorted = file_b + ".sorted";
 
     std::vector<int> a, b;
-    for(size_t linecount = range_begin; read_pair(input, a, b) && linecount <= range_end; ++linecount) {
+    for(size_t linecount = 0; read_pair(input, a, b) && linecount <= range_end; ++linecount) {
         if(static_cast<int>(a.size()) != order / compress || static_cast<int>(b.size()) != order / compress) {
             std::cerr << "Compressed pair has invalid length: " << a.size() << " " << b.size() << "\n";
             return 1;
         }
 
         // If the line is not within our step, continue
-        if((linecount + range_begin) % step != 0) {
+        if(linecount % step != range_begin) {
             a.clear();
             b.clear();
             continue;

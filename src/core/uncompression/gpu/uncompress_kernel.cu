@@ -6,13 +6,14 @@
 #include <algorithm>
 #include <format>
 #include <functional>
+#include <stdexcept>
+#include <string>
 
 #include <thrust/device_vector.h>
 #include <cuda/std/mdspan>
 #include <cuda/std/span>
 #include <cufft.h>
 
-#include "io.h"
 #include "uncompress_kernel.h"
 
 void check_cuda_error(cudaError_t err) {
