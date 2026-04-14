@@ -116,7 +116,7 @@ int stage_uncompress(const Options& opts, const Uncompress_Options& uncompress_o
 
         std::string prefix = (i == 0) ? uncompress_opts.input_prefix : uncompress_opts.output_prefix;
         std::ifstream in_pairs(match_output(opts, prefix, i));
-        std::ofstream out_pairs(match_output(opts, prefix, i + 1));
+        std::ofstream out_pairs(match_output(opts, uncompress_opts.output_prefix, i + 1));
 
         uncompress_pipeline(
             opts.order,
