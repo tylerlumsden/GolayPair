@@ -7,13 +7,13 @@
 #include <format>
 #include <functional>
 
-#include <boost/multiprecision/cpp_int.hpp>
 #include <thrust/device_vector.h>
 #include <cuda/std/mdspan>
 #include <cuda/std/span>
 #include <cufft.h>
 
 #include "io.h"
+#include "uncompress_kernel.h"
 
 void check_cuda_error(cudaError_t err) {
   if(err != cudaSuccess) {
@@ -23,12 +23,6 @@ void check_cuda_error(cudaError_t err) {
 
 using SeqVal = float;
 using Fourier = cuComplex;
-
-using BigInt = boost::multiprecision::cpp_int;
-
-using PermList = std::vector<
-  std::vector<std::vector<int>>
->;
 
 using PermSpan = cuda::std::mdspan <
   int,
@@ -172,43 +166,44 @@ class MixedRadixView {
 class MixedRadixPool {
   int* num_pool;
   int* base_num;
-  int* radices;
+  int* d_radices;
   int digits;
 
   std::vector<int> host_radices;
 
   public:
     __host__
-    MixedRadixPool(const std::vector<int>& input_radices, uint64_t num_threads, BigInt base = 0) {
+    MixedRadixPool(const std::vector<int>& input_radices, uint64_t num_threads) {
       digits = input_radices.size();
-      check_cuda_error(cudaMalloc(&radices, digits * sizeof(int)));
+      check_cuda_error(cudaMalloc(&d_radices, digits * sizeof(int)));
       check_cuda_error(cudaMalloc(&base_num, digits * sizeof(int)));
       check_cuda_error(cudaMalloc(&num_pool, num_threads * digits * sizeof(int)));
 
-      check_cuda_error(cudaMemcpy(radices, input_radices.data(), digits * sizeof(int), cudaMemcpyHostToDevice));
+      check_cuda_error(cudaMemcpy(d_radices, input_radices.data(), digits * sizeof(int), cudaMemcpyHostToDevice));
       host_radices = input_radices;
 
-      set_base(base);
+      std::vector<int> zeros(digits, 0);
+      set_base(zeros);
     }
 
     __host__
-    void set_base(BigInt base) {
-      std::vector<int> mixed_base(digits);
-      for(int i = digits - 1; i >= 0; --i) {
-        mixed_base[i] = static_cast<int>(base % host_radices[i]);
-        base /= host_radices[i];
-      }
+    void set_base(const std::vector<int>& mixed_base) {
       check_cuda_error(cudaMemcpy(base_num, mixed_base.data(), digits * sizeof(int), cudaMemcpyHostToDevice));
-    } 
+    }
+
+    const std::vector<int>& radices() const {
+      return host_radices;
+    }
+
     __host__ __device__
     MixedRadixView view() {
-      return MixedRadixView(num_pool, base_num, radices, digits);
+      return MixedRadixView(num_pool, base_num, d_radices, digits);
     }
 
     ~MixedRadixPool() {
       cudaFree(num_pool);
       cudaFree(base_num);
-      cudaFree(radices);
+      cudaFree(d_radices);
     }
 };
 
@@ -401,157 +396,127 @@ void print_vram() {
   printf("Used:  %.2f GB\n", (total_mem - free_mem) / 1e9);
 }
 
-void uncompress_kernel(
-  std::vector<int> seq, 
-  PermList permutations, 
-  size_t new_length, 
-  int order, 
-  int paf_constant,
-  std::function<void(std::span<int>, std::span<double>)> writer
-) {   
-  size_t seq_length = seq.size();
+struct UncompressKernel::Impl {
+  FlatPermList                 flat_perm_list;
+  MixedRadixPool               rad_pool;
+  CoalescedMemoryPool<SeqVal>  seq_pool;
+  CoalescedMemoryPool<Fourier> psd_pool;
+  CoalescedMemoryPool<SeqVal>  seq_filtered;
+  CoalescedMemoryPool<Fourier> psd_filtered;
+  GPUFourier                   fft;
 
-  FlatPermList flat_perm_list(permutations, seq);
+  Impl(PermList& permutations, const std::vector<int>& seq,
+       size_t new_length, size_t items_per_iter, const std::vector<int>& radices)
+    : flat_perm_list(permutations, seq)
+    , rad_pool(radices, items_per_iter)
+    , seq_pool(new_length, items_per_iter)
+    , psd_pool(new_length, items_per_iter)
+    , seq_filtered(new_length, items_per_iter)
+    , psd_filtered(new_length, items_per_iter)
+    , fft(seq_pool, psd_pool)
+  {}
+};
 
+UncompressKernel::UncompressKernel(PermList& permutations, const std::vector<int>& seq,
+                                   size_t new_length, size_t items_per_iter) {
   std::vector<int> radices;
   for(auto list : permutations) {
     radices.push_back(list.size());
   }
+  impl = std::make_unique<Impl>(permutations, seq, new_length, items_per_iter, radices);
+}
 
-  BigInt count = 1;
-  for(int num : radices) {
-    count *= num;
-  }
+UncompressKernel::~UncompressKernel() = default;
 
-  //printf("Pre-allocation VRAM:\n");
-  //print_vram();
+const std::vector<int>& UncompressKernel::radices() const {
+  return impl->rad_pool.radices();
+}
 
-  std::size_t free_mem, total_mem;
-  cudaMemGetInfo(&free_mem, &total_mem);
+size_t UncompressKernel::items_per_iter() const {
+  return impl->seq_pool.batch_size;
+}
 
-  // TODO: free_mem division should be designated somewhere else
-  size_t items_per_iter = static_cast<size_t>(
-    std::min(count, static_cast<BigInt>(CoalescedMemoryPool<float>::items_storable(seq_length, free_mem / 256)))
+void UncompressKernel::set_offset(const std::vector<int>& mixed_radix) {
+  impl->rad_pool.set_base(mixed_radix);
+}
+
+void UncompressKernel::launch_cartesian_product(size_t blocks, size_t threads) {
+  cartesian_product<<<blocks, threads>>>(
+    impl->flat_perm_list.view(),
+    impl->rad_pool.view(),
+    impl->seq_pool.view()
   );
+  check_cuda_error(cudaDeviceSynchronize());
+}
 
-  MixedRadixPool rad_pool(radices, items_per_iter);
-  CoalescedMemoryPool<SeqVal> seq_pool(new_length, items_per_iter);
-  CoalescedMemoryPool<Fourier> psd_pool(new_length, items_per_iter);
+void UncompressKernel::launch_fft() {
+  impl->fft.launch_batch();
+  check_cuda_error(cudaDeviceSynchronize());
+}
 
-  CoalescedMemoryPool<SeqVal> seq_filtered(new_length, items_per_iter);
-  CoalescedMemoryPool<Fourier> psd_filtered(new_length, items_per_iter);
+size_t UncompressKernel::launch_sequence_filter(size_t blocks, size_t threads,
+                                                 int order, int paf_constant) {
+  // Initialize a device vector containing one counter element
+  // We do this so that we can pass a raw pointer to the kernel but with RAII on the host side
+  thrust::device_vector<size_t> counter(1, 0);
+  sequence_filter<<<blocks, threads>>>(
+    impl->seq_pool.view(),
+    impl->seq_filtered.view(),
+    impl->psd_pool.view(),
+    impl->psd_filtered.view(),
+    thrust::raw_pointer_cast(counter.data()),
+    order,
+    paf_constant
+  );
+  check_cuda_error(cudaDeviceSynchronize());
+  return counter[0];
+}
 
-  GPUFourier fft(seq_pool, psd_pool);
+void UncompressKernel::write_filtered(size_t count,
+                                       std::function<void(std::span<int>, std::span<double>)> writer) {
+  //printf("Copying sequence data\n");
+  // Repack from coalesced layout (values[seq_idx + elem_idx * batch_size])
+  // into packed layout (values[seq_idx * length + elem_idx]) for the writer.
+  auto seq_raw = thrust::raw_pointer_cast(impl->seq_filtered.values.data());
+  size_t seq_batch = impl->seq_filtered.batch_size;
+  size_t seq_len   = impl->seq_filtered.length;
+  thrust::device_vector<int> int_vals(count * seq_len);
+  thrust::transform(
+      thrust::make_counting_iterator<size_t>(0),
+      thrust::make_counting_iterator<size_t>(count * seq_len),
+      int_vals.begin(),
+      [seq_raw, seq_batch, seq_len] __device__ (size_t k) {
+          size_t seq_idx  = k / seq_len;
+          size_t elem_idx = k % seq_len;
+          return static_cast<int>(seq_raw[seq_idx + elem_idx * seq_batch]);
+      }
+  );
+  std::vector<int> flat_sequences(count * seq_len);
+  thrust::copy(int_vals.begin(), int_vals.end(), flat_sequences.begin());
 
-  //printf("Post-allocation VRAM, %lu sequences allocated:\n", items_per_iter);
-  //print_vram();
+  printf("Copying PSD data\n");
+  auto psd_raw = thrust::raw_pointer_cast(impl->psd_filtered.values.data());
+  size_t psd_batch = impl->psd_filtered.batch_size;
+  size_t psd_len   = impl->psd_filtered.length;
+  thrust::device_vector<float> psd_device(count * psd_len);
+  thrust::transform(
+      thrust::make_counting_iterator<size_t>(0),
+      thrust::make_counting_iterator<size_t>(count * psd_len),
+      psd_device.begin(),
+      [psd_raw, psd_batch, psd_len] __device__ (size_t k) {
+          size_t seq_idx  = k / psd_len;
+          size_t elem_idx = k % psd_len;
+          return psd_raw[seq_idx + elem_idx * psd_batch].x;
+      }
+  );
+  std::vector<double> psds(count * psd_len);
+  thrust::copy(psd_device.begin(), psd_device.end(), psds.begin());
 
-  size_t filtered_count = 0;
-  printf("Uncompressing with a count of: %s\n", count.str().c_str());
-  for(BigInt offset = 0; offset < count;) {
-    printf("Current offset: %s\n", offset.str().c_str());
-    
-    rad_pool.set_base(offset);
-    BigInt remaining = count - offset;
-
-    // TODO: refactor... ugly if else chain
-    std::size_t threads_per_block, num_blocks;
-    if(remaining < items_per_iter) {
-      if(remaining < 256) {
-        threads_per_block = static_cast<int>(remaining);
-        num_blocks = 1;
-      } else {
-        threads_per_block = std::min(static_cast<std::size_t>(256), items_per_iter);
-        num_blocks = static_cast<std::size_t>(remaining / static_cast<BigInt>(threads_per_block));
-      } 
-    } else {
-      threads_per_block = std::min(static_cast<std::size_t>(256), items_per_iter);
-      num_blocks = static_cast<std::size_t>(items_per_iter / threads_per_block);
-    }
-    std::size_t num_threads = num_blocks * threads_per_block;
-    std::cout << "num_threads: " << num_threads << "\n";
-
-    printf("Launching cartesian product\n");
-    cartesian_product<<<num_blocks, threads_per_block>>>(
-      flat_perm_list.view(), 
-      rad_pool.view(), 
-      seq_pool.view()
+  //printf("Writing sequence data\n");
+  for(size_t i = 0; i < count; ++i) {
+    writer(
+      std::span<int>(&flat_sequences[i * seq_len], seq_len),
+      std::span<double>(&psds[i * psd_len], psd_len / 2)
     );
-    check_cuda_error(cudaDeviceSynchronize());
-
-    //printf("Launching FFT batch\n");
-    fft.launch_batch();
-    check_cuda_error(cudaDeviceSynchronize());
-
-    //printf("Filtering batch\n");
-    
-    // Initialize a device vector containing one counter element
-    // We do this so that we can pass a raw pointer to the kernel but with RAII on the host side
-    thrust::device_vector<size_t> counter(1, 0);
-    sequence_filter<<<num_blocks, threads_per_block>>>(
-      seq_pool.view(), 
-      seq_filtered.view(), 
-      psd_pool.view(),
-      psd_filtered.view(),
-      thrust::raw_pointer_cast(counter.data()),
-      order,
-      paf_constant
-    );
-    check_cuda_error(cudaDeviceSynchronize());
-
-    size_t count = counter[0];
-    filtered_count += count;
-
-    //printf("Filtered count: %lu\n", count);
-
-    //printf("Copying sequence data\n");
-    // Repack from coalesced layout (values[seq_idx + elem_idx * batch_size])
-    // into packed layout (values[seq_idx * length + elem_idx]) for the writer.
-    auto seq_raw = thrust::raw_pointer_cast(seq_filtered.values.data());
-    size_t seq_batch = seq_filtered.batch_size;
-    size_t seq_len   = seq_filtered.length;
-    thrust::device_vector<int> int_vals(count * seq_len);
-    thrust::transform(
-        thrust::make_counting_iterator<size_t>(0),
-        thrust::make_counting_iterator<size_t>(count * seq_len),
-        int_vals.begin(),
-        [seq_raw, seq_batch, seq_len] __device__ (size_t k) {
-            size_t seq_idx  = k / seq_len;
-            size_t elem_idx = k % seq_len;
-            return static_cast<int>(seq_raw[seq_idx + elem_idx * seq_batch]);
-        }
-    );
-    std::vector<int> flat_sequences(count * seq_len);
-    thrust::copy(int_vals.begin(), int_vals.end(), flat_sequences.begin());
-
-    printf("Copying PSD data\n");
-    auto psd_raw = thrust::raw_pointer_cast(psd_filtered.values.data());
-    size_t psd_batch = psd_filtered.batch_size;
-    size_t psd_len   = psd_filtered.length;
-    thrust::device_vector<float> psd_device(count * psd_len);
-    thrust::transform(
-        thrust::make_counting_iterator<size_t>(0),
-        thrust::make_counting_iterator<size_t>(count * psd_len),
-        psd_device.begin(),
-        [psd_raw, psd_batch, psd_len] __device__ (size_t k) {
-            size_t seq_idx  = k / psd_len;
-            size_t elem_idx = k % psd_len;
-            return psd_raw[seq_idx + elem_idx * psd_batch].x;
-        }
-    );
-    std::vector<double> psds(count * psd_len);
-    thrust::copy(psd_device.begin(), psd_device.end(), psds.begin());
-
-    //printf("Writing sequence data\n");
-    for(size_t i = 0; i < count; ++i) {
-      writer(
-        std::span<int>(&flat_sequences[i * seq_len], seq_len),
-        std::span<double>(&psds[i * psd_len], psd_len / 2)
-      );
-    }
-
-    offset += num_threads;
   }
-
-  printf("Done uncompressing, total output: %lu\n", filtered_count);
 }
