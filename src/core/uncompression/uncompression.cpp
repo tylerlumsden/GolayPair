@@ -73,7 +73,7 @@ int uncompress_pipeline(
             uncompress_gpu(b, compress, new_compress, paf_constant, 0, 1, outb, 1);
         } else {
             uncompress_recursive(a, compress, new_compress, paf_constant, 0, 1, outa, 0);
-            uncompress_recursive(b, compress, new_compress, paf_constant, 0, 1, outa, 1);
+            uncompress_recursive(b, compress, new_compress, paf_constant, 0, 1, outb, 1);
         }
         outa.close();
         outb.close();
