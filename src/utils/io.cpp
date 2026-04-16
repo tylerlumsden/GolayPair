@@ -9,6 +9,8 @@
 #include <span>
 #include <sstream>
 
+#include "io.h"
+
 void write_seq_psd(std::span<const int> seq, std::span<const double> psd, std::ofstream& out) {
     out << "PSD";
     for(std::size_t i = 1; i < psd.size(); i++) {
@@ -33,29 +35,63 @@ void write_seq_psd_invert(std::span<const int> seq, std::span<const double> psd,
     out << "\n";
 }
 
-bool read_pair(std::ifstream& in, std::vector<int>& a, std::vector<int>& b) {
-    std::string line;
-    if(std::getline(in, line)) {
-        std::vector<int> seq;
+namespace IO {
+PairReader& PairReader::operator>>(PairType& pair) {
+    SequenceType a;
+    SequenceType b;
+
+    if(std::string line; std::getline(input, line)) {
+        SequenceType seq;
+        ValueType val;
         std::istringstream iss(line);
-        std::string val;
 
         while(iss >> val) {
-            seq.push_back(std::stoi(val));
+            seq.push_back(val);
         }
 
-        std::vector<int> seqa;
-        for(size_t i = 0; i < seq.size() / 2; ++i) {
+        if(seq.size() != length * 2) {
+            throw std::runtime_error(std::format(
+                "PairReader: input line {}: length is {}. Expected {}", line_number, seq.size(), this->length * 2
+            ));
+        }
+
+        SequenceType seqa;
+        for(size_t i = 0; i < this->length; ++i) {
             a.push_back(seq[i]);
         }
 
-        std::vector<int> seqb;
-        for(size_t i = seq.size() / 2; i < seq.size(); ++i) {
-            b.push_back(seq[i]);
+        SequenceType seqb;
+        for(size_t i = 0; i < this->length; ++i) {
+            b.push_back(seq[i + this->length]);
         }
-        
-        return true;
-    } else {
-        return false;
-    }
+
+        ++line_number;  
+    } 
+    pair.first = a;
+    pair.second = b;
+    return *this;
 }
+
+PairWriter& PairWriter::operator<<(const PairType& pair) {
+    SequenceType a = pair.first;
+    SequenceType b = pair.second;
+    
+    if(a.size() != this->length || b.size() != this->length) {
+        throw std::runtime_error(std::format( 
+            "PairWriter: input length is {} and {}. Expected {}", a.size(), b.size(), this->length 
+        ));
+    }
+
+    for(auto val : a) {
+        this->output << val << " ";
+    }
+    this->output << " ";
+    for(auto val : b) { 
+        this->output << val << " ";
+    }
+    this->output << "\n";
+
+    return *this;
+}
+}
+
