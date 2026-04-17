@@ -94,16 +94,8 @@ int stage_match(const Options& opts, const Match_Options& match_opts) {
     auto [file_a_sorted, file_b_sorted] = sort_output(opts, match_opts.input_prefix);
     std::ifstream ifa(file_a_sorted);
     std::ifstream ifb(file_b_sorted);
-
-    IO::PairWriter pair_writer(
-        std::ofstream(
-            match_output(opts, match_opts.output_prefix, 0), match_opts.file_append ? std::ios::app : std::ios::trunc
-        ),
-        opts.order / opts.compress[0]
-    );
-    return match_pairs(opts.order, opts.compress[0], opts.paf_constant, ifa, ifb, [&](IO::PairType pair) {
-        pair_writer << pair;
-    });
+    std::ofstream pairs(match_output(opts, match_opts.output_prefix, 0), match_opts.file_append ? std::ios::app : std::ios::trunc);
+    return match_pairs(opts.order, opts.compress[0], opts.paf_constant, ifa, ifb, pairs);
 }
 
 struct Uncompress_Options {
@@ -123,6 +115,7 @@ int stage_uncompress(const Options& opts, const Uncompress_Options& uncompress_o
     for(size_t i = 0; i < opts.compress.size() - 1; ++i) {
 
         std::string prefix = (i == 0) ? uncompress_opts.input_prefix : uncompress_opts.output_prefix;
+        std::ifstream in_pairs(match_output(opts, prefix, i));
         std::ofstream out_pairs(match_output(opts, uncompress_opts.output_prefix, i + 1));
 
         uncompress_pipeline(
@@ -130,7 +123,7 @@ int stage_uncompress(const Options& opts, const Uncompress_Options& uncompress_o
             opts.compress[i],
             opts.compress[i + 1],
             opts.paf_constant,
-            match_output(opts, prefix, i),
+            in_pairs,
             out_pairs,
             opts.work_dir(),
             uncompress_opts.temp_prefix,

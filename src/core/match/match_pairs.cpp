@@ -1,0 +1,122 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<time.h>
+#include<array>
+#include<time.h>
+#include<iostream>
+#include<vector>
+#include<fstream>
+#include"golay.h"
+#include<limits>
+
+#include "constants.h"
+
+int match_pairs(const int ORDER, const int COMPRESS, const int PAF_CONSTANT, std::ifstream& filea, std::ifstream& fileb, std::ofstream& out) {
+    const int LEN = ORDER / COMPRESS;
+
+    std::string a;
+    std::string b;
+    std::string arrayA;
+    std::string arrayB;
+    std::string temp;
+
+    vector<int> seqa;
+    seqa.resize(LEN);
+    vector<int> seqb;
+    seqb.resize(LEN);
+
+    vector<vector<int>> matchA;
+    vector<vector<int>> matchB;
+
+    if(filea.peek() == EOF) {
+        return 1;
+    }
+
+    if(fileb.peek() == EOF) {
+        return 1;
+    }
+
+    filea >> a;
+    fileb >> b;
+
+    for(int i = 0; i < LEN; i++) {
+        filea >> arrayA;
+        seqa[i] = stoi(arrayA);
+    }
+
+    for(int i = 0; i < LEN; i++) {
+        fileb >> arrayB;
+        seqb[i] = stoi(arrayB);
+    }
+
+
+    while(filea.good() && fileb.good()) {
+
+        //if a == b
+        //get all sequences of a and b of those psd's in separate vectors
+        //match all combinations of these vectors
+
+        if(a == b) {
+            //match the pairs
+                temp = a;
+
+                while(filea.good() && a == temp) {
+                    matchA.push_back(seqa);
+                    filea.ignore(std::numeric_limits<streamsize>::max(), '\n');
+                    filea >> a;
+                    for(int i = 0; i < LEN; i++) {
+                        filea >> arrayA;
+                        seqa[i] = stoi(arrayA);
+                    }
+                }
+
+                temp = b;
+
+                while(fileb.good() && b == temp) {
+                    matchB.push_back(seqb);
+                    fileb.ignore(std::numeric_limits<streamsize>::max(), '\n');
+                    fileb >> b;
+                    for(int i = 0; i < LEN; i++) {
+                        fileb >> arrayB;
+                        seqb[i] = stoi(arrayB);
+                    }
+                }
+
+                for(vector<int> sequenceA : matchA) {
+                    for(vector<int> sequenceB : matchB) {
+                        if(check_if_pair(sequenceA, sequenceB, PAF_CONSTANT, COMPRESS)) {
+                            write_seq(out, sequenceA);
+                            out << " ";
+                            write_seq(out, sequenceB);
+                            out << "\n";
+                        }
+                    }
+                }
+
+                matchA.clear();
+                matchB.clear();
+        }
+
+        else if(a < b) {
+            //go to next line
+            filea.ignore(std::numeric_limits<streamsize>::max(), '\n');
+            filea >> a;
+            for(int i = 0; i < LEN; i++) {
+                filea >> arrayA;
+                seqa[i] = stoi(arrayA);
+            }
+        }
+
+        else if(b < a) {
+            //go to next line
+            fileb.ignore(std::numeric_limits<streamsize>::max(), '\n');
+            fileb >> b;
+            for(int i = 0; i < LEN; i++) {
+                fileb >> arrayB;
+                seqb[i] = stoi(arrayB);
+            }
+        }
+    }
+
+    return 0;
+}

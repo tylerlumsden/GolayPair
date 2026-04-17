@@ -17,7 +17,7 @@ int uncompress_pipeline(
     int compress,
     int new_compress,
     int paf_constant,
-    const std::string& in_pairs,
+    std::ifstream& input,
     std::ofstream& out_pairs,
     const std::string& work_dir,
     const std::string& prefix = "",

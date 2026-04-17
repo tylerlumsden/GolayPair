@@ -29,16 +29,7 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <cuda_runtime_api.h>
 
-int uncompress_gpu(
-    std::vector<int>& orig, 
-    const int COMPRESS, 
-    const int NEWCOMPRESS, 
-    const int PAF_CONSTANT, 
-    const int PROC_ID, 
-    const int PROC_NUM, 
-    std::ofstream& outfile, 
-    int seqflag
-) {
+int uncompress_gpu(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ofstream& outfile, int seqflag) {
     const int ORDER = orig.size() * COMPRESS;
 
     Fourier FourierManager = Fourier(ORDER / NEWCOMPRESS);

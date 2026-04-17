@@ -1,8 +1,10 @@
-add_library(match INTERFACE)
+add_library(match STATIC
+    match_pairs.cpp
+)
 
 target_include_directories(match
-    INTERFACE
+    PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_link_libraries(match INTERFACE utils)
+target_link_libraries(match PRIVATE utils)
