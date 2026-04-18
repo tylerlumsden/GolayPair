@@ -1,0 +1,92 @@
+// Copyright (c) 2019-2025, NVIDIA CORPORATION & AFFILIATES.  All rights reserved.
+//
+// NVIDIA CORPORATION and its licensors retain all intellectual property
+// and proprietary rights in and to this software, related documentation
+// and any modifications thereto.  Any use, reproduction, disclosure or
+// distribution of this software and related documentation without an express
+// license agreement from NVIDIA CORPORATION is strictly prohibited.
+
+#ifndef CUFFTDX_DETAIL_SYSTEM_CHECKS_HPP
+#define CUFFTDX_DETAIL_SYSTEM_CHECKS_HPP
+
+// Unless explicitly directed otherwise, we  target architecture to be Turing+ (only checking on
+// device). Ignoring this requirement is not guaranteed to either compile or give correct results.
+#ifndef CUFFTDX_IGNORE_MIN_ARCHITECTURE_REQUIREMENT
+#    if defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 750
+#        error "cuFFTDx requires GPU architecture sm_75 or higher"
+#    endif
+#endif // CUFFTDX_IGNORE_MIN_ARCHITECTURE_REQUIREMENT
+
+#ifdef __CUDACC_RTC__
+
+// NVRTC version check
+#    ifndef CUFFTDX_IGNORE_DEPRECATED_COMPILER
+#        if !(__CUDACC_VER_MAJOR__ >= 13)
+#            error cuFFTDx requires NVRTC from CUDA Toolkit 13.0 or newer
+#        endif
+#    endif // CUFFTDX_IGNORE_DEPRECATED_COMPILER
+
+// NVRTC compilation checks
+#    ifndef CUFFTDX_IGNORE_DEPRECATED_COMPILER
+static_assert((__CUDACC_VER_MAJOR__ >= 13),
+              "cuFFTDx requires CUDA Runtime 13.0 or newer to work with NVRTC");
+#    endif // CUFFTDX_IGNORE_DEPRECATED_COMPILER
+
+#else
+#    include <cuda.h>
+
+// NVCC compilation
+
+static_assert(CUDART_VERSION >= 13000, "cuFFTDx requires CUDA Runtime 13.0 or newer");
+static_assert(CUDA_VERSION >= 13000, "cuFFTDx requires CUDA Toolkit 13.0 or newer");
+
+#    ifndef CUFFTDX_IGNORE_DEPRECATED_COMPILER
+
+// Test for GCC 7+
+#        if defined(__GNUC__) && !defined(__clang__)
+#            if (__GNUC__ < 7)
+#                error cuFFTDx requires GCC in version 7 or newer
+#            endif
+#        endif // __GNUC__
+
+// Test for clang 9+
+#        ifdef __clang__
+#            if (__clang_major__ < 9)
+#                error cuFFTDx requires clang in version 9 or newer
+#            endif
+#        endif // __clang__
+
+// Preliminary support for MSVC >= 1920 (Visual Studio 2019 16.0)
+// MSVC support requires /Zc:__cplusplus option enabled
+#        ifdef _MSC_VER
+#            if (_MSC_VER < 1920)
+#                error cuFFTDx preliminary support for MSVC requires version 1920 or newer
+#            endif
+#        endif // _MSC_VER
+
+#    endif // CUFFTDX_IGNORE_DEPRECATED_COMPILER
+
+#endif // __CUDACC_RTC__
+
+// C++ Version
+#ifndef CUFFTDX_IGNORE_DEPRECATED_DIALECT
+#    if defined(_MSC_VER) && defined(_MSVC_LANG)
+#        if (_MSVC_LANG < 201703L)
+#            error cuFFTDx requires C++17 (or newer) enabled
+#        endif
+#    elif defined(__cplusplus)
+#        if (__cplusplus < 201703L)
+#            error cuFFTDx requires C++17 (or newer) enabled
+#        endif
+#    else
+#        error __cplusplus undefined; cuFFTDx requires C++17 (or newer) enabled
+#    endif
+#endif // CUFFTDX_IGNORE_DEPRECATED_DIALECT
+
+
+// For nvcc <= 13.1.0 cuFFTDx does not officially support BlockDim
+#define CUFFTDX_BLOCK_DIM_UNSUPPORTED ((__CUDACC_VER_MAJOR__ * 10000 + __CUDACC_VER_MINOR__ * 100 + __CUDACC_VER_BUILD__) <= 130180)
+
+#define CUFFT_LTO_VERSION_SUPPORT_BLOCK_DIMENSION 400 // 0.4.0
+
+#endif // CUFFTDX_DETAIL_SYSTEM_CHECKS_HPP

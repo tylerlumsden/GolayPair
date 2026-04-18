@@ -26,12 +26,3 @@ int uncompress_pipeline(
     size_t step = 1,
     DeviceType dev = DeviceType::CPU
 );
-
-void uncompress_kernel(
-  std::vector<int> seq, 
-  PermList permutations, 
-  size_t new_length, 
-  int order, 
-  int paf_constant,
-  std::function<void(std::span<int>, std::span<double>)> writer
-);
