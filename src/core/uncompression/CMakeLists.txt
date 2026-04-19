@@ -5,8 +5,9 @@ set(UNCOMPRESS_SOURCE
 
 if(GPU_ARCH)
     list(APPEND UNCOMPRESS_SOURCE
-        gpu/uncompress_kernel_interface.cpp
-        gpu/uncompress_kernel.cu
+        gpu/uncompress_gpu.cpp
+        gpu/impl/uncompress_kernel.cpp
+        gpu/impl/uncompress_kernel.cu
     )
 endif()
 
@@ -18,11 +19,14 @@ target_include_directories(uncompress
     PRIVATE 
         ${CMAKE_CURRENT_SOURCE_DIR}/cpu
         ${CMAKE_CURRENT_SOURCE_DIR}/gpu
+        ${CMAKE_CURRENT_SOURCE_DIR}/gpu/impl
         ${GOLAYPAIR_BOOST_MULTIPRECISION_INCLUDE}
+        ${GOLAYPAIR_THIRD_PARTY_DIR}
 )
 
 if(GPU_ARCH)
-    target_link_libraries(uncompress PRIVATE utils match sort gpu_utils CUDA::cufft CUDA::cudart)
+    target_link_libraries(uncompress PRIVATE utils match sort gpu_utils CUDA::cufft CUDA::cudart CUDA::cuda_driver CUDA::nvrtc)
+    target_compile_definitions(uncompress PRIVATE JITIFY_LINK_CUDA_STATIC=1 JITIFY_LINK_NVRTC_STATIC=1)
 else()
     target_link_libraries(uncompress PRIVATE utils match sort)
 endif()

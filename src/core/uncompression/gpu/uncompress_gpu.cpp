@@ -11,8 +11,8 @@
 #include "equivalence.h"
 #include "constants.h"
 #include "io.h"
-#include "uncompress_kernel_impl.h"
 #include <boost/multiprecision/cpp_int.hpp>
+#include "uncompress_kernel.h"
 
 int uncompress_gpu(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ofstream& outfile, int seqflag) {
     const int ORDER = orig.size() * COMPRESS;
@@ -89,51 +89,4 @@ int uncompress_gpu(std::vector<int>& orig, const int COMPRESS, const int NEWCOMP
     kernel.run(orig, write_function);
 
     return 0;
-}
-
-void UncompressKernel::run(const std::vector<int>& seq,
-                            std::function<void(std::span<int>, std::span<double>)> writer) {
-    using BigInt = boost::multiprecision::cpp_int;
-
-    BigInt count = 1;
-    for(int r : impl->radices()) count *= r;
-
-    size_t filtered_count = 0;
-    printf("Uncompressing with a count of: %s\n", count.str().c_str());
-    for(BigInt offset = 0; offset < count;) {
-        printf("Current offset: %s\n", offset.str().c_str());
-
-        BigInt remaining = count - offset;
-
-        std::size_t threads_per_block, num_blocks;
-        if(remaining < impl->items_per_iter()) {
-            if(remaining < 256) {
-                threads_per_block = static_cast<size_t>(remaining);
-                num_blocks = 1;
-            } else {
-                threads_per_block = std::min(static_cast<std::size_t>(256), impl->items_per_iter());
-                num_blocks = static_cast<std::size_t>(remaining / static_cast<BigInt>(threads_per_block));
-            }
-        } else {
-            threads_per_block = std::min(static_cast<std::size_t>(256), impl->items_per_iter());
-            num_blocks = static_cast<std::size_t>(impl->items_per_iter() / threads_per_block);
-        }
-        std::size_t num_threads = num_blocks * threads_per_block;
-        std::cout << "num_threads: " << num_threads << "\n";
-
-        std::vector<int> mixed_radix(impl->radices().size());
-        BigInt tmp = offset;
-        for(int i = (int)mixed_radix.size() - 1; i >= 0; --i) {
-            mixed_radix[i] = static_cast<int>(tmp % impl->radices()[i]);
-            tmp /= impl->radices()[i];
-        }
-
-        printf("Launching cartesian product\n");
-        size_t n = impl->execute_batch(mixed_radix, num_blocks, threads_per_block, writer);
-        filtered_count += n;
-
-        offset += num_threads;
-    }
-
-    printf("Done uncompressing, total output: %lu\n", filtered_count);
 }
