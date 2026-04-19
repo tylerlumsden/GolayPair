@@ -11,7 +11,7 @@
 #include "equivalence.h"
 #include "constants.h"
 #include "io.h"
-#include "uncompress_kernel.h"
+#include "uncompress_kernel_impl.h"
 #include <boost/multiprecision/cpp_int.hpp>
 
 int uncompress_gpu(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ofstream& outfile, int seqflag) {
@@ -96,7 +96,7 @@ void UncompressKernel::run(const std::vector<int>& seq,
     using BigInt = boost::multiprecision::cpp_int;
 
     BigInt count = 1;
-    for(int r : radices()) count *= r;
+    for(int r : impl->radices()) count *= r;
 
     size_t filtered_count = 0;
     printf("Uncompressing with a count of: %s\n", count.str().c_str());
@@ -105,38 +105,32 @@ void UncompressKernel::run(const std::vector<int>& seq,
 
         BigInt remaining = count - offset;
 
-        // TODO: refactor... ugly if else chain
         std::size_t threads_per_block, num_blocks;
-        if(remaining < items_per_iter()) {
+        if(remaining < impl->items_per_iter()) {
             if(remaining < 256) {
                 threads_per_block = static_cast<size_t>(remaining);
                 num_blocks = 1;
             } else {
-                threads_per_block = std::min(static_cast<std::size_t>(256), items_per_iter());
+                threads_per_block = std::min(static_cast<std::size_t>(256), impl->items_per_iter());
                 num_blocks = static_cast<std::size_t>(remaining / static_cast<BigInt>(threads_per_block));
             }
         } else {
-            threads_per_block = std::min(static_cast<std::size_t>(256), items_per_iter());
-            num_blocks = static_cast<std::size_t>(items_per_iter() / threads_per_block);
+            threads_per_block = std::min(static_cast<std::size_t>(256), impl->items_per_iter());
+            num_blocks = static_cast<std::size_t>(impl->items_per_iter() / threads_per_block);
         }
         std::size_t num_threads = num_blocks * threads_per_block;
         std::cout << "num_threads: " << num_threads << "\n";
 
-        std::vector<int> mixed_radix(radices().size());
+        std::vector<int> mixed_radix(impl->radices().size());
         BigInt tmp = offset;
         for(int i = (int)mixed_radix.size() - 1; i >= 0; --i) {
-            mixed_radix[i] = static_cast<int>(tmp % radices()[i]);
-            tmp /= radices()[i];
+            mixed_radix[i] = static_cast<int>(tmp % impl->radices()[i]);
+            tmp /= impl->radices()[i];
         }
-        set_offset(mixed_radix);
 
         printf("Launching cartesian product\n");
-        launch_cartesian_product(num_blocks, threads_per_block);
-        launch_fft();
-
-        size_t n = launch_sequence_filter(num_blocks, threads_per_block);
+        size_t n = impl->execute_batch(mixed_radix, num_blocks, threads_per_block, writer);
         filtered_count += n;
-        write_filtered(n, writer);
 
         offset += num_threads;
     }

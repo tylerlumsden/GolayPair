@@ -22,7 +22,7 @@ target_include_directories(uncompress
 )
 
 if(GPU_ARCH)
-    target_link_libraries(uncompress PRIVATE utils match sort CUDA::cufft CUDA::cudart)
+    target_link_libraries(uncompress PRIVATE utils match sort gpu_utils CUDA::cufft CUDA::cudart)
 else()
     target_link_libraries(uncompress PRIVATE utils match sort)
 endif()

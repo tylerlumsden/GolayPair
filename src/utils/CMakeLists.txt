@@ -17,3 +17,7 @@ target_include_directories(utils
         ${GOLAYPAIR_FFTW3_INCLUDE}
 )
 target_link_libraries(utils PUBLIC ${GOLAYPAIR_FFTW3_LIB} m)
+
+if(GPU_ARCH)
+    add_subdirectory(gpu)
+endif()
