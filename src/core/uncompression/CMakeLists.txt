@@ -7,7 +7,6 @@ if(GPU_ARCH)
     list(APPEND UNCOMPRESS_SOURCE
         gpu/uncompress_gpu.cpp
         gpu/impl/uncompress_kernel.cpp
-        gpu/impl/uncompress_kernel.cu
     )
 endif()
 
