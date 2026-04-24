@@ -30,7 +30,7 @@ class Progress {
 
 public:
 
-    Progress(cpp_int end_count, milliseconds interval = milliseconds(10)) 
+    Progress(cpp_int end_count, milliseconds interval = milliseconds(10000)) 
         : end_count(end_count), interval(interval) {}
 
     void update(boost::multiprecision::cpp_int curr_count) {
