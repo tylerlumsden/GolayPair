@@ -9,6 +9,7 @@
 #include <format>
 #include <optional>
 #include <string>
+#include <limits>
 
 struct Options {
     int order;
@@ -102,65 +103,37 @@ struct Uncompress_Options {
     std::string internal_prefix = "filtered";
     std::string sorted_prefix = "filtered_sorted";
     std::string output_prefix = "pairs";
+    std::string temp_prefix = "";
     std::optional<long long> line_number;
+    size_t range_begin = 0;
+    size_t range_end = std::numeric_limits<size_t>::max();
+    size_t range_step = 1;
+    DeviceType dev = DeviceType::CPU;
 };
 
 int stage_uncompress(const Options& opts, const Uncompress_Options& uncompress_opts) {
-    if(opts.compress[0] <= 1) return 0;
+    for(size_t i = 0; i < opts.compress.size() - 1; ++i) {
 
-    auto [files_a, files_b] = candidate_output(opts, uncompress_opts.internal_prefix);
-
-    std::vector<std::string> input_list;
-    for(size_t i = 0; i < opts.compress.size(); i++) {
         std::string prefix = (i == 0) ? uncompress_opts.input_prefix : uncompress_opts.output_prefix;
-        input_list.push_back(match_output(opts, prefix, i));
+        std::ifstream in_pairs(match_output(opts, prefix, i));
+        std::ofstream out_pairs(match_output(opts, uncompress_opts.output_prefix, i + 1));
+
+        uncompress_pipeline(
+            opts.order,
+            opts.compress[i],
+            opts.compress[i + 1],
+            opts.paf_constant,
+            in_pairs,
+            out_pairs,
+            opts.work_dir(),
+            uncompress_opts.temp_prefix,
+            uncompress_opts.range_begin,
+            uncompress_opts.range_end,
+            uncompress_opts.range_step,
+            uncompress_opts.dev
+        );
     }
 
-    std::cout << "Running Uncompression Pipeline\n";
-    for(size_t i = 0; i < opts.compress.size() - 1; i++) {
-        std::cout << "Uncompressing to new compression ratio " << opts.compress[i + 1] << "\n";
-
-        std::ifstream in_pairs(input_list[i]);
-        std::ofstream out_pairs(input_list[i + 1]);
-
-        std::vector<int> a, b;
-        for(long long linecount = 0; read_pair(in_pairs, a, b); ++linecount) {
-            if(uncompress_opts.line_number.has_value()) {
-                if(linecount < *uncompress_opts.line_number - 1) { a.clear(); b.clear(); continue; }
-                if(linecount > *uncompress_opts.line_number - 1) break;
-            }
-            if(static_cast<int>(a.size()) != opts.order / opts.compress[i] || static_cast<int>(b.size()) != opts.order / opts.compress[i]) {
-                std::cerr << "Compressed pair has invalid length: " << a.size() << " " << b.size() << "\n";
-                return 1;
-            }
-
-            std::cout << "Uncompressing line: " << linecount << "\n";
-
-            std::ofstream outa(files_a[opts.job_id]);
-            std::ofstream outb(files_b[opts.job_id]);
-
-            if(uncompress_opts.line_number.has_value()) {
-                uncompress_recursive(a, opts.compress[i], opts.compress[i + 1], opts.paf_constant, opts.job_id, opts.job_count, outa, 0);
-                uncompress_recursive(b, opts.compress[i], opts.compress[i + 1], opts.paf_constant, opts.job_id, opts.job_count, outb, 1);
-            } else {
-                uncompress_recursive(a, opts.compress[i], opts.compress[i + 1], opts.paf_constant, 0, 1, outa, 0);
-                uncompress_recursive(b, opts.compress[i], opts.compress[i + 1], opts.paf_constant, 0, 1, outb, 1);
-                outa.close();
-                outb.close();
-
-                auto [file_a_sorted, file_b_sorted] = sort_output(opts, uncompress_opts.sorted_prefix);
-
-                GNU_sort({files_a[opts.job_id]}, file_a_sorted, opts.work_dir());
-                GNU_sort({files_b[opts.job_id]}, file_b_sorted, opts.work_dir());
-                std::ifstream ina(file_a_sorted);
-                std::ifstream inb(file_b_sorted);
-                match_pairs(opts.order, opts.compress[i + 1], opts.paf_constant, ina, inb, out_pairs);
-            }
-
-            a.clear();
-            b.clear();
-        }
-    }
     return 0;
 }
 
@@ -216,6 +189,18 @@ int main(int argc, char* argv[]) {
     uncompress->add_option("--internal", uncompress_opts.internal_prefix, "Internal candidate file prefix");
     uncompress->add_option("--sorted", uncompress_opts.sorted_prefix, "Sorted candidate file prefix");
     uncompress->add_option("--line,-l", uncompress_opts.line_number, "Process only this line number (1-indexed)");
+    uncompress->add_option("-b,--range_begin", uncompress_opts.range_begin, "Beginning range of lines to uncompress");
+    uncompress->add_option("-e,--range_end", uncompress_opts.range_end, "Ending range of lines to uncompress");
+    uncompress->add_option("-s,--range_step", uncompress_opts.range_step, "Step of range to uncompress");
+    uncompress->add_option("-p,--prefix", uncompress_opts.temp_prefix, "Prefix for generated temp files");
+
+    std::map<std::string, DeviceType> device_map{
+        {"cpu", DeviceType::CPU},
+        {"gpu", DeviceType::GPU}
+    };
+    uncompress->add_option("-d,--device", uncompress_opts.dev)
+        ->transform(CLI::CheckedTransformer(device_map, CLI::ignore_case))
+        ->description("Device to use for uncompression, options: [cpu, gpu]");
 
     Filter_Options filter_opts;
     auto filter = app.add_subcommand("filter", "Pair equivalence filter step");
@@ -258,7 +243,7 @@ int main(int argc, char* argv[]) {
     }
 
     if(*filter || *all) {
-        if(stage_filter(opts,filter_opts)) return 1;
+        if(stage_filter(opts, filter_opts)) return 1;
     }
     
     return 0;

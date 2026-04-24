@@ -7,4 +7,6 @@ Makefile
 *.cmake
 build/
 .cache/
+.venv/
+.claude/
 compile_commands.json
