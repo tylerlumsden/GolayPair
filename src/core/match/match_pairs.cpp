@@ -10,8 +10,9 @@
 #include<limits>
 
 #include "constants.h"
+#include "io.h"
 
-int match_pairs(const int ORDER, const int COMPRESS, const int PAF_CONSTANT, std::ifstream& filea, std::ifstream& fileb, std::ofstream& out) {
+int match_pairs(const int ORDER, const int COMPRESS, const int PAF_CONSTANT, std::ifstream& filea, std::ifstream& fileb, IO::PairWriter& out) {
     const int LEN = ORDER / COMPRESS;
 
     std::string a;
@@ -85,10 +86,8 @@ int match_pairs(const int ORDER, const int COMPRESS, const int PAF_CONSTANT, std
                 for(vector<int> sequenceA : matchA) {
                     for(vector<int> sequenceB : matchB) {
                         if(check_if_pair(sequenceA, sequenceB, PAF_CONSTANT, COMPRESS)) {
-                            write_seq(out, sequenceA);
-                            out << " ";
-                            write_seq(out, sequenceB);
-                            out << "\n";
+                            IO::PairType pair{sequenceA, sequenceB};
+                            out << pair;
                         }
                     }
                 }

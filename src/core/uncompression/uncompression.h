@@ -1,9 +1,13 @@
+#pragma once
+
 #include <span>
 #include <limits>
 #include <vector>
 #include <fstream>
 #include <string>
 #include <functional>
+
+#include "io.h"
 using PermList = std::vector<std::vector<std::vector<int>>>;
 int uncompress_recursive(std::vector<int>& orig, const int COMPRESS, const int NEWCOMPRESS, const int PAF_CONSTANT, const int PROC_ID, const int PROC_NUM, std::ofstream& outfile, int seqflag);
 
@@ -17,12 +21,9 @@ int uncompress_pipeline(
     int compress,
     int new_compress,
     int paf_constant,
-    std::ifstream& input,
-    std::ofstream& out_pairs,
+    IO::PairReader&,
+    IO::PairWriter&,
     const std::string& work_dir,
     const std::string& prefix = "",
-    size_t range_begin = 0,
-    size_t range_end = std::numeric_limits<size_t>::max(),
-    size_t step = 1,
     DeviceType dev = DeviceType::CPU
 );

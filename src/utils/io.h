@@ -63,3 +63,41 @@ private:
     const milliseconds interval;
     clock::time_point next_print = clock::now();
 };
+
+namespace IO {
+
+using ValueType = int;
+using SequenceType = std::vector<ValueType>;
+using PairType = std::pair<SequenceType, SequenceType>;
+
+class PairReader {
+    std::ifstream input;
+    size_t length;
+    size_t line_number = 0;
+
+public:
+    PairReader(const std::string& filename, size_t length) : input(std::ifstream(filename)), length(length) {}
+    PairReader(std::ifstream&& in, size_t length) : input(std::move(in)), length(length) {}
+
+    PairReader& operator>>(PairType&);
+
+    size_t lines_read() {
+        return line_number;
+    }
+
+    explicit operator bool() const {
+        return this->input.good();
+    }
+};
+
+class PairWriter {
+    std::ofstream output;
+    size_t length;
+
+public:
+    PairWriter(const std::string& filename, size_t length) : output(std::ofstream(filename)), length(length) {}
+    PairWriter(std::ofstream&& out, size_t length) : output(std::move(out)), length(length) {}
+
+    PairWriter& operator<<(const PairType&);
+};
+}

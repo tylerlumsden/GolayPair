@@ -34,13 +34,10 @@ int uncompress_pipeline(
     int compress,
     int new_compress,
     int paf_constant,
-    std::ifstream& input,
-    std::ofstream& out_pairs,
+    IO::PairReader& pair_reader,
+    IO::PairWriter& pair_writer,
     const std::string& work_dir,
     const std::string& prefix,
-    size_t range_begin,
-    size_t range_end,
-    size_t step,
     DeviceType dev
 ) {
     if(compress <= 1) return 0;
@@ -50,22 +47,15 @@ int uncompress_pipeline(
     const std::string file_a_sorted = file_a + ".sorted";
     const std::string file_b_sorted = file_b + ".sorted";
 
-    std::vector<int> a, b;
-    for(size_t linecount = range_begin; read_pair(input, a, b) && linecount <= range_end; ++linecount) {
+    for(IO::PairType pair; pair_reader >> pair;) {
+        IO::SequenceType a = pair.first;
+        IO::SequenceType b = pair.second;
+
         if(static_cast<int>(a.size()) != order / compress || static_cast<int>(b.size()) != order / compress) {
             std::cerr << "Compressed pair has invalid length: " << a.size() << " " << b.size() << "\n";
             return 1;
         }
-
-        // If the line is not within our step, continue
-        if((linecount + range_begin) % step != 0) {
-            a.clear();
-            b.clear();
-            continue;
-        }
-
-        std::cout << "Uncompressing line: " << linecount << "\n";
-
+        
         std::ofstream outa(file_a);
         std::ofstream outb(file_b);
         if(dev == DeviceType::GPU) {
@@ -83,10 +73,7 @@ int uncompress_pipeline(
 
         std::ifstream ina(file_a_sorted);
         std::ifstream inb(file_b_sorted);
-        match_pairs(order, new_compress, paf_constant, ina, inb, out_pairs);
-
-        a.clear();
-        b.clear();
+        match_pairs(order, new_compress, paf_constant, ina, inb, pair_writer);
     }
     return 0;
 }
