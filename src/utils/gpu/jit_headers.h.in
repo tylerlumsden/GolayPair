@@ -1,0 +1,18 @@
+#pragma once
+#include <string>
+
+inline const std::string flat_perm_list_jit = R"JITDELIM(
+#pragma once
+struct FlatPermListData {
+    int* indexes;
+    int  indexes_size;
+    int* data;
+    int  data_size;
+    int  permutation_size;
+};
+struct FlatPermList { struct View; };
+)JITDELIM";
+
+inline const std::string view_types_jit = R"JITDELIM(
+@VIEW_TYPES_CONTENT@
+)JITDELIM";

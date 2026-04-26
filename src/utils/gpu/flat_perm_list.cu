@@ -40,8 +40,12 @@ FlatPermList::FlatPermList(const PermList& permutations)
 
 FlatPermList::~FlatPermList() = default;
 
+FlatPermListData FlatPermList::data() {
+    return { impl->indexes, impl->indexes_size,
+             impl->data,    impl->data_size,
+             impl->permutation_size };
+}
+
 FlatPermList::View FlatPermList::get_view() {
-    return View(impl->indexes, impl->indexes_size,
-                impl->data,    impl->data_size,
-                impl->permutation_size);
+    return View(data());
 }

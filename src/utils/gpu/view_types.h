@@ -28,6 +28,12 @@ struct FlatPermList::View {
         data(data), data_size(data_size),
         permutation_size(permutation_size) {}
 
+    __host__ __device__
+    View(const FlatPermListData& d)
+      : indexes(d.indexes), indexes_size(d.indexes_size),
+        data(d.data), data_size(d.data_size),
+        permutation_size(d.permutation_size) {}
+
     __device__ __host__
     PermSpan operator[](int i) const {
         int index = indexes[i];
