@@ -85,7 +85,7 @@ int uncompress_gpu(std::vector<int>& orig, const int COMPRESS, const int NEWCOMP
         };
     }
 
-    UncompressKernel kernel(permutation_list, COMPRESS, NEWCOMPRESS, ORDER, PAF_CONSTANT);
+    UncompressKernel kernel(permutation_list, ORDER, COMPRESS, NEWCOMPRESS, PAF_CONSTANT);
     kernel.run(orig, write_function);
 
     return 0;

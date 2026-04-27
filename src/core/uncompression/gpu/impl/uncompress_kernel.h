@@ -8,12 +8,19 @@
 using PermList = std::vector<std::vector<std::vector<int>>>;
 
 class UncompressKernel {
+    struct LaunchParams {
+        unsigned int block_dim_x;
+        unsigned int shared_mem;
+        unsigned int ffts_per_block;
+    };
+
     int order;
     int compress;
     int new_compress;
     int paf_constant;
     const PermList& permutations;
     jitify2::Kernel kernel;
+    LaunchParams launch_params;
 
 public:
     UncompressKernel(const PermList& permutations, int order, int compress, int new_compress, int paf_constant);
