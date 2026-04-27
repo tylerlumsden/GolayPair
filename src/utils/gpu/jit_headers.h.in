@@ -16,3 +16,5 @@ struct FlatPermList { struct View; };
 inline const std::string view_types_jit = R"JITDELIM(
 @VIEW_TYPES_CONTENT@
 )JITDELIM";
+
+inline const std::string jit_third_party_dir = "@JIT_THIRD_PARTY_DIR@";
