@@ -4,12 +4,13 @@
 #include <functional>
 #include <memory>
 #include "jitify2.hpp"
+#include "cuda_runtime.h"
 
 using PermList = std::vector<std::vector<std::vector<int>>>;
 
 class UncompressKernel {
     struct LaunchParams {
-        unsigned int block_dim_x;
+        dim3 block_dim;
         unsigned int shared_mem;
         unsigned int ffts_per_block;
     };
@@ -18,6 +19,8 @@ class UncompressKernel {
     int compress;
     int new_compress;
     int paf_constant;
+    size_t length;
+    size_t new_length;
     const PermList& permutations;
     jitify2::Kernel kernel;
     LaunchParams launch_params;

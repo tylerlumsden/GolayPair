@@ -4,12 +4,11 @@
 #include "cuda_error.h"
 
 template <typename T>
-class MemoryPool {
+struct MemoryPool {
     T* values;
     size_t size;
     size_t length;
 
-public:
     MemoryPool(size_t size, size_t length) : size(size), length(length) {
         check_cuda_error(cudaMalloc(&values, size * length));
     }
