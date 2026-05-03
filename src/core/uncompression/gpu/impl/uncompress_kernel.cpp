@@ -39,7 +39,7 @@ __device__ constexpr unsigned int fft_suggested_ffts     = FFT::suggested_ffts_p
 __device__ constexpr unsigned int new_length = FFT_SIZE;
 __device__ constexpr unsigned int length = FFT_SIZE / (COMPRESS / NEWCOMPRESS);
 
-__device__ constexpr float threshold = 2 * ORDER - PAFCONSTANT + 0.1;
+__device__ constexpr float threshold = 2 * ORDER - PAFCONSTANT + 0.01;
 
 __global__ void uncompress_kernel(
     int* base_radices,
@@ -79,15 +79,21 @@ __global__ void uncompress_kernel(
     __syncthreads();
 
     FlatPermList::View permutations(perm_data);
-    int input_data[FFT::storage_size];
+    int input_data[new_length];
     FFT::value_type thread_data[FFT::storage_size];
-    for (unsigned int i = 0; i < FFT::elements_per_thread; i++) {
+
+    for (unsigned int i = 0; i < new_length; i++) {
         unsigned int idx = elements_id + i * FFT::block_dim.x;
         constexpr int stride = (new_length / (COMPRESS / NEWCOMPRESS));
         int list_index = idx % stride;
         int perm_index = idx / stride;
         input_data[i] = permutations[list_index](radices_view(local_fft_id, list_index), perm_index);
-        thread_data[i] = FFT::value_type(input_data[i], 0.0f);
+    }
+
+    for (unsigned int i = 0; i < FFT::elements_per_thread; i++) {
+        float re = (2*i     < new_length) ? (float)input_data[2*i]     : 0.0f;
+        float im = (2*i + 1 < new_length) ? (float)input_data[2*i + 1] : 0.0f;
+        thread_data[i] = FFT::value_type(re, im);
     }
 
     if (elements_id == 0) fft_passed[local_fft_id] = true;
@@ -210,7 +216,10 @@ void UncompressKernel::run(const std::vector<int>& seq, std::function<void(std::
     check_cuda_error(cudaMemset(output_count, 0, sizeof(unsigned int)));
     check_cuda_error(cudaMemcpy(base_radices.values, radices.data(), this->length * sizeof(int), cudaMemcpyHostToDevice));
 
+    BigInt total_count = 0;
+
     for (BigInt offset = 0; offset < search_count; offset += items_per_iter) {
+        std::cout << "Current Offset:" << offset << "\n";
         BigInt remaining = search_count - offset;
         size_t items_this_iter = static_cast<size_t>(std::min(remaining, static_cast<BigInt>(items_per_iter)));
 
@@ -226,8 +235,8 @@ void UncompressKernel::run(const std::vector<int>& seq, std::function<void(std::
         check_cuda_error(cudaMemcpy(radix_offset.values, offset_radix.data(), this->length * sizeof(int), cudaMemcpyHostToDevice));
 
         dim3 grid((items_this_iter + launch_params.ffts_per_block - 1) / launch_params.ffts_per_block);
-        printf( "block.x : %u, block.y: %u, block.z: %u\n", launch_params.block_dim.x, launch_params.block_dim.y, launch_params.block_dim.z);
-        printf("  grid: %u, ffts_per_block: %u\n", grid.x, launch_params.ffts_per_block);
+        //printf( "block.x : %u, block.y: %u, block.z: %u\n", launch_params.block_dim.x, launch_params.block_dim.y, launch_params.block_dim.z);
+        //printf("  grid: %u, ffts_per_block: %u\n", grid.x, launch_params.ffts_per_block);
 
         this->kernel
             ->configure(grid, launch_params.block_dim, launch_params.shared_mem)
@@ -237,9 +246,9 @@ void UncompressKernel::run(const std::vector<int>& seq, std::function<void(std::
 
         unsigned int count;
         check_cuda_error(cudaMemcpy(&count, output_count, sizeof(unsigned int), cudaMemcpyDeviceToHost));
-        printf("count: %u\n", count);
+        total_count += count;
 
-        if (false) {
+        if (count > 0) {
             std::vector<int>    h_input(count * this->new_length);
             std::vector<float>  h_output_f(count * this->new_length);
             std::vector<double> h_output(count * this->new_length);
@@ -257,6 +266,8 @@ void UncompressKernel::run(const std::vector<int>& seq, std::function<void(std::
             }
         }
     }
+
+    std::cout << "Total passing sequences: " << total_count << "\n";
 
     check_cuda_error(cudaFree(output_count));
 }
