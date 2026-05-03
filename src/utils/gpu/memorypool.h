@@ -1,5 +1,6 @@
 #pragma once
 
+#include <span>
 #include <cuda_runtime.h>
 #include "cuda_error.h"
 
@@ -10,7 +11,7 @@ struct MemoryPool {
     size_t length;
 
     MemoryPool(size_t size, size_t length) : size(size), length(length) {
-        check_cuda_error(cudaMalloc(&values, size * length));
+        check_cuda_error(cudaMalloc(&values, size * length * sizeof(T)));
     }
 
     ~MemoryPool() {
