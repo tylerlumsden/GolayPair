@@ -13,6 +13,9 @@ class UncompressKernel {
         dim3 block_dim;
         unsigned int shared_mem;
         unsigned int ffts_per_block;
+        unsigned int workspace_size;
+        dim3 blue_block_dim;
+        unsigned int blue_smem_size;
     };
 
     int order;
@@ -24,6 +27,7 @@ class UncompressKernel {
     const PermList& permutations;
     jitify2::Kernel kernel;
     LaunchParams launch_params;
+    void* workspace = nullptr;
 
 public:
     UncompressKernel(const PermList& permutations, int order, int compress, int new_compress, int paf_constant);

@@ -35,6 +35,59 @@ using FFT = decltype(FFT_base() + FFTsPerBlock<FFT_base::suggested_ffts_per_bloc
 __device__ constexpr decltype(FFT::block_dim) fft_block_dim    = FFT::block_dim;
 __device__ constexpr unsigned int fft_shared_mem         = (unsigned int)FFT::shared_memory_size;
 __device__ constexpr unsigned int fft_suggested_ffts     = FFT::suggested_ffts_per_block;
+__device__ constexpr unsigned int fft_workspace_size     = (unsigned int)FFT::workspace_size;
+
+constexpr unsigned int BLUE_FFT_SIZE = detail::get_bluestein_size(FFT_SIZE);
+
+using BlueFFT = decltype(
+    Size<BLUE_FFT_SIZE>() + Direction<fft_direction::forward>() +
+    Precision<double>() + Type<fft_type::c2c>() + Block() + SM<SM_ARCH>()
+);
+
+__device__ constexpr decltype(BlueFFT::block_dim) blue_block_dim = BlueFFT::block_dim;
+__device__ constexpr unsigned int                  blue_smem_size = (unsigned int)BlueFFT::shared_memory_size;
+
+// Fills the workspace buffer with Bluestein chirp factors (mirrors bluestein_workspace_impl::kernel).
+// Must be launched with 1 block, BlueFFT::block_dim threads, BlueFFT::shared_memory_size smem.
+__global__ void setup_workspace(void* workspace) {
+    using blue_complex = typename BlueFFT::value_type;
+
+    FFT::value_type* w_time = (FFT::value_type*)workspace;
+    FFT::value_type* w_freq = w_time + BLUE_FFT_SIZE;
+
+    blue_complex thread_data[BlueFFT::storage_size];
+
+    constexpr unsigned int stride = BLUE_FFT_SIZE / BlueFFT::elements_per_thread;
+    const double theta0 = 3.14159265358979323846 / FFT_SIZE;
+
+    unsigned int index         = threadIdx.x;
+    unsigned int compute_index = index;
+
+    for (unsigned int i = 0; i < BlueFFT::elements_per_thread; i++) {
+        if (index >= FFT_SIZE) compute_index = BLUE_FFT_SIZE - index;
+        thread_data[i] = blue_complex(0.0, 0.0);
+        blue_complex b_n(0.0, 0.0);
+        if (compute_index < FFT_SIZE) {
+            double theta = theta0 * (double)((compute_index * compute_index) % (2 * FFT_SIZE));
+            b_n = blue_complex(cos(theta), sin(theta));
+            thread_data[i] = b_n;
+        }
+        b_n.y = -b_n.y;
+        w_time[index] = FFT::value_type(b_n);
+        index += stride;
+        compute_index = index;
+    }
+    __syncthreads();
+
+    extern __shared__ __align__(alignof(blue_complex)) blue_complex blue_smem[];
+    BlueFFT().execute(thread_data, blue_smem);
+
+    index = threadIdx.x;
+    for (unsigned int i = 0; i < BlueFFT::elements_per_thread; i++) {
+        w_freq[index] = FFT::value_type(thread_data[i]);
+        index += stride;
+    }
+}
 
 __device__ constexpr unsigned int new_length = FFT_SIZE;
 __device__ constexpr unsigned int length = FFT_SIZE / (COMPRESS / NEWCOMPRESS);
@@ -48,7 +101,8 @@ __global__ void uncompress_kernel(
     float* output,
     int* input_output,
     unsigned int* output_count,
-    unsigned int num_ffts
+    unsigned int num_ffts,
+    void* workspace
 ) {
     __shared__ int  radix_indexes[length * fft_suggested_ffts];
     extern __shared__ __align__(alignof(FFT::value_type)) FFT::value_type smem[];
@@ -99,7 +153,18 @@ __global__ void uncompress_kernel(
     if (elements_id == 0) fft_passed[local_fft_id] = true;
     __syncthreads();
 
-    FFT().execute(thread_data, smem);
+    if constexpr (FFT::requires_workspace) {
+        // Workspace is a single buffer: [w_time (BLUE_FFT_SIZE elems) | w_freq (BLUE_FFT_SIZE elems)].
+        // device_handle is just two consecutive pointers; reinterpret a local pair to avoid its private ctor.
+        FFT::value_type* ws_ptrs[2] = {
+            (FFT::value_type*)workspace,
+            (FFT::value_type*)workspace + BLUE_FFT_SIZE
+        };
+        auto& ws_handle = *reinterpret_cast<FFT::workspace_type*>(ws_ptrs);
+        FFT().execute(thread_data, smem, ws_handle);
+    } else {
+        FFT().execute(thread_data, smem);
+    }
 
     // Compute magnitude squared and check threshold
     float mag_sq[FFT::storage_size];
@@ -158,17 +223,35 @@ UncompressKernel::UncompressKernel(const PermList& permutations, int order, int 
 
     this->kernel = cache.get_kernel("uncompress_kernel");
 
-    dim3 block_dim;
-    unsigned int shared_mem, suggested_ffts;
-    this->kernel->program().get_global_value("fft_block_dim",      &block_dim);
-    this->kernel->program().get_global_value("fft_shared_mem",     &shared_mem);
-    this->kernel->program().get_global_value("fft_suggested_ffts", &suggested_ffts);
+    dim3 block_dim, blue_block_dim;
+    unsigned int shared_mem, suggested_ffts, workspace_size, blue_smem_size;
+    this->kernel->program().get_global_value("fft_block_dim",       &block_dim);
+    this->kernel->program().get_global_value("fft_shared_mem",      &shared_mem);
+    this->kernel->program().get_global_value("fft_suggested_ffts",  &suggested_ffts);
+    this->kernel->program().get_global_value("fft_workspace_size",  &workspace_size);
+    this->kernel->program().get_global_value("blue_block_dim",      &blue_block_dim);
+    this->kernel->program().get_global_value("blue_smem_size",      &blue_smem_size);
     cudaDeviceSynchronize();
 
-    this->launch_params = {block_dim, shared_mem, suggested_ffts};
+    this->launch_params.block_dim       = block_dim;
+    this->launch_params.shared_mem      = shared_mem;
+    this->launch_params.ffts_per_block  = suggested_ffts;
+    this->launch_params.workspace_size  = workspace_size;
+    this->launch_params.blue_block_dim  = blue_block_dim;
+    this->launch_params.blue_smem_size  = blue_smem_size;
+
+    if (workspace_size > 0) {
+        check_cuda_error(cudaMalloc(&this->workspace, workspace_size));
+        auto setup = cache.get_kernel("setup_workspace");
+        setup->configure(dim3(1), blue_block_dim, blue_smem_size)
+             ->launch(this->workspace);
+        check_cuda_error(cudaDeviceSynchronize());
+    }
 }
 
-UncompressKernel::~UncompressKernel() {}
+UncompressKernel::~UncompressKernel() {
+    if (this->workspace) cudaFree(this->workspace);
+}
 
 void UncompressKernel::run(const std::vector<int>& seq, std::function<void(std::span<int>, std::span<double>)> writer) {
     if(seq.size() != this->length) {
@@ -240,7 +323,7 @@ void UncompressKernel::run(const std::vector<int>& seq, std::function<void(std::
 
         this->kernel
             ->configure(grid, launch_params.block_dim, launch_params.shared_mem)
-            ->launch(base_radices.values, radix_offset.values, perm_list.data(), output.values, input_output.values, output_count, (unsigned int)items_this_iter);
+            ->launch(base_radices.values, radix_offset.values, perm_list.data(), output.values, input_output.values, output_count, (unsigned int)items_this_iter, this->workspace);
 
         check_cuda_error(cudaDeviceSynchronize());
 
