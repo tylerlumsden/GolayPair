@@ -119,7 +119,7 @@ int stage_uncompress(const Options& opts, const Uncompress_Options& uncompress_o
 
         std::string prefix = (i == 0) ? uncompress_opts.input_prefix : uncompress_opts.output_prefix;
 
-        IO::PairReader reader(match_output(opts, prefix, i), opts.order / opts.compress[i]);
+        IO::PairReader reader(match_output(opts, prefix, i), opts.order / opts.compress[i], uncompress_opts.range_begin, uncompress_opts.range_end, uncompress_opts.range_step);
         IO::PairWriter writer(match_output(opts, uncompress_opts.output_prefix, i + 1), opts.order / opts.compress[i + 1]);
 
         uncompress_pipeline(

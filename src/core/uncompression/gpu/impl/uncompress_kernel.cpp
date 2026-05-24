@@ -70,6 +70,10 @@ void UncompressKernel::run(const std::vector<int>& seq, std::function<void(std::
     const size_t smem = THREADS_PER_BLOCK * smem_char_stride((int)this->new_length);
     BigInt total_count = 0;
     double kernel_ms = 0.0, gpu_kernel_ms = 0.0, writer_ms = 0.0;
+
+    unsigned long long* step_cycles_dev;
+    check_cuda_error(cudaMalloc(&step_cycles_dev, 3 * sizeof(unsigned long long)));
+    check_cuda_error(cudaMemset(step_cycles_dev, 0, 3 * sizeof(unsigned long long)));
     using Clock = std::chrono::high_resolution_clock;
     auto run_start = Clock::now();
 
@@ -102,7 +106,8 @@ void UncompressKernel::run(const std::vector<int>& seq, std::function<void(std::
             output.values, input_output.values, output_count,
             (unsigned int)items_this_iter,
             (int)this->new_length, (int)this->length, threshold,
-            (unsigned int)items_per_iter
+            (unsigned int)items_per_iter,
+            step_cycles_dev
         );
         check_cuda_error(cudaEventRecord(ev_stop));
         check_cuda_error(cudaDeviceSynchronize());
@@ -136,6 +141,10 @@ void UncompressKernel::run(const std::vector<int>& seq, std::function<void(std::
         }
     }
 
+    unsigned long long step_cycles_host[3];
+    check_cuda_error(cudaMemcpy(step_cycles_host, step_cycles_dev, 3 * sizeof(unsigned long long), cudaMemcpyDeviceToHost));
+    check_cuda_error(cudaFree(step_cycles_dev));
+
     check_cuda_error(cudaEventDestroy(ev_start));
     check_cuda_error(cudaEventDestroy(ev_stop));
     check_cuda_error(cudaFree(output_count));
@@ -148,4 +157,10 @@ void UncompressKernel::run(const std::vector<int>& seq, std::function<void(std::
     printf("  GPU kernel time:       %.1f ms  (%.1f%%)\n", gpu_kernel_ms,    100.0 * gpu_kernel_ms    / total_ms);
     printf("  Sync overhead (WSL2):  %.1f ms  (%.1f%%)\n", sync_overhead_ms, 100.0 * sync_overhead_ms / total_ms);
     printf("Time in writer:          %.1f ms  (%.1f%%)\n", writer_ms,        100.0 * writer_ms        / total_ms);
+
+    unsigned long long total_cycles = step_cycles_host[0] + step_cycles_host[1] + step_cycles_host[2];
+    printf("\nKernel step breakdown (thread-cycles):\n");
+    printf("  Radix computation: %5.2f%%\n", 100.0 * step_cycles_host[0] / total_cycles);
+    printf("  Input load:        %5.2f%%\n", 100.0 * step_cycles_host[1] / total_cycles);
+    printf("  DFT + threshold:   %5.2f%%\n", 100.0 * step_cycles_host[2] / total_cycles);
 }

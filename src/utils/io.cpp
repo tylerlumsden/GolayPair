@@ -54,7 +54,21 @@ PairReader& PairReader::operator>>(PairType& pair) {
     SequenceType a;
     SequenceType b;
 
+    if (has_range) {
+        std::string skip_line;
+        while (file_line < next_target && std::getline(input, skip_line)) {
+            ++file_line;
+        }
+        if (!input.good() || file_line != next_target) {
+            pair.first = a;
+            pair.second = b;
+            return *this;
+        }
+    }
+
     if(std::string line; std::getline(input, line)) {
+        std::cout << "Read line: " << file_line << "\n";
+        ++file_line;
         SequenceType seq;
         ValueType val;
         std::istringstream iss(line);
@@ -79,8 +93,11 @@ PairReader& PairReader::operator>>(PairType& pair) {
             b.push_back(seq[i + this->length]);
         }
 
-        ++line_number;  
-    } 
+        ++line_number;
+        if (has_range) {
+            next_target += range_step;
+        }
+    }
     pair.first = a;
     pair.second = b;
     return *this;

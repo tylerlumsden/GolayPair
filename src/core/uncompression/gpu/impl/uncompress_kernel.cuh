@@ -21,5 +21,6 @@ void launch_uncompress_kernel(
     unsigned int* output_count,
     unsigned int num_ffts,
     int fft_size, int length, float threshold,
-    unsigned int max_output_count
+    unsigned int max_output_count,
+    unsigned long long* step_cycles = nullptr
 );

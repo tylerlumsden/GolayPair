@@ -74,10 +74,18 @@ class PairReader {
     std::ifstream input;
     size_t length;
     size_t line_number = 0;
+    size_t file_line = 0;
+    bool has_range = false;
+    size_t range_end = 0;
+    size_t range_step = 1;
+    size_t next_target = 0;
 
 public:
     PairReader(const std::string& filename, size_t length) : input(std::ifstream(filename)), length(length) {}
     PairReader(std::ifstream&& in, size_t length) : input(std::move(in)), length(length) {}
+    PairReader(const std::string& filename, size_t length, size_t range_begin, size_t range_end, size_t range_step)
+        : input(std::ifstream(filename)), length(length),
+          has_range(true), range_end(range_end), range_step(range_step), next_target(range_begin) {}
 
     PairReader& operator>>(PairType&);
 
@@ -86,6 +94,7 @@ public:
     }
 
     explicit operator bool() const {
+        if (has_range && next_target >= range_end) return false;
         return this->input.good();
     }
 };
