@@ -8,6 +8,7 @@
 #include <chrono>
 #include <span>
 #include <sstream>
+#include <format>
 
 #include "io.h"
 

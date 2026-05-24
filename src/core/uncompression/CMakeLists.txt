@@ -7,15 +7,16 @@ if(GPU_ARCH)
     list(APPEND UNCOMPRESS_SOURCE
         gpu/uncompress_gpu.cpp
         gpu/impl/uncompress_kernel.cpp
+        gpu/impl/uncompress_kernel.cu
     )
 endif()
 
 add_library(uncompress STATIC ${UNCOMPRESS_SOURCE})
 
 target_include_directories(uncompress
-    PUBLIC  
+    PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
-    PRIVATE 
+    PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/cpu
         ${CMAKE_CURRENT_SOURCE_DIR}/gpu
         ${CMAKE_CURRENT_SOURCE_DIR}/gpu/impl
@@ -24,8 +25,7 @@ target_include_directories(uncompress
 )
 
 if(GPU_ARCH)
-    target_link_libraries(uncompress PRIVATE utils match sort gpu_utils CUDA::cufft CUDA::cudart CUDA::cuda_driver CUDA::nvrtc)
-    target_compile_definitions(uncompress PRIVATE JITIFY_LINK_CUDA_STATIC=1 JITIFY_LINK_NVRTC_STATIC=1)
+    target_link_libraries(uncompress PRIVATE utils match sort gpu_utils CUDA::cufft CUDA::cudart CUDA::cuda_driver)
 else()
     target_link_libraries(uncompress PRIVATE utils match sort)
 endif()

@@ -75,12 +75,12 @@ int uncompress_gpu(std::vector<int>& orig, const int COMPRESS, const int NEWCOMP
 
     std::function<void(std::span<int>, std::span<double>)> write_function;
     if(seqflag) {
-        write_function = [&outfile](std::span<int> seq, std::span<double> psd) {
+        write_function = [&](std::span<int> seq, std::span<double> psd) {
             write_seq_psd(seq, psd, outfile);
         };
     } else {
         int bound = ORDER * 2 - PAF_CONSTANT;
-        write_function = [&outfile, bound](std::span<int> seq, std::span<double> psd) {
+        write_function = [&, bound](std::span<int> seq, std::span<double> psd) {
             write_seq_psd_invert(seq, psd, outfile, bound);
         };
     }
