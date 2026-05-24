@@ -27,7 +27,7 @@ __global__ void uncompress_kernel_impl(
     int length,
     float threshold,
     unsigned int max_output_count,
-    unsigned long long* step_cycles  // nullable; [0]=radix [1]=input_load [2]=dft
+    unsigned long long* step_cycles  // nullable; [0]=coop_load [1]=radix [2]=input_load [3]=dft
 ) {
     extern __shared__ int8_t smem_raw[];
     const int stride = smem_char_stride(fft_size);
@@ -37,6 +37,13 @@ __global__ void uncompress_kernel_impl(
     int* smem_indexes = (int*)(smem_raw + THREADS_PER_BLOCK * stride);
     int* smem_pdata   = smem_indexes + perm_data.indexes_size;
 
+    // Only time full blocks so __shfl_down_sync(0xffffffff) is safe.
+    // Computed here (before early exit) so the coop load is included in timing.
+    const bool do_timing = step_cycles &&
+        ((blockIdx.x + 1) * (unsigned)blockDim.x <= num_ffts);
+
+    clock_t t0 = do_timing ? clock() : 0;
+
     // Cooperatively load the permutation table into shared memory (all threads participate).
     for (int i = (int)threadIdx.x; i < perm_data.indexes_size; i += (int)blockDim.x)
         smem_indexes[i] = __ldg(&perm_data.indexes[i]);
@@ -44,14 +51,10 @@ __global__ void uncompress_kernel_impl(
         smem_pdata[i] = __ldg(&perm_data.data[i]);
     __syncthreads();
 
+    clock_t t1 = do_timing ? clock() : 0;
+
     const unsigned int fft_id = blockIdx.x * blockDim.x + threadIdx.x;
     if (fft_id >= num_ffts) return;
-
-    // Only time full blocks so __shfl_down_sync(0xffffffff) is safe.
-    const bool do_timing = step_cycles &&
-        ((blockIdx.x + 1) * (unsigned)blockDim.x <= num_ffts);
-
-    clock_t t0 = do_timing ? clock() : 0;
 
     // Step 1: Mixed-radix index computation (Barrett reduction — no hardware divide).
     int my_radix[MAX_RADIX_LENGTH];
@@ -71,11 +74,9 @@ __global__ void uncompress_kernel_impl(
         }
     }
 
-    clock_t t1 = do_timing ? clock() : 0;
+    clock_t t2 = do_timing ? clock() : 0;
 
     // Step 2: Load input sequence into shared memory via smem perm table.
-    // Precompute base offsets to eliminate the smem_indexes + multiply from the hot loop.
-    // Restructure (rep, j) to avoid i%length and i/length integer divides.
     const int perm_sz = perm_data.permutation_size;
     int base_off[MAX_RADIX_LENGTH];
     for (int j = 0; j < length; j++)
@@ -85,7 +86,7 @@ __global__ void uncompress_kernel_impl(
         for (int j = 0; j < length; j++)
             my_input[out++] = (int8_t)smem_pdata[base_off[j] + rep];
 
-    clock_t t2 = do_timing ? clock() : 0;
+    clock_t t3 = do_timing ? clock() : 0;
 
     // Step 3: Naive DFT with threshold check.
     // Use flag+break (not early return) so all threads reach the timing point below.
@@ -113,22 +114,25 @@ __global__ void uncompress_kernel_impl(
         }
     }
 
-    clock_t t3 = do_timing ? clock() : 0;
+    clock_t t4 = do_timing ? clock() : 0;
 
-    // Warp-reduce cycle deltas and accumulate to global counters.
+    // Warp-reduce all 4 cycle deltas and accumulate to global counters.
     if (do_timing) {
-        unsigned long long r = (unsigned long long)(t1 - t0);
-        unsigned long long l = (unsigned long long)(t2 - t1);
-        unsigned long long d = (unsigned long long)(t3 - t2);
+        unsigned long long c = (unsigned long long)(t1 - t0);
+        unsigned long long r = (unsigned long long)(t2 - t1);
+        unsigned long long l = (unsigned long long)(t3 - t2);
+        unsigned long long d = (unsigned long long)(t4 - t3);
         for (int off = 16; off > 0; off >>= 1) {
+            c += __shfl_down_sync(0xffffffff, c, off);
             r += __shfl_down_sync(0xffffffff, r, off);
             l += __shfl_down_sync(0xffffffff, l, off);
             d += __shfl_down_sync(0xffffffff, d, off);
         }
         if ((threadIdx.x & 31) == 0) {
-            atomicAdd(&step_cycles[0], r);
-            atomicAdd(&step_cycles[1], l);
-            atomicAdd(&step_cycles[2], d);
+            atomicAdd(&step_cycles[0], c);
+            atomicAdd(&step_cycles[1], r);
+            atomicAdd(&step_cycles[2], l);
+            atomicAdd(&step_cycles[3], d);
         }
     }
 
