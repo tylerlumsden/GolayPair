@@ -69,9 +69,13 @@ void UncompressKernel::run(const std::vector<int>& seq, std::function<void(std::
     const dim3 block(THREADS_PER_BLOCK);
     const size_t smem = THREADS_PER_BLOCK * smem_char_stride((int)this->new_length);
     BigInt total_count = 0;
-    double kernel_ms = 0.0, writer_ms = 0.0;
+    double kernel_ms = 0.0, gpu_kernel_ms = 0.0, writer_ms = 0.0;
     using Clock = std::chrono::high_resolution_clock;
     auto run_start = Clock::now();
+
+    cudaEvent_t ev_start, ev_stop;
+    check_cuda_error(cudaEventCreate(&ev_start));
+    check_cuda_error(cudaEventCreate(&ev_stop));
 
     for (BigInt offset = 0; offset < search_count; offset += items_per_iter) {
         std::cout << "Current Offset: " << offset << "\n";
@@ -91,6 +95,7 @@ void UncompressKernel::run(const std::vector<int>& seq, std::function<void(std::
         dim3 grid((items_this_iter + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK);
 
         auto t0 = Clock::now();
+        check_cuda_error(cudaEventRecord(ev_start));
         launch_uncompress_kernel(
             grid, block, smem,
             base_radices_buf.values, radix_offset.values, perm_list.data(),
@@ -99,8 +104,12 @@ void UncompressKernel::run(const std::vector<int>& seq, std::function<void(std::
             (int)this->new_length, (int)this->length, threshold,
             (unsigned int)items_per_iter
         );
+        check_cuda_error(cudaEventRecord(ev_stop));
         check_cuda_error(cudaDeviceSynchronize());
         kernel_ms += std::chrono::duration<double, std::milli>(Clock::now() - t0).count();
+        float ev_ms = 0.0f;
+        check_cuda_error(cudaEventElapsedTime(&ev_ms, ev_start, ev_stop));
+        gpu_kernel_ms += ev_ms;
 
         unsigned int count;
         check_cuda_error(cudaMemcpy(&count, output_count, sizeof(unsigned int), cudaMemcpyDeviceToHost));
@@ -127,11 +136,16 @@ void UncompressKernel::run(const std::vector<int>& seq, std::function<void(std::
         }
     }
 
-    double total_ms = std::chrono::duration<double, std::milli>(Clock::now() - run_start).count();
-    printf("Total passing sequences: %s\n", total_count.str().c_str());
-    printf("Total wall time:         %.1f ms\n", total_ms);
-    printf("Time in kernel+sync:     %.1f ms  (%.1f%%)\n", kernel_ms, 100.0 * kernel_ms / total_ms);
-    printf("Time in writer:          %.1f ms  (%.1f%%)\n", writer_ms, 100.0 * writer_ms / total_ms);
-
+    check_cuda_error(cudaEventDestroy(ev_start));
+    check_cuda_error(cudaEventDestroy(ev_stop));
     check_cuda_error(cudaFree(output_count));
+
+    double total_ms = std::chrono::duration<double, std::milli>(Clock::now() - run_start).count();
+    double sync_overhead_ms = kernel_ms - gpu_kernel_ms;
+    printf("Total passing sequences: %s\n",  total_count.str().c_str());
+    printf("Total wall time:         %.1f ms\n", total_ms);
+    printf("Time in kernel+sync:     %.1f ms  (%.1f%%)\n", kernel_ms,        100.0 * kernel_ms        / total_ms);
+    printf("  GPU kernel time:       %.1f ms  (%.1f%%)\n", gpu_kernel_ms,    100.0 * gpu_kernel_ms    / total_ms);
+    printf("  Sync overhead (WSL2):  %.1f ms  (%.1f%%)\n", sync_overhead_ms, 100.0 * sync_overhead_ms / total_ms);
+    printf("Time in writer:          %.1f ms  (%.1f%%)\n", writer_ms,        100.0 * writer_ms        / total_ms);
 }

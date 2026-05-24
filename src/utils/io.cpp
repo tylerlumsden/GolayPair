@@ -9,31 +9,44 @@
 #include <span>
 #include <sstream>
 #include <format>
+#include <charconv>
 
 #include "io.h"
 
+static char* write_int(char* p, int v) {
+    auto [end, _] = std::to_chars(p, p + 12, v);
+    return end;
+}
+
 void write_seq_psd(std::span<const int> seq, std::span<const double> psd, std::ofstream& out) {
-    out << "PSD";
-    for(std::size_t i = 1; i < psd.size(); i++) {
-        out << (int)rint(psd[i]);
+    // max bytes: 3 + (N-1)*12 + 1 + N*13 + 1; 8192 covers N up to ~300
+    char buf[8192];
+    char* p = buf;
+    *p++ = 'P'; *p++ = 'S'; *p++ = 'D';
+    for(std::size_t i = 1; i < psd.size(); i++)
+        p = write_int(p, (int)rint(psd[i]));
+    *p++ = ' ';
+    for(int v : seq) {
+        p = write_int(p, v);
+        *p++ = ' ';
     }
-    out << " ";
-    for(std::size_t i = 0; i < seq.size(); i++) {
-        out << seq[i] << " ";
-    }
-    out << "\n";
+    *p++ = '\n';
+    out.write(buf, p - buf);
 }
 
 void write_seq_psd_invert(std::span<const int> seq, std::span<const double> psd, std::ofstream& out, const int BOUND) {
-    out << "PSD";
-    for(std::size_t i = 1; i < psd.size(); i++) {
-        out << BOUND - (int)rint(psd[i]);
+    char buf[8192];
+    char* p = buf;
+    *p++ = 'P'; *p++ = 'S'; *p++ = 'D';
+    for(std::size_t i = 1; i < psd.size(); i++)
+        p = write_int(p, BOUND - (int)rint(psd[i]));
+    *p++ = ' ';
+    for(int v : seq) {
+        p = write_int(p, v);
+        *p++ = ' ';
     }
-    out << " ";
-    for(std::size_t i = 0; i < seq.size(); i++) {
-        out << seq[i] << " ";
-    }
-    out << "\n";
+    *p++ = '\n';
+    out.write(buf, p - buf);
 }
 
 namespace IO {
