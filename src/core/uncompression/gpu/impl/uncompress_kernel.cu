@@ -5,10 +5,19 @@
 static constexpr float TWO_PI_F = 6.28318530717958647692f;
 static constexpr int MAX_RADIX_LENGTH = 64;
 
+// Barrett reduction: q = a/d, r = a%d  (magic = (1ULL<<32)/d, precomputed on host)
+__device__ __forceinline__ void fast_divmod(uint32_t a, uint32_t magic, uint32_t d,
+                                             uint32_t& q, uint32_t& r) {
+    q = __umulhi(a, magic);
+    r = a - q * d;
+    if (r >= d) { r -= d; ++q; }
+}
+
 __launch_bounds__(THREADS_PER_BLOCK, 3)
 __global__ void uncompress_kernel_impl(
     const int* __restrict__ base_radices,
     const int* __restrict__ offset,
+    const uint32_t* __restrict__ magic,
     FlatPermListData perm_data,
     float* __restrict__ output,
     int*   __restrict__ input_output,
@@ -20,9 +29,20 @@ __global__ void uncompress_kernel_impl(
     unsigned int max_output_count,
     unsigned long long* step_cycles  // nullable; [0]=radix [1]=input_load [2]=dft
 ) {
-    extern __shared__ int8_t smem_input[];
-    const int stride  = smem_char_stride(fft_size);
-    int8_t* my_input  = smem_input + threadIdx.x * stride;
+    extern __shared__ int8_t smem_raw[];
+    const int stride = smem_char_stride(fft_size);
+    int8_t* my_input = smem_raw + threadIdx.x * stride;
+
+    // Perm table section sits after the per-thread input buffers (always 4-byte aligned).
+    int* smem_indexes = (int*)(smem_raw + THREADS_PER_BLOCK * stride);
+    int* smem_pdata   = smem_indexes + perm_data.indexes_size;
+
+    // Cooperatively load the permutation table into shared memory (all threads participate).
+    for (int i = (int)threadIdx.x; i < perm_data.indexes_size; i += (int)blockDim.x)
+        smem_indexes[i] = __ldg(&perm_data.indexes[i]);
+    for (int i = (int)threadIdx.x; i < perm_data.data_size; i += (int)blockDim.x)
+        smem_pdata[i] = __ldg(&perm_data.data[i]);
+    __syncthreads();
 
     const unsigned int fft_id = blockIdx.x * blockDim.x + threadIdx.x;
     if (fft_id >= num_ffts) return;
@@ -33,25 +53,37 @@ __global__ void uncompress_kernel_impl(
 
     clock_t t0 = do_timing ? clock() : 0;
 
-    // Step 1: Mixed-radix index computation.
+    // Step 1: Mixed-radix index computation (Barrett reduction — no hardware divide).
     int my_radix[MAX_RADIX_LENGTH];
     {
-        int temp = (int)fft_id, carry = 0;
+        uint32_t temp = fft_id, carry = 0;
         for (int i = length - 1; i >= 0; i--) {
-            int d  = temp % base_radices[i];
-            temp  /= base_radices[i];
-            int s  = offset[i] + d + carry;
-            my_radix[i] = s % base_radices[i];
-            carry        = s / base_radices[i];
+            uint32_t d = (uint32_t)base_radices[i];
+            uint32_t m = magic[i];
+            uint32_t q, r;
+            fast_divmod(temp, m, d, q, r);
+            temp = q;
+            uint32_t s = (uint32_t)offset[i] + r + carry;
+            uint32_t sq, sr;
+            fast_divmod(s, m, d, sq, sr);
+            my_radix[i] = (int)sr;
+            carry        = sq;
         }
     }
 
     clock_t t1 = do_timing ? clock() : 0;
 
-    // Step 2: Load input sequence into shared memory as int8_t.
-    FlatPermList::View permutations(perm_data);
-    for (int i = 0; i < fft_size; i++)
-        my_input[i] = (int8_t)permutations[i % length](my_radix[i % length], i / length);
+    // Step 2: Load input sequence into shared memory via smem perm table.
+    // Precompute base offsets to eliminate the smem_indexes + multiply from the hot loop.
+    // Restructure (rep, j) to avoid i%length and i/length integer divides.
+    const int perm_sz = perm_data.permutation_size;
+    int base_off[MAX_RADIX_LENGTH];
+    for (int j = 0; j < length; j++)
+        base_off[j] = smem_indexes[j] + my_radix[j] * perm_sz;
+    int out = 0;
+    for (int rep = 0; rep < perm_sz; rep++)
+        for (int j = 0; j < length; j++)
+            my_input[out++] = (int8_t)smem_pdata[base_off[j] + rep];
 
     clock_t t2 = do_timing ? clock() : 0;
 
@@ -136,6 +168,7 @@ __global__ void uncompress_kernel_impl(
 void launch_uncompress_kernel(
     dim3 grid, dim3 block, size_t smem_bytes,
     int* base_radices, int* offset,
+    const uint32_t* magic,
     FlatPermListData perm_data,
     float* output, int* input_output,
     unsigned int* output_count,
@@ -145,7 +178,7 @@ void launch_uncompress_kernel(
     unsigned long long* step_cycles
 ) {
     uncompress_kernel_impl<<<grid, block, smem_bytes>>>(
-        base_radices, offset, perm_data,
+        base_radices, offset, magic, perm_data,
         output, input_output, output_count,
         num_ffts, fft_size, length, threshold, max_output_count,
         step_cycles

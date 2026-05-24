@@ -60,7 +60,7 @@ int uncompress_pipeline(
         std::ofstream outb(file_b);
         if(dev == DeviceType::GPU) {
             uncompress_gpu(a, compress, new_compress, paf_constant, 0, 1, outa, 0);
-            uncompress_gpu(b, compress, new_compress, paf_constant, 0, 1, outb, 1);
+            //uncompress_gpu(b, compress, new_compress, paf_constant, 0, 1, outb, 1);
         } else {
             uncompress_recursive(a, compress, new_compress, paf_constant, 0, 1, outa, 0);
             uncompress_recursive(b, compress, new_compress, paf_constant, 0, 1, outb, 1);
@@ -68,12 +68,12 @@ int uncompress_pipeline(
         outa.close();
         outb.close();
 
-        GNU_sort({file_a}, file_a_sorted, work_dir);
-        GNU_sort({file_b}, file_b_sorted, work_dir);
+        //GNU_sort({file_a}, file_a_sorted, work_dir);
+        //GNU_sort({file_b}, file_b_sorted, work_dir);
 
         std::ifstream ina(file_a_sorted);
         std::ifstream inb(file_b_sorted);
-        match_pairs(order, new_compress, paf_constant, ina, inb, pair_writer);
+        //match_pairs(order, new_compress, paf_constant, ina, inb, pair_writer);
     }
     return 0;
 }

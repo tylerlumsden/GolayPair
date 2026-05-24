@@ -40,6 +40,15 @@ void UncompressKernel::run(const std::vector<int>& seq, std::function<void(std::
 
     FlatPermList perm_list(this->permutations);
 
+    // Precompute Barrett magic numbers: magic[i] = (1ULL << 32) / radices[i].
+    // d=1 must be special-cased: (1ULL<<32)/1 = 0x100000000 truncates to 0 as uint32_t,
+    // breaking the reduction. UINT32_MAX gives the correct result for d=1.
+    std::vector<uint32_t> magic(this->length);
+    for (size_t i = 0; i < this->length; i++) {
+        uint64_t d = (uint64_t)radices[i];
+        magic[i] = (d <= 1) ? UINT32_MAX : (uint32_t)((1ULL << 32) / d);
+    }
+
     size_t free_mem, total_mem;
     cudaMemGetInfo(&free_mem, &total_mem);
 
@@ -56,10 +65,13 @@ void UncompressKernel::run(const std::vector<int>& seq, std::function<void(std::
 
     printf("Iterating with %zu sequences per iteration\n", items_per_iter);
 
-    MemoryPool<int>   radix_offset(1, this->length);
-    MemoryPool<int>   base_radices_buf(1, this->length);
-    MemoryPool<float> output(items_per_iter, this->new_length);
-    MemoryPool<int>   input_output(items_per_iter, this->new_length);
+    MemoryPool<uint32_t> magic_buf(1, this->length);
+    MemoryPool<int>      radix_offset(1, this->length);
+    MemoryPool<int>      base_radices_buf(1, this->length);
+    MemoryPool<float>    output(items_per_iter, this->new_length);
+    MemoryPool<int>      input_output(items_per_iter, this->new_length);
+
+    check_cuda_error(cudaMemcpy(magic_buf.values, magic.data(), this->length * sizeof(uint32_t), cudaMemcpyHostToDevice));
 
     unsigned int* output_count;
     check_cuda_error(cudaMalloc(&output_count, sizeof(unsigned int)));
@@ -67,7 +79,11 @@ void UncompressKernel::run(const std::vector<int>& seq, std::function<void(std::
 
     const float threshold = 2.0f * order - paf_constant + 0.01f;
     const dim3 block(THREADS_PER_BLOCK);
-    const size_t smem = THREADS_PER_BLOCK * smem_char_stride((int)this->new_length);
+    auto perm_data_info = perm_list.data();
+    const size_t perm_smem = (size_t)(perm_data_info.indexes_size + perm_data_info.data_size) * sizeof(int);
+    const size_t smem = THREADS_PER_BLOCK * smem_char_stride((int)this->new_length) + perm_smem;
+    printf("Perm table: %d indexes + %d values = %.1f KB in smem\n",
+           perm_data_info.indexes_size, perm_data_info.data_size, perm_smem / 1024.0);
     BigInt total_count = 0;
     double kernel_ms = 0.0, gpu_kernel_ms = 0.0, writer_ms = 0.0;
 
@@ -102,7 +118,7 @@ void UncompressKernel::run(const std::vector<int>& seq, std::function<void(std::
         check_cuda_error(cudaEventRecord(ev_start));
         launch_uncompress_kernel(
             grid, block, smem,
-            base_radices_buf.values, radix_offset.values, perm_list.data(),
+            base_radices_buf.values, radix_offset.values, magic_buf.values, perm_list.data(),
             output.values, input_output.values, output_count,
             (unsigned int)items_this_iter,
             (int)this->new_length, (int)this->length, threshold,

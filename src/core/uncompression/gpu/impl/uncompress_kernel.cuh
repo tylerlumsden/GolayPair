@@ -13,9 +13,11 @@ inline __host__ __device__ int smem_char_stride(int fft_size) {
     return k * 4;
 }
 
+
 void launch_uncompress_kernel(
     dim3 grid, dim3 block, size_t smem_bytes,
     int* base_radices, int* offset,
+    const uint32_t* magic,
     FlatPermListData perm_data,
     float* output, int* input_output,
     unsigned int* output_count,
