@@ -80,9 +80,14 @@ __global__ void uncompress_kernel_impl(
     for (int j = 0; j < length; j++)
         base_off[j] = smem_indexes[j] + my_radix[j] * perm_sz;
     int out = 0;
+    int dc_sum = 0;
     for (int rep = 0; rep < perm_sz; rep++)
         for (int j = 0; j < length; j++)
-            my_input[out++] = (int8_t)smem_pdata[base_off[j] + rep];
+        {
+            int8_t v = (int8_t)smem_pdata[base_off[j] + rep];
+            my_input[out++] = v;
+            dc_sum += (int)v;
+        }
 
     clock_t t3 = do_timing ? clock() : 0;
 
@@ -90,25 +95,35 @@ __global__ void uncompress_kernel_impl(
     // Use flag+break (not early return) so all threads reach the timing point below.
     bool passed = true;
     {
-        float w1r, w1i;
-        __sincosf(-TWO_PI_F / (float)fft_size, &w1i, &w1r);
-        float wkr = 1.f, wki = 0.f;
+        // k=0 is the DC bin and can be checked without trig recurrence.
+        float dc = (float)dc_sum;
+        if (dc * dc >= threshold) {
+            passed = false;
+        }
 
-        for (int k = 0; k < fft_size; k++) {
-            float pr = 1.f, pi = 0.f, re = 0.f, im = 0.f;
-            for (int n = 0; n < fft_size; n++) {
-                float x  = (float)my_input[n];
-                re += x * pr;
-                im += x * pi;
-                float tmp = pr * wkr - pi * wki;
-                pi = pr * wki + pi * wkr;
-                pr = tmp;
+        if (passed) {
+            const int k_last = fft_size >> 1; // floor(N/2), includes Nyquist for even N.
+            float w1r, w1i;
+            __sincosf(-TWO_PI_F / (float)fft_size, &w1i, &w1r);
+            float wkr = w1r, wki = w1i; // Start at k=1; k=0 already checked.
+
+            for (int k = 1; k <= k_last; k++) {
+                float pr = 1.f, pi = 0.f, re = 0.f, im = 0.f;
+                #pragma unroll 4
+                for (int n = 0; n < fft_size; n++) {
+                    float x = (float)my_input[n];
+                    re = fmaf(x, pr, re);
+                    im = fmaf(x, pi, im);
+                    float tmp = fmaf(-pi, wki, pr * wkr);
+                    pi = fmaf(pr, wki, pi * wkr);
+                    pr = tmp;
+                }
+                if (re * re + im * im >= threshold) { passed = false; break; }
+
+                float nwkr = fmaf(-wki, w1i, wkr * w1r);
+                wki = fmaf(wkr, w1i, wki * w1r);
+                wkr = nwkr;
             }
-            if (re * re + im * im >= threshold) { passed = false; break; }
-
-            float nwkr = wkr * w1r - wki * w1i;
-            wki = wkr * w1i + wki * w1r;
-            wkr = nwkr;
         }
     }
 
@@ -142,24 +157,35 @@ __global__ void uncompress_kernel_impl(
 
     // Step 5: Recompute DFT and write magnitudes + input to output buffers.
     {
+        const int k_last = fft_size >> 1; // floor(N/2), includes Nyquist for even N.
         float w1r, w1i;
         __sincosf(-TWO_PI_F / (float)fft_size, &w1i, &w1r);
-        float wkr = 1.f, wki = 0.f;
 
-        for (int k = 0; k < fft_size; k++) {
+        float dc = (float)dc_sum;
+        output[out_idx * fft_size] = dc * dc;
+
+        float wkr = w1r, wki = w1i; // Start at k=1; k=0 already emitted.
+
+        for (int k = 1; k <= k_last; k++) {
             float pr = 1.f, pi = 0.f, re = 0.f, im = 0.f;
+            #pragma unroll 4
             for (int n = 0; n < fft_size; n++) {
-                float x  = (float)my_input[n];
-                re += x * pr;
-                im += x * pi;
-                float tmp = pr * wkr - pi * wki;
-                pi = pr * wki + pi * wkr;
+                float x = (float)my_input[n];
+                re = fmaf(x, pr, re);
+                im = fmaf(x, pi, im);
+                float tmp = fmaf(-pi, wki, pr * wkr);
+                pi = fmaf(pr, wki, pi * wkr);
                 pr = tmp;
             }
-            output[out_idx * fft_size + k] = re * re + im * im;
+            float mag = re * re + im * im;
+            const int k_mirror = fft_size - k;
+            output[out_idx * fft_size + k] = mag;
+            if (k_mirror != k) {
+                output[out_idx * fft_size + k_mirror] = mag;
+            }
 
-            float nwkr = wkr * w1r - wki * w1i;
-            wki = wkr * w1i + wki * w1r;
+            float nwkr = fmaf(-wki, w1i, wkr * w1r);
+            wki = fmaf(wkr, w1i, wki * w1r);
             wkr = nwkr;
         }
         for (int i = 0; i < fft_size; i++)
