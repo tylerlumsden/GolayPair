@@ -3,7 +3,7 @@
 #include <cstdint>
 #include "flat_perm_list.h"
 
-constexpr unsigned int THREADS_PER_BLOCK = 128;
+constexpr unsigned int THREADS_PER_BLOCK = 256;
 
 // Per-thread stride in bytes for int8_t shared memory.
 // Smallest multiple of 4 >= fft_size with stride/4 odd → bank-conflict-free for 32-thread warps.

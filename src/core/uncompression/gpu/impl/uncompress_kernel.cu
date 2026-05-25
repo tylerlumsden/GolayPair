@@ -37,10 +37,8 @@ __global__ void uncompress_kernel_impl(
     int* smem_indexes = (int*)(smem_raw + THREADS_PER_BLOCK * stride);
     int* smem_pdata   = smem_indexes + perm_data.indexes_size;
 
-    // Only time full blocks so __shfl_down_sync(0xffffffff) is safe.
-    // Computed here (before early exit) so the coop load is included in timing.
-    const bool do_timing = step_cycles &&
-        ((blockIdx.x + 1) * (unsigned)blockDim.x <= num_ffts);
+    // Timing disabled for benchmarking runs.
+    const bool do_timing = false;
 
     clock_t t0 = do_timing ? clock() : 0;
 
